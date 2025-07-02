@@ -26,7 +26,7 @@ import {handleAddPhoto} from '../Functions/functions';
 const Indoor = () => {
   const loginData = useSelector(state => state.login.value);
   const signProjectData = useSelector(state => state.signProject.value);
-  console.log('indoor', signProjectData?.indoor_photos_and_measurements);
+  // console.log('indoor', signProjectData?.indoor_photos_and_measurements);
   const [active, setActive] = useState('');
   const [state, setState] = useState(null);
   const [signGeneralAuditTodoPunchList, setSignGeneralAuditTodoPunchList] =

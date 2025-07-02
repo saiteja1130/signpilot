@@ -48,7 +48,6 @@ const Home = () => {
   const dispatch = useDispatch();
   const [refreshing, setRefreshing] = useState(false);
   const [response, setResponse] = useState(false);
-  console.log(signSelected);
 
   const fetchData = async (state, previousSignSelected = null) => {
     console.log('API fetching....');
@@ -65,13 +64,9 @@ const Home = () => {
           },
         },
       );
-
-      console.log(response.data);
-
       if (response.data.status) {
         setResponse(response.data.status);
         const data = response.data.projectData;
-        console.log('API Projects GetData:', data);
         setAlldata(data);
 
         const titles = data.map(item => item.projectTitle);
@@ -90,7 +85,6 @@ const Home = () => {
         dispatch(addProject(currentProject));
         SetSignTitles(currentProject.signDataOptions);
 
-        // ✅ Try to re-select the previously selected sign
         const matchedSign = currentProject.signDataOptions?.find(
           s => s.signId === previousSignSelected?.signId,
         );
@@ -131,8 +125,6 @@ const Home = () => {
       console.log('API fetched....');
     }
   };
-  // console.log(loginData);
-  // optionId 3
   const saveSection = async () => {
     const token = loginData?.tokenNumber;
     try {
@@ -326,7 +318,7 @@ const Home = () => {
     },
     branchTitle: {
       color: isActive ? 'black' : 'white',
-      fontSize: 22,
+      fontSize: 18,
       fontWeight: '600',
       fontFamily: 'Barlow-SemiBold',
     },
@@ -451,7 +443,7 @@ const Home = () => {
                     <View style={styles.iconWrapper}>
                       <Bag width={33} height={33} />
                     </View>
-                    <Text style={styles.branchTitle}>Beverly Hills Branch</Text>
+                    <Text style={styles.branchTitle}>{selectedValue}</Text>
                   </View>
                   <View style={styles.detailsSection}>
                     <View style={styles.detailRow}>
@@ -517,7 +509,9 @@ const Home = () => {
                     <View style={styles.iconWrapper}>
                       <Bag width={23} height={23} />
                     </View>
-                    <Text style={styles.branchTitle}>Beverly Hills Branch</Text>
+                    <Text style={styles.branchTitle}>
+                      {projects?.customerCompanyName}
+                    </Text>
                   </View>
                   <View style={styles.detailsSection}>
                     <View style={[styles.detailRow, {marginBottom: 24}]}>
@@ -529,7 +523,7 @@ const Home = () => {
                           styles.value,
                           {fontSize: 19, fontWeight: '500'},
                         ]}>
-                        Beverly Hills Branch
+                        {selectedValue}
                       </Text>
                     </View>
                     <View style={styles.detailRow}>

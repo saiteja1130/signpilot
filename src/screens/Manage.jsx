@@ -147,8 +147,6 @@ const Manage = () => {
 
   const handleSave = async () => {
     if (!validateForm()) return;
-    console.log(form);
-
     try {
       const response = await axios.post(
         'https://www.beeberg.com/api/createCustomer',
@@ -159,7 +157,6 @@ const Manage = () => {
           },
         },
       );
-      console.log(response.data);
       if (response.data.status) {
         Toast.show({
           text1: response?.data?.message,
@@ -210,7 +207,6 @@ const Manage = () => {
         },
       );
       if (response.data.status) {
-        console.log(response.data);
         setSavedSign(response.data);
         setIsSignCreated(true);
         getUnassociatedSigns(userId, token, setUnassociatedSign);
@@ -228,7 +224,6 @@ const Manage = () => {
         fname: selectedCustomer?.first_name,
         lname: selectedCustomer?.last_name,
       };
-      console.log(updateCustomerData);
       const response = await axios.post(
         `https://www.beeberg.com/api/updateCustomer`,
         updateCustomerData,
@@ -263,7 +258,6 @@ const Manage = () => {
       updatedData.projectId = 0;
       updatedData.admin_id = admin_id;
       updatedData.customer_id = customer?.id;
-      console.log(updatedData);
       const response = await axios.post(
         `https://www.beeberg.com/api/${apiEndpointsToSetSigns}`,
         updatedData,
@@ -271,7 +265,6 @@ const Manage = () => {
           headers: {Authorization: `Bearer ${token}`},
         },
       );
-      console.log(response.data);
       if (response.data.status) {
         Toast.show({
           text1: response?.data?.message,
@@ -361,14 +354,12 @@ const Manage = () => {
       const response = await axios.get(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${pincode}.json?access_token=${apiTTocken}=postcode&limit=1`,
       );
-      console.log(response.data?.features[0]?.context);
       const stateData = response.data?.features[0]?.context?.filter(data =>
         data?.id.includes('region'),
       )[0];
       const cityData = response.data?.features[0]?.context?.filter(data =>
         data?.id.includes('district'),
       )[0];
-      console.log(stateData, cityData);
       if (stateData && cityData) {
         setForm(prev => ({
           ...prev,
@@ -424,7 +415,6 @@ const Manage = () => {
       setApiEndpointsToSetSigns('changeCustomer');
       return;
     }
-    console.log(selectedSignToEdit);
   }, [selectedSignToEdit]);
 
   if (loading) {

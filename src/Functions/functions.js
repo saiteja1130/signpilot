@@ -128,7 +128,6 @@ export const fetchCustomers = async (admin_id, role, token, setCustomers) => {
 };
 
 export const fetchSigns = async (signId, token, setSignData) => {
-  console.log(signId, token, setSignData);
   try {
     const response = await axios.get(
       `https://beeberg.com/api/signsOptions/${signId}`,
@@ -139,7 +138,6 @@ export const fetchSigns = async (signId, token, setSignData) => {
       },
     );
     setSignData(response.data.signOptions);
-    console.log(response.data.signOptions);
   } catch (error) {
     console.log(error.response?.data);
   }
@@ -161,7 +159,6 @@ export const getUnassociatedSigns = async (
     );
     const signs = response.data.signs;
     setUnassociatedSign(signs);
-    console.log(signs);
   } catch (error) {
     console.error('Error creating project:', error.response?.data);
   }
@@ -178,7 +175,6 @@ export const getTeams = async (admin_id, role, token, setTeams) => {
     if (response.data.status) {
       const data = response.data?.data;
       setTeams(data);
-      console.log(data);
     }
   } catch (error) {
     console.error('Error updating customer:', error.response?.data);
@@ -190,7 +186,6 @@ export const getUnassociatedCustomerSigns = async (
   token,
   setUnassociatedSign,
 ) => {
-  console.log(customer_id, token, setUnassociatedSign);
   try {
     const response = await axios.get(
       `https://www.beeberg.com/api/${customer_id}/getUnAttachedSigns`,
@@ -202,7 +197,6 @@ export const getUnassociatedCustomerSigns = async (
     );
     const signs = response.data.signs;
     setUnassociatedSign(signs);
-    console.log(signs);
   } catch (error) {
     console.error('Error creating project:', error.response?.data);
   }
@@ -214,7 +208,6 @@ export const getUnsignedSigns = async (
   setFullyAssociatedSigns,
 ) => {
   try {
-    console.log(projectId, token, setFullyAssociatedSigns);
     const response = await axios.get(
       `https://www.beeberg.com/api/${projectId}/getUnAssignSigns`,
       {
@@ -223,7 +216,6 @@ export const getUnsignedSigns = async (
         },
       },
     );
-    console.log(response.data);
     if (response.data?.status) {
       setFullyAssociatedSigns(response.data?.signs || []);
     }
@@ -244,7 +236,6 @@ export const sendUpdateNameMail = async data => {
         },
       },
     );
-    console.log(response.data);
   } catch (error) {
     console.error('Error creating project:', error.response?.data);
   }
@@ -261,7 +252,6 @@ export const sendChangeTypeUpdateMail = async data => {
         },
       },
     );
-    console.log(response.data);
   } catch (error) {
     console.error('Error creating project:', error.response?.data);
   }
@@ -278,14 +268,12 @@ export const sendProjectChange = async data => {
         },
       },
     );
-    console.log(response.data);
   } catch (error) {
     console.error('Error creating project:', error.response?.data);
   }
 };
 
 export const getCompletedSurveys = async (data, setSubmittedSigns) => {
-  console.log(data);
   try {
     const {tokenNumber, userId, role} = data;
 
@@ -297,7 +285,6 @@ export const getCompletedSurveys = async (data, setSubmittedSigns) => {
         },
       },
     );
-    console.log(response.data?.submittedSigns);
     setSubmittedSigns(response.data?.submittedSigns);
   } catch (error) {
     console.error('Error creating project:', error.response);
@@ -306,7 +293,6 @@ export const getCompletedSurveys = async (data, setSubmittedSigns) => {
 };
 
 export const changeSignSubmitStatus = async data => {
-  console.log(data);
   try {
     const {token, ...rest} = data;
     const response = await axios.post(
@@ -318,7 +304,6 @@ export const changeSignSubmitStatus = async data => {
         },
       },
     );
-    console.log(response.data);
   } catch (error) {
     console.error('Error creating project:', error.response);
     console.error('Error creating project:', error);

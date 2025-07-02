@@ -17,7 +17,7 @@ const Completedsurveys = () => {
   const loginData = useSelector(state => state.login.value);
   const [loading, setLoading] = useState(false);
   const [submittedSigns, setSubmittedSigns] = useState([]);
-  const [expandedIndexes, setExpandedIndexes] = useState({}); // Track expanded items by index
+  const [expandedIndexes, setExpandedIndexes] = useState({});
 
   const toggleDetails = index => {
     setExpandedIndexes(prev => ({
@@ -79,13 +79,10 @@ const Completedsurveys = () => {
   useFocusEffect(
     useCallback(() => {
       setLoading(true);
-
       getCompletedSurveys(loginData, setSubmittedSigns);
-
       const timeout = setTimeout(() => {
         setLoading(false);
       }, 1200);
-
       return () => clearTimeout(timeout);
     }, [loginData]),
   );

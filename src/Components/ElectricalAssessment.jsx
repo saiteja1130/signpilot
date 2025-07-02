@@ -171,12 +171,10 @@ const ElectricalAssessment = ({handleFetchData}) => {
       setLoadingImage(true);
       const bodyData = {
         ...selectedOptions,
-        // anyAccessibilityIssues,
         typeOfIlluminationInside,
         electricalAuditTodoPunchList,
         electricalAuditSummaryNotes,
       };
-      console.log(bodyData);
       const token = loginData?.tokenNumber;
       const responce = await axios.post(
         'https://www.beeberg.com/api/updateElectricalAudit',
@@ -221,7 +219,6 @@ const ElectricalAssessment = ({handleFetchData}) => {
           },
         },
       );
-      console.log(responce.data);
       if (responce.data.status) {
         setSelectedOptions(prev => {
           return {

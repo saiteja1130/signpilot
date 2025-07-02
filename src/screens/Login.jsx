@@ -70,7 +70,6 @@ const Login = () => {
         body: JSON.stringify(data),
       });
       const responsedata = await response.json();
-      console.log(responsedata);
       if (responsedata?.status) {
         insertUser(responsedata);
         getUsers(users => {

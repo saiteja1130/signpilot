@@ -111,7 +111,6 @@ const PermittingAssenment = ({handleFetchData}) => {
   ];
 
   const showDatePicker = (mode, currentDate, setDate) => {
-    // console.log(currentDate, currentDate instanceof Date);
     try {
       let validDate;
       if (currentDate instanceof Date) {

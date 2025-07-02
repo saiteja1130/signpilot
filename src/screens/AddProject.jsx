@@ -167,7 +167,6 @@ const AddProject = ({navigation}) => {
       );
       if (response.data.status) {
         setProjects(response.data.projects);
-        console.log(response.data.projects);
       }
     } catch (error) {
       console.error('Error fetching projects:', error);
@@ -198,8 +197,6 @@ const AddProject = ({navigation}) => {
   };
 
   const handleSaveProject = async () => {
-    console.log(projectAssignData);
-    console.log(customerData);
     if (!validateFields()) return;
 
     try {
@@ -212,7 +209,6 @@ const AddProject = ({navigation}) => {
           },
         },
       );
-      console.log('Project created:', response.data);
       if (response.data.status) {
         Toast.show({
           text1: response.data.message,
@@ -228,13 +224,11 @@ const AddProject = ({navigation}) => {
   };
 
   const handleUpdateProject = async () => {
-    console.log(projectAssignData);
     try {
       const updateData = {
         ...projectAssignData,
         project_id: projectAssignData?.id,
       };
-      console.log(updateData);
       const response = await axios.post(
         'https://www.beeberg.com/api/updateProject',
         projectAssignData,
@@ -253,7 +247,6 @@ const AddProject = ({navigation}) => {
         getCustomersAllProjects();
         setUpdateModalVisible(false);
       }
-      console.log('Project created:', response.data);
     } catch (error) {
       console.error('Error creating project:', error.response?.data);
     }
@@ -288,7 +281,6 @@ const AddProject = ({navigation}) => {
             headers: {Authorization: `Bearer ${token}`},
           },
         );
-        console.log(response.data);
         if (response.data.status) {
           Toast.show({
             text1: response?.data?.message,
@@ -352,7 +344,6 @@ const AddProject = ({navigation}) => {
       );
       const self = teams?.find(data => data.id === userId);
       const others = teams?.find(data => data.id === EditSignForm?.teamId);
-      console.log(teams);
       const project = projects.find(data => data.id === EditSignForm?.teamId);
       const updatedData = {
         ...EditSignForm,
@@ -370,7 +361,6 @@ const AddProject = ({navigation}) => {
         updatedData.assign_to = others?.role;
         updatedData.teamId = others?.id;
       }
-      console.log(updatedData);
       const response = await axios.post(
         `https://www.beeberg.com/api/${apiEndpointsToSetSigns}`,
         updatedData,
@@ -378,7 +368,6 @@ const AddProject = ({navigation}) => {
           headers: {Authorization: `Bearer ${token}`},
         },
       );
-      console.log(response.data);
       if (response.data.status) {
         Toast.show({
           text1: response?.data?.message,
@@ -427,8 +416,6 @@ const AddProject = ({navigation}) => {
   const onAssign = () => {
     setIsAssigned(prev => !prev);
   };
-  // console.log(customers);
-
   const actions = [
     'change sign name',
     'change sign type',
@@ -457,7 +444,6 @@ const AddProject = ({navigation}) => {
       setApiEndpointsToSetSigns('signAssign');
       return;
     }
-    // console.log(selectedSignToEdit);
   }, [selectedSignToEdit]);
 
   useEffect(() => {
@@ -610,7 +596,6 @@ const AddProject = ({navigation}) => {
                   <Text style={styles.projectName}>{project.project_name}</Text>
                   <TouchableOpacity
                     onPress={() => {
-                      console.log(projects);
                       setProjectAssignData({
                         project_id: project?.id,
                         project_name: project.project_name,

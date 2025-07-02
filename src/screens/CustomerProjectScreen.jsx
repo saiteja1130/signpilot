@@ -76,7 +76,6 @@ const CustomerProjectScreen = () => {
   const projects = route.params?.projects;
   const customers = route.params?.customers;
   const teams = route.params?.teams;
-  console.log(project);
 
   const actions = [
     'change sign name',
@@ -94,7 +93,6 @@ const CustomerProjectScreen = () => {
       );
       const self = teams?.find(data => data.id === userId);
       const others = teams?.find(data => data.id === EditSignForm?.teamId);
-      console.log(teams);
       const projectData = projects.find(
         data => data.id === EditSignForm?.teamId,
       );
@@ -116,8 +114,6 @@ const CustomerProjectScreen = () => {
         updatedData.teamId = others?.id;
       }
 
-      console.log(updatedData);
-
       const response = await axios.post(
         `https://www.beeberg.com/api/${apiEndpointsToSetSigns}`,
         updatedData,
@@ -125,7 +121,6 @@ const CustomerProjectScreen = () => {
           headers: {Authorization: `Bearer ${token}`},
         },
       );
-      console.log(response.data);
       if (response.data.status) {
         Toast.show({
           text1: response?.data?.message,
@@ -135,7 +130,6 @@ const CustomerProjectScreen = () => {
         getUnsignedSigns(project?.id, token, setFullyAssociatedSigns);
         setIsEditSignModalVisible(false);
         setSelectedSignToEdit(null);
-        // getUnassociatedCustomerSigns(customer_id, token, setUnassociatedSign);
         setIsAssigned(false);
         setIsAliasChanged(false);
         setSignIdChanged(false);
@@ -176,7 +170,6 @@ const CustomerProjectScreen = () => {
             headers: {Authorization: `Bearer ${token}`},
           },
         );
-        console.log(response.data);
         if (response.data.status) {
           const response = await axios.post(
             `https://www.beeberg.com/api/changeProject`,
@@ -185,7 +178,6 @@ const CustomerProjectScreen = () => {
               headers: {Authorization: `Bearer ${token}`},
             },
           );
-          console.log(response.data);
         }
       }
       setAddSignModalVisible(false);
@@ -221,7 +213,6 @@ const CustomerProjectScreen = () => {
   useEffect(() => {
     if (signId !== 0) {
       fetchSigns(signId, token, setSignData);
-      console.log(signId);
     }
   }, [signId]);
 

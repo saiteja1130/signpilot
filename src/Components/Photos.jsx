@@ -25,19 +25,15 @@ const Photos = ({handleFetchData}) => {
   const [active, setActive] = useState('');
   const loginData = useSelector(state => state.login.value);
   const signProjectData = useSelector(state => state.signProject.value);
-  console.log(signProjectData?.outdoor_photos_and_measurements);
+  // console.log(signProjectData?.outdoor_photos_and_measurements);
   const [loadingImage, setLoadingImage] = useState(true);
   const signName = signProjectData?.signName;
-  console.log(signName);
-
   const [signDimentionsState, setSignDimensionsState] = useState(false);
   const [measureChannel, setMeasureChannel] = useState(false);
   const [footage, setFootage] = useState(false);
   const [measureGround, setMeasureGround] = useState(false);
   const [otherPhotos, setOtherPhotos] = useState(false);
-  console.log(signProjectData);
 
-  const [state, setState] = useState(null);
   const [
     photosAndMeasurementsTodoPunchList,
     setPhotosAndMeasurementsTodoPunchList,
@@ -578,7 +574,6 @@ const Photos = ({handleFetchData}) => {
   ];
 
   const handleSave = async () => {
-    console.log(selectedOptions);
     try {
       const DoorData = {
         ...selectedOptions,
@@ -605,18 +600,10 @@ const Photos = ({handleFetchData}) => {
         });
         handleFetchData(null, signProjectData);
         setLoadingImage(true);
-      } else {
-        console.log(responce.data);
       }
     } catch (error) {
       console.log(error);
-    }
-  };
-  const handleState = value => {
-    if (value === state) {
-      setState(null);
-    } else {
-      setState(value);
+      setLoadingImage(true);
     }
   };
   const handleRemoveImage = async (imageId1, fieldName1, actualKey) => {

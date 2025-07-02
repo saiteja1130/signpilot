@@ -118,7 +118,6 @@ const ExistingAuditProject = ({handleFetchData}) => {
           },
         },
       );
-      console.log(responce.data);
       if (responce.data.status) {
         setSelectedOptions(prev => {
           return {
@@ -146,7 +145,6 @@ const ExistingAuditProject = ({handleFetchData}) => {
         existingSignAuditTodoPunchList,
         existingSignAuditDocumentSignCondition,
       };
-      console.log(bodyData);
       const token = loginData?.tokenNumber;
       const responce = await axios.post(
         'https://www.beeberg.com/api/updateExistingSignAudit',

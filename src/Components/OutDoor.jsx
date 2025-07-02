@@ -237,7 +237,6 @@ const OutDoor = ({handleFetchData}) => {
       signGeneralAuditTodoPunchList,
       sizeOfLadderOrLift,
     };
-    console.log(permitData);
     try {
       setLoadingImage(true);
       const token = loginData?.tokenNumber;
@@ -250,7 +249,6 @@ const OutDoor = ({handleFetchData}) => {
           },
         },
       );
-      // console.log(responce.data);
       if (responce.data.status) {
         Toast.show({
           type: 'success',
@@ -260,8 +258,6 @@ const OutDoor = ({handleFetchData}) => {
         });
         handleFetchData(null, signProjectData);
         setLoadingImage(false);
-      } else {
-        console.log(responce.data);
       }
     } catch (error) {
       console.log('Server error:', error.response);
@@ -286,7 +282,6 @@ const OutDoor = ({handleFetchData}) => {
           },
         },
       );
-      console.log(responce.data);
       if (responce.data.status) {
         setSelectedOptions(prev => {
           return {
