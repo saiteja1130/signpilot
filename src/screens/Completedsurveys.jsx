@@ -11,6 +11,7 @@ import {
 } from '../Functions/functions';
 import {useSelector} from 'react-redux';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import ProgressBar from '../Components/Progressbar';
 
 const Completedsurveys = () => {
   const navigation = useNavigation();
@@ -90,7 +91,7 @@ const Completedsurveys = () => {
   if (loading) {
     return (
       <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-        <Text style={{fontSize: 24}}>Loading...</Text>
+        <ProgressBar duration={1000} />
       </View>
     );
   }

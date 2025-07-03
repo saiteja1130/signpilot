@@ -33,6 +33,7 @@ import {
   sendChangeTypeUpdateMail,
   sendUpdateNameMail,
 } from '../Functions/functions';
+import ProgressBar from '../Components/Progressbar';
 
 const Manage = () => {
   const navigation = useNavigation();
@@ -420,7 +421,7 @@ const Manage = () => {
   if (loading) {
     return (
       <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-        <ActivityIndicator size="large" color="#f58220" />
+        <ProgressBar duration={1000} />
       </View>
     );
   }

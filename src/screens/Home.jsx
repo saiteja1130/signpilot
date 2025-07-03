@@ -30,6 +30,7 @@ import {dropUsersTable} from '../Db/db';
 import Toast from 'react-native-toast-message';
 import {setActiveState} from '../Redux/Slices/Active';
 import Indoor from '../Components/Indoor';
+import ProgressBar from '../Components/Progressbar';
 
 const Home = () => {
   const navigation = useNavigation();
@@ -356,7 +357,7 @@ const Home = () => {
   if (loading) {
     return (
       <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-        <Text style={{fontSize: 24}}>Loading...</Text>
+        <ProgressBar duration={1000} />
       </View>
     );
   }

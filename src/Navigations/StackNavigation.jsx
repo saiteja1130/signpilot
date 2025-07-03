@@ -11,6 +11,7 @@ import Completedsurveys from '../screens/Completedsurveys.jsx';
 import Manage from '../screens/Manage.jsx';
 import AddProject from '../screens/AddProject.jsx';
 import CustomerProjectScreen from '../screens/CustomerProjectScreen.jsx';
+import ProgressBar from '../Components/Progressbar.jsx';
 
 const Stack = createNativeStackNavigator();
 
@@ -41,7 +42,7 @@ const StackNavigation = () => {
   if (loading) {
     return (
       <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-        <Text style={{fontSize: 24}}>Loading...</Text>
+        <ProgressBar duration={1000} />
       </View>
     );
   }

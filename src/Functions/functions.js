@@ -138,6 +138,7 @@ export const fetchSigns = async (signId, token, setSignData) => {
       },
     );
     setSignData(response.data.signOptions);
+    console.log(response.data.signOptions);
   } catch (error) {
     console.log(error.response?.data);
   }

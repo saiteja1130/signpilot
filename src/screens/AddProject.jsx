@@ -31,6 +31,7 @@ import {
   getUnassociatedCustomerSigns,
   sendProjectChange,
 } from '../Functions/functions';
+import ProgressBar from '../Components/Progressbar';
 
 const AddProject = ({navigation}) => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -497,7 +498,7 @@ const AddProject = ({navigation}) => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#f58220" />
+        <ProgressBar duration={1000} />
       </View>
     );
   }
