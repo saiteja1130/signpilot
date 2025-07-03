@@ -19,12 +19,15 @@ import Photo from '../../assets/images/photo.svg';
 import axios from 'axios';
 import {handleAddPhoto} from '../Functions/functions.js';
 import Toast from 'react-native-toast-message';
+import {
+  getDBConnection,
+  updateSignDataOptionInProject,
+} from '../Db/ProjectsDb.js';
 
 const ExistingAuditProject = ({handleFetchData}) => {
   const loginData = useSelector(state => state.login.value);
   const signProjectData = useSelector(state => state.signProject.value);
   const [loadingImage, setLoadingImage] = useState(true);
-  // console.log('sign projected data', signProjectData?.electrical_audit);
   const [active, setActive] = useState('');
   const [existingSignAuditSummaryNotes, setExistingSignAuditSummaryNotes] =
     useState(
@@ -126,7 +129,6 @@ const ExistingAuditProject = ({handleFetchData}) => {
               responce.data.data?.existingSignAuditPhotos,
           };
         });
-        // handleFetchData();
         setTimeout(() => {
           setLoadingImage(false);
         }, 1000);
@@ -137,16 +139,25 @@ const ExistingAuditProject = ({handleFetchData}) => {
   };
 
   const handleSave = async () => {
+    setLoadingImage(true);
+    const bodyData = {
+      ...selectedOptions,
+      existingSignAuditSummaryNotes,
+      existingSignAuditTodoPunchList,
+      existingSignAuditDocumentSignCondition,
+    };
+    const projectId = selectedOptions.projectId;
+    const signId = selectedOptions.signId;
+    const updatedSign = {
+      ...selectedOptions,
+      existingSignAuditSummaryNotes,
+      existingSignAuditTodoPunchList,
+      existingSignAuditDocumentSignCondition,
+    };
+    let apiSuccess = false;
     try {
-      setLoadingImage(true);
-      const bodyData = {
-        ...selectedOptions,
-        existingSignAuditSummaryNotes,
-        existingSignAuditTodoPunchList,
-        existingSignAuditDocumentSignCondition,
-      };
       const token = loginData?.tokenNumber;
-      const responce = await axios.post(
+      const response = await axios.post(
         'https://www.beeberg.com/api/updateExistingSignAudit',
         bodyData,
         {
@@ -155,18 +166,51 @@ const ExistingAuditProject = ({handleFetchData}) => {
           },
         },
       );
-      if (responce.data.status) {
+
+      if (response?.data?.status) {
+        apiSuccess = true;
         Toast.show({
           type: 'success',
-          text1: responce?.data?.message,
+          text1: response?.data?.message || 'Audit saved successfully.',
           visibilityTime: 3000,
           position: 'top',
         });
         handleFetchData(null, signProjectData);
-        setLoadingImage(false);
+      } else {
+        throw new Error('Sync failed with unknown server response.');
       }
     } catch (error) {
-      console.log('Error response data:', error.response?.data);
+      console.log(' API Sync failed. Will still save locally.');
+      console.log('Error:', error?.response?.data || error?.message);
+      Toast.show({
+        type: 'info',
+        text1: 'Saved Offline. Will sync later.',
+        visibilityTime: 3000,
+        position: 'top',
+      });
+    }
+
+    try {
+      const db = await getDBConnection();
+      await updateSignDataOptionInProject(projectId, signId, {
+        existing_sign_audit: updatedSign,
+        offlineSync: apiSuccess ? 1 : 0,
+      });
+      console.log(
+        '📁 Data saved locally with offlineSync =',
+        apiSuccess ? 1 : 0,
+      );
+      handleFetchData(null, signProjectData);
+    } catch (sqliteError) {
+      console.error(' SQLite Save Error:', sqliteError.message);
+      Toast.show({
+        type: 'error',
+        text1: 'Failed to save offline. Please try again.',
+        visibilityTime: 3000,
+        position: 'top',
+      });
+    } finally {
+      setLoadingImage(false);
     }
   };
 
@@ -175,7 +219,6 @@ const ExistingAuditProject = ({handleFetchData}) => {
       setLoadingImage(false);
     }, 800);
   }, [loadingImage]);
-
   return (
     <View>
       <TouchableOpacity

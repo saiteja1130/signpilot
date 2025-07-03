@@ -19,6 +19,10 @@ import {useDispatch, useSelector} from 'react-redux';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
 import {handleAddPhoto} from '../Functions/functions.js';
+import {
+  getDBConnection,
+  updateSignDataOptionInProject,
+} from '../Db/ProjectsDb.js';
 
 const ElectricalAssessment = ({handleFetchData}) => {
   const signProjectData = useSelector(state => state.signProject.value);
@@ -167,16 +171,30 @@ const ElectricalAssessment = ({handleFetchData}) => {
   ];
 
   const handleSave = async () => {
+    setLoadingImage(true);
+
+    const bodyData = {
+      ...selectedOptions,
+      typeOfIlluminationInside,
+      electricalAuditTodoPunchList,
+      electricalAuditSummaryNotes,
+    };
+
+    const projectId = selectedOptions.projectId;
+    const signId = selectedOptions.signId;
+
+    const updatedSign = {
+      ...selectedOptions,
+      typeOfIlluminationInside,
+      electricalAuditTodoPunchList,
+      electricalAuditSummaryNotes,
+    };
+
+    let apiSuccess = false;
+
     try {
-      setLoadingImage(true);
-      const bodyData = {
-        ...selectedOptions,
-        typeOfIlluminationInside,
-        electricalAuditTodoPunchList,
-        electricalAuditSummaryNotes,
-      };
       const token = loginData?.tokenNumber;
-      const responce = await axios.post(
+      const response = await axios.post(
         'https://www.beeberg.com/api/updateElectricalAudit',
         bodyData,
         {
@@ -185,18 +203,52 @@ const ElectricalAssessment = ({handleFetchData}) => {
           },
         },
       );
-      if (responce.data.status) {
+
+      if (response?.data?.status) {
+        apiSuccess = true;
         Toast.show({
           type: 'success',
-          text1: responce?.data?.message,
+          text1: response?.data?.message || 'Audit saved successfully.',
           visibilityTime: 3000,
           position: 'top',
         });
         handleFetchData(null, signProjectData);
-        setLoadingImage(false);
+      } else {
+        throw new Error('Sync failed with unknown server response.');
       }
     } catch (error) {
-      console.log('Error response data:', error.response?.data);
+      console.log('❌ API Sync failed. Will still save locally.');
+      console.log('Error:', error?.response?.data || error?.message);
+      Toast.show({
+        type: 'info',
+        text1: 'Saved Offline. Will sync later.',
+        visibilityTime: 3000,
+        position: 'top',
+      });
+    }
+
+    try {
+      const db = await getDBConnection();
+      await updateSignDataOptionInProject(projectId, signId, {
+        electrical_audit: updatedSign,
+        offlineSync: apiSuccess ? 1 : 0,
+      });
+
+      console.log(
+        '📁 Electrical audit saved locally with offlineSync =',
+        apiSuccess ? 1 : 0,
+      );
+      handleFetchData(null, signProjectData);
+    } catch (sqliteError) {
+      console.error('❌ SQLite Save Error:', sqliteError.message);
+      Toast.show({
+        type: 'error',
+        text1: 'Failed to save offline. Please try again.',
+        visibilityTime: 3000,
+        position: 'top',
+      });
+    } finally {
+      setLoadingImage(false);
     }
   };
 

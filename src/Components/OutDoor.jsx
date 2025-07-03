@@ -22,6 +22,7 @@ import Up from '../../assets/images/arrow.svg';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
 import {handleAddPhoto} from '../Functions/functions';
+import {getDBConnection, updateSignDataOptionInProject} from '../Db/ProjectsDb';
 const OutDoor = ({handleFetchData}) => {
   const loginData = useSelector(state => state.login.value);
   const signProjectData = useSelector(state => state.signProject.value);
@@ -231,38 +232,90 @@ const OutDoor = ({handleFetchData}) => {
   };
   const handleSave = async () => {
     console.log('--- Save Button Pressed ---');
-    const permitData = {
+    setLoadingImage(true);
+
+    const signGeneralData = {
       ...selectedOptions,
       signGeneralAuditSummaryNotes,
       signGeneralAuditTodoPunchList,
       sizeOfLadderOrLift,
     };
+
+    const projectId = selectedOptions.projectId;
+    const signId = selectedOptions.signId;
+
+    const updatedSign = {
+      ...signGeneralData,
+    };
+
+    let apiSuccess = false;
+
     try {
-      setLoadingImage(true);
       const token = loginData?.tokenNumber;
-      const responce = await axios.post(
+
+      const response = await axios.post(
         'https://www.beeberg.com/api/updateSignGeneralAudit',
-        permitData,
+        signGeneralData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         },
       );
-      if (responce.data.status) {
+
+      if (response?.data?.status) {
+        apiSuccess = true;
+
         Toast.show({
           type: 'success',
-          text1: responce?.data?.message,
+          text1: response?.data?.message || 'Audit saved successfully.',
           visibilityTime: 3000,
           position: 'top',
         });
+
         handleFetchData(null, signProjectData);
-        setLoadingImage(false);
+      } else {
+        throw new Error('Sync failed with unknown server response.');
       }
     } catch (error) {
-      console.log('Server error:', error.response);
+      console.log('❌ API Sync failed. Will still save locally.');
+      console.log('Error:', error?.response?.data || error?.message);
+
+      Toast.show({
+        type: 'info',
+        text1: 'Saved Offline. Will sync later.',
+        visibilityTime: 3000,
+        position: 'top',
+      });
+    }
+
+    // ✅ Always update local DB
+    try {
+      const db = await getDBConnection();
+      await updateSignDataOptionInProject(projectId, signId, {
+        sign_general_audit: updatedSign,
+        offlineSync: apiSuccess ? 1 : 0,
+      });
+
+      console.log(
+        `📁 Sign General Audit saved locally with offlineSync = ${
+          apiSuccess ? 1 : 0
+        }`,
+      );
+      handleFetchData(null, signProjectData);
+    } catch (sqliteError) {
+      console.error('❌ SQLite Save Error:', sqliteError.message);
+      Toast.show({
+        type: 'error',
+        text1: 'Failed to save locally. Please try again.',
+        visibilityTime: 3000,
+        position: 'top',
+      });
+    } finally {
+      setLoadingImage(false);
     }
   };
+
   const handleRemoveImage = async (imageId1, fieldName1, actualKey) => {
     try {
       setLoadingImage(true);

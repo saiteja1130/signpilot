@@ -18,13 +18,10 @@ import Date1 from '../../assets/images/date.svg';
 import {useSelector} from 'react-redux';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
+import {getDBConnection, updateSignDataOptionInProject} from '../Db/ProjectsDb';
 const PermittingAssenment = ({handleFetchData}) => {
   const [active, setActive] = useState('');
   const signProjectData = useSelector(state => state.signProject.value);
-  // console.log(
-  //   'Exist Permitting Assenment Data:',
-  //   signProjectData?.permitting_assessment,
-  // );
   const loginData = useSelector(state => state.login.value);
   const [loadingImage, setLoadingImage] = useState(false);
   const [fromDate, setFromDate] = useState(
@@ -144,6 +141,8 @@ const PermittingAssenment = ({handleFetchData}) => {
   };
   const handleSave = async () => {
     console.log('--- Save Button Pressed ---');
+    setLoadingImage(true);
+
     const permitData = {
       ...selectedOptions,
       permitTimeframeFrom: fromDate?.toISOString() || '',
@@ -153,10 +152,20 @@ const PermittingAssenment = ({handleFetchData}) => {
       permitEstimatedCost,
       permitAcquisitionFeeText,
     };
-    setLoadingImage(true);
+
+    const projectId = selectedOptions.projectId;
+    const signId = selectedOptions.signId;
+
+    const updatedSign = {
+      ...permitData,
+    };
+
+    let apiSuccess = false;
+
     try {
       const token = loginData?.tokenNumber;
-      const responce = await axios.post(
+
+      const response = await axios.post(
         'https://www.beeberg.com/api/updatePermittingAssessmentAudit',
         permitData,
         {
@@ -165,20 +174,59 @@ const PermittingAssenment = ({handleFetchData}) => {
           },
         },
       );
-      if (responce.data.status) {
+
+      if (response?.data?.status) {
+        apiSuccess = true;
+
         Toast.show({
           type: 'success',
-          text1: responce?.data?.message,
+          text1: response?.data?.message || 'Audit saved successfully.',
           visibilityTime: 3000,
           position: 'top',
         });
+
         handleFetchData(null, signProjectData);
-        setLoadingImage(false);
+      } else {
+        throw new Error('Sync failed with unknown server response.');
       }
     } catch (error) {
-      console.log(error.response?.data);
+      console.log('❌ API Sync failed. Will still save locally.');
+      console.log('Error:', error?.response?.data || error?.message);
+
+      Toast.show({
+        type: 'info',
+        text1: 'Saved Offline. Will sync later.',
+        visibilityTime: 3000,
+        position: 'top',
+      });
+    }
+
+    try {
+      const db = await getDBConnection();
+      await updateSignDataOptionInProject(projectId, signId, {
+        permitting_assessment: updatedSign,
+        offlineSync: apiSuccess ? 1 : 0,
+      });
+
+      console.log(
+        `📁 Permitting Assessment saved locally with offlineSync = ${
+          apiSuccess ? 1 : 0
+        }`,
+      );
+      handleFetchData(null, signProjectData);
+    } catch (sqliteError) {
+      console.error('❌ SQLite Save Error:', sqliteError.message);
+      Toast.show({
+        type: 'error',
+        text1: 'Failed to save locally. Please try again.',
+        visibilityTime: 3000,
+        position: 'top',
+      });
+    } finally {
+      setLoadingImage(false);
     }
   };
+
   return (
     <View>
       <TouchableOpacity

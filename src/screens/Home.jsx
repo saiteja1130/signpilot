@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useCallback, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import Logo from '../../assets/images/app logo.svg';
 import Refresh from '../../assets/images/cloud.svg';
 import Menu from '../../assets/images/menu.svg';
@@ -26,14 +26,26 @@ import {addProject} from '../Redux/Slices/ProjectData';
 import {addSignProject} from '../Redux/Slices/SigProject';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {setPhotoState} from '../Redux/Slices/PhotosActive';
-import {dropUsersTable} from '../Db/db';
+import {dropUsersTable, getUsers} from '../Db/db';
 import Toast from 'react-native-toast-message';
 import {setActiveState} from '../Redux/Slices/Active';
 import ProgressBar from '../Components/Progressbar';
+import {
+  createProjectTable,
+  getAllProjects,
+  getDBConnection,
+  insertOrUpdateProject,
+  syncOfflineAudits,
+} from '../Db/ProjectsDb';
+import NetInfo from '@react-native-community/netinfo';
+import {useNetworkStatus} from '../Functions/functions';
+import {addLoginData} from '../Redux/Slices/LoginData';
 
 const Home = () => {
+  const signProjectData = useSelector(state => state.signProject.value);
+  const status = useNetworkStatus();
   const navigation = useNavigation();
-  const [selectedValue, setSelectedValue] = useState('');
+  const [selectedProject, setSelectedProject] = useState('');
   const [selectedSignValue, setSelectedSignValue] = useState('');
   const [signSelected, setSignSelected] = useState('');
   const loginData = useSelector(state => state.login.value);
@@ -48,14 +60,29 @@ const Home = () => {
   const dispatch = useDispatch();
   const [refreshing, setRefreshing] = useState(false);
   const [response, setResponse] = useState(false);
+  const loadApp = async () => {
+    getUsers(users => {
+      if (users.length > 0) {
+        dispatch(addLoginData(users[0]));
+        setUser(users[0]);
+      } else {
+        setLoading(false);
+      }
+      console.log(users);
+    });
+  };
+  useEffect(() => {
+    console.log(selectedSignValue);
+  }, [selectedSignValue]);
 
-  const fetchData = async (state, previousSignSelected = null) => {
+  const fetchData = async (state, previousSignSelected) => {
     console.log('API fetching....');
+    const db = await getDBConnection();
+    await createProjectTable(db);
     try {
       const token = loginData?.tokenNumber;
       const userId = loginData?.userId;
       const role = loginData?.role;
-
       const response = await axios.get(
         `https://www.beeberg.com/api/getData/${userId}/${role}`,
         {
@@ -67,63 +94,68 @@ const Home = () => {
       if (response.data.status) {
         setResponse(response.data.status);
         const data = response.data.projectData;
+        console.log(data);
         setAlldata(data);
-
-        const titles = data.map(item => item.projectTitle);
-        SetProjectTitles(titles);
-
-        let currentProject = data.find(
-          item => item.projectTitle === selectedValue,
-        );
-
-        if (!selectedValue || !currentProject) {
-          currentProject = data[0];
-          setSelectedValue(currentProject.projectTitle);
+        for (const project of data) {
+          await insertOrUpdateProject(db, project);
         }
-
-        setProjects(currentProject);
-        dispatch(addProject(currentProject));
-        SetSignTitles(currentProject.signDataOptions);
-
-        const matchedSign = currentProject.signDataOptions?.find(
-          s => s.signId === previousSignSelected?.signId,
-        );
-
-        if (matchedSign) {
-          setSignConfirmed(true);
-          setSignSelected(matchedSign);
-          dispatch(addSignProject(matchedSign));
-        } else {
-          const firstSign = currentProject.signDataOptions?.[0];
-          if (firstSign) {
-            setSignConfirmed(true);
-            setSignSelected(firstSign);
-            dispatch(addSignProject(firstSign));
-          } else {
-            console.log('API Fetch Error', response.data.message);
-            Alert.alert('Please Login Again');
-            navigation.navigate('Login');
-          }
-        }
-
-        dispatch(setPhotoState(state || null));
+        handleProjectSelection(data, previousSignSelected, state);
       } else {
         setResponse(response.data.status);
       }
     } catch (error) {
+      console.error('Fetch failed, using offline data...');
       if (
         error?.response?.data.message === 'Unauthorized access - Invalid token'
       ) {
         dropUsersTable();
         navigation.navigate('Login');
+        return;
       }
-
-      console.error('Error fetching data:', error.response);
-      dispatch(setPhotoState(state || null));
+      const data = await getAllProjects(db);
+      if (data.length === 0) {
+        Alert.alert('No offline data available. Please login again.');
+        navigation.navigate('Login');
+        return;
+      }
+      setAlldata(data);
+      console.log(data);
+      setResponse(true);
+      handleProjectSelection(data, previousSignSelected, state);
     } finally {
       setLoading(false);
       console.log('API fetched....');
     }
+  };
+  const handleProjectSelection = (data, previousSignSelected, state) => {
+    console.log(previousSignSelected);
+    const titles = data.map(item => item.projectTitle);
+    SetProjectTitles(titles);
+    let currentProject =
+      data.find(item => item.projectTitle === selectedProject) || data[0];
+    setSelectedProject(currentProject.projectTitle);
+
+    setProjects(currentProject);
+    dispatch(addProject(currentProject));
+    SetSignTitles(currentProject.signDataOptions);
+
+    const matchedSign = currentProject.signDataOptions?.find(
+      s => s.signId === previousSignSelected?.signId,
+    );
+
+    if (matchedSign) {
+      setSignConfirmed(true);
+      setSignSelected(matchedSign);
+      dispatch(addSignProject(matchedSign));
+    } else {
+      const firstSign = currentProject.signDataOptions?.[0];
+      if (firstSign) {
+        setSignConfirmed(true);
+        setSignSelected(firstSign);
+        dispatch(addSignProject(firstSign));
+      }
+    }
+    dispatch(setPhotoState(state || null));
   };
   const saveSection = async () => {
     const token = loginData?.tokenNumber;
@@ -183,7 +215,7 @@ const Home = () => {
     }
   };
   const filterdata = item => {
-    setSelectedValue(item);
+    setSelectedProject(item);
     setSignConfirmed(false);
     const filteredProject = allData.find(data => data.projectTitle === item);
     if (filteredProject) {
@@ -193,7 +225,6 @@ const Home = () => {
       const firstSign = filteredProject.signDataOptions?.[0];
       if (firstSign) {
         setSelectedSignValue('');
-        // setSignSelected(null);
         dispatch(addSignProject(null));
         dispatch(setActiveState(null));
       }
@@ -217,11 +248,23 @@ const Home = () => {
   const handleRefresh = async () => {
     setRefreshing(true);
     await new Promise(resolve => {
-      fetchData();
+      fetchData(null, signProjectData);
       setTimeout(resolve, 1000);
     });
     setRefreshing(false);
   };
+
+  useEffect(() => {
+    loadApp();
+    console.log('synching');
+    const unsubscribe = NetInfo.addEventListener(state => {
+      if (state.isConnected) {
+        syncOfflineAudits(loginData);
+      }
+      fetchData();
+    });
+    return () => unsubscribe();
+  }, [status]);
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -367,12 +410,16 @@ const Home = () => {
           <Logo width={150} height={36} />
         </View>
         <View style={styles.iconContainer}>
-          <TouchableOpacity onPress={() => handleRefresh()}>
-            <Refresh width={36} height={36} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('Menu')}>
-            <Menu width={36} height={36} />
-          </TouchableOpacity>
+          {status && (
+            <TouchableOpacity onPress={() => handleRefresh()}>
+              <Refresh width={36} height={36} />
+            </TouchableOpacity>
+          )}
+          {status && (
+            <TouchableOpacity onPress={() => navigation.navigate('Menu')}>
+              <Menu width={36} height={36} />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
       {response ? (
@@ -390,9 +437,9 @@ const Home = () => {
                 <View style={styles.dropdown}>
                   <Picker
                     style={styles.picker}
-                    selectedValue={selectedValue}
+                    selectedValue={selectedProject}
                     onValueChange={(itemValue, itemIndex) => {
-                      setSelectedValue(itemValue);
+                      setSelectedProject(itemValue);
                       filterdata(itemValue);
                     }}>
                     {projectTitles?.map((item, index) => (
@@ -443,7 +490,7 @@ const Home = () => {
                     <View style={styles.iconWrapper}>
                       <Bag width={33} height={33} />
                     </View>
-                    <Text style={styles.branchTitle}>{selectedValue}</Text>
+                    <Text style={styles.branchTitle}>{selectedProject}</Text>
                   </View>
                   <View style={styles.detailsSection}>
                     <View style={styles.detailRow}>
@@ -523,7 +570,7 @@ const Home = () => {
                           styles.value,
                           {fontSize: 19, fontWeight: '500'},
                         ]}>
-                        {selectedValue}
+                        {selectedProject}
                       </Text>
                     </View>
                     <View style={styles.detailRow}>

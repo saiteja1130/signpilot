@@ -1,4 +1,6 @@
+import NetInfo from '@react-native-community/netinfo';
 import axios from 'axios';
+import {useEffect, useState} from 'react';
 import {Alert, PermissionsAndroid, Platform} from 'react-native';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 
@@ -309,4 +311,15 @@ export const changeSignSubmitStatus = async data => {
     console.error('Error creating project:', error.response);
     console.error('Error creating project:', error);
   }
+};
+
+export const useNetworkStatus = () => {
+  const [isConnected, setIsConnected] = useState(true);
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(state => {
+      setIsConnected(state.isConnected);
+    });
+    return () => unsubscribe();
+  }, []);
+  return isConnected;
 };
