@@ -256,7 +256,7 @@ const Home = () => {
 
   useEffect(() => {
     loadApp();
-    console.log('synching');
+    setLoading(true);
     const unsubscribe = NetInfo.addEventListener(state => {
       if (state.isConnected) {
         syncOfflineAudits(loginData);

@@ -226,7 +226,6 @@ const ElectricalAssessment = ({handleFetchData}) => {
         position: 'top',
       });
     }
-
     try {
       const db = await getDBConnection();
       await updateSignDataOptionInProject(projectId, signId, {
