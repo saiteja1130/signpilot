@@ -29,7 +29,6 @@ import {setPhotoState} from '../Redux/Slices/PhotosActive';
 import {dropUsersTable} from '../Db/db';
 import Toast from 'react-native-toast-message';
 import {setActiveState} from '../Redux/Slices/Active';
-import Indoor from '../Components/Indoor';
 import ProgressBar from '../Components/Progressbar';
 
 const Home = () => {
