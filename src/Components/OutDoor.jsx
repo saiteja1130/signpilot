@@ -288,8 +288,6 @@ const OutDoor = ({handleFetchData}) => {
         position: 'top',
       });
     }
-
-    // ✅ Always update local DB
     try {
       const db = await getDBConnection();
       await updateSignDataOptionInProject(projectId, signId, {
