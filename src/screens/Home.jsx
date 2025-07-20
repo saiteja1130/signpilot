@@ -60,20 +60,6 @@ const Home = () => {
   const dispatch = useDispatch();
   const [refreshing, setRefreshing] = useState(false);
   const [response, setResponse] = useState(false);
-  const loadApp = async () => {
-    getUsers(users => {
-      if (users.length > 0) {
-        dispatch(addLoginData(users[0]));
-        setUser(users[0]);
-      } else {
-        setLoading(false);
-      }
-      console.log(users);
-    });
-  };
-  useEffect(() => {
-    console.log(selectedSignValue);
-  }, [selectedSignValue]);
 
   const fetchData = async (state, previousSignSelected) => {
     console.log('API fetching....');
@@ -104,7 +90,7 @@ const Home = () => {
         setResponse(response.data.status);
       }
     } catch (error) {
-      console.error('Fetch failed, using offline data...');
+      console.error('Fetch failed, using offline data...', error);
       if (
         error?.response?.data.message === 'Unauthorized access - Invalid token'
       ) {
@@ -255,16 +241,51 @@ const Home = () => {
   };
 
   useEffect(() => {
-    loadApp();
+    let hasSynced = false;
     setLoading(true);
     const unsubscribe = NetInfo.addEventListener(state => {
-      if (state.isConnected) {
-        syncOfflineAudits(loginData);
+      if (state.isConnected && !hasSynced) {
+        console.log('🔁 Syncing once after coming online...');
+        hasSynced = true;
+        setLoading(true);
+
+        syncOfflineAudits(loginData)
+          .then(() => {
+            console.log('✅ Sync complete');
+            Toast.show({
+              type: 'success',
+              text1: `${
+                state ? 'offline' : 'Online'
+              } changes synced successfully!`,
+              visibilityTime: 3000,
+              position: 'top',
+            });
+          })
+          .catch(e => console.log('❌ Sync error', e))
+          .finally(() => {
+            setTimeout(() => {
+              setLoading(false);
+            }, 1200);
+          });
       }
-      fetchData();
+      if (!state.isConnected) {
+        hasSynced = false;
+        setLoading(true);
+        console.log('🔌 Offline now...');
+        Toast.show({
+          type: 'success',
+          text1: `${state ? 'offline' : 'Online'} changes synced successfully!`,
+          visibilityTime: 3000,
+          position: 'top',
+        });
+        setTimeout(() => {
+          setLoading(false);
+        }, 1200);
+      }
     });
+
     return () => unsubscribe();
-  }, [status]);
+  }, []);
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -598,7 +619,8 @@ const Home = () => {
                   <PermittingAssenment handleFetchData={fetchData} />
                   <Outdoor handleFetchData={fetchData} />
                   {/* <Indoor handleFetchData={fetchData} /> */}
-                  <Photos handleFetchData={fetchData} />
+                  {status && <Photos handleFetchData={fetchData} />}
+
                   <View>
                     <TouchableOpacity
                       onPress={() => saveSection()}

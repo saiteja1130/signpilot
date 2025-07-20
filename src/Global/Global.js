@@ -276,4 +276,48 @@ export const styles = StyleSheet.create({
     borderBottomRightRadius: 11,
     borderBottomLeftRadius: 11,
   },
+  openButton: {
+    backgroundColor: '#3498db',
+    padding: 12,
+    borderRadius: 8,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 20,
+    width: '85%',
+    borderRadius: 12,
+  },
+  heading: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  textInput: {
+    height: 120,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 10,
+    textAlignVertical: 'top',
+  },
+  charCount: {
+    textAlign: 'right',
+    marginTop: 6,
+    color: '#888',
+  },
+  closeButton: {
+    borderRadius: 8,
+    paddingVertical: 8,
+    alignItems: 'flex-end',
+  },
 });

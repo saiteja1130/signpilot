@@ -6,6 +6,8 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Modal,
+  Pressable,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import Exist from '../../assets/images/2.svg';
@@ -19,12 +21,15 @@ import {useDispatch, useSelector} from 'react-redux';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
 import {handleAddPhoto} from '../Functions/functions.js';
+import Menu from '../../assets/images/close.svg';
 import {
   getDBConnection,
   updateSignDataOptionInProject,
 } from '../Db/ProjectsDb.js';
 
 const ElectricalAssessment = ({handleFetchData}) => {
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editing, setEditing] = useState('');
   const signProjectData = useSelector(state => state.signProject.value);
   // console.log('Electrical AUdit Data:', signProjectData?.electrical_audit);
   // console.log(signProjectData?.electrical_audit?.adminName);
@@ -594,6 +599,13 @@ const ElectricalAssessment = ({handleFetchData}) => {
                       {electricalAuditTodoPunchList.length}/300
                     </Text>
                   </View>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setEditing('electricalAuditTodoPunchList');
+                      setModalVisible(true);
+                    }}>
+                    <Text>See More</Text>
+                  </TouchableOpacity>
                   <View style={styles.section}>
                     <Text style={styles.label}>Summary Notes</Text>
                   </View>
@@ -610,6 +622,13 @@ const ElectricalAssessment = ({handleFetchData}) => {
                       {electricalAuditSummaryNotes.length}/300
                     </Text>
                   </View>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setEditing('electricalAuditSummaryNotes');
+                      setModalVisible(true);
+                    }}>
+                    <Text>See More</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             )}
@@ -637,6 +656,45 @@ const ElectricalAssessment = ({handleFetchData}) => {
           </View>
         )}
       </View>
+      <Modal
+        transparent
+        animationType="slide"
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}>
+        <Pressable
+          style={styles.backdrop}
+          onPress={() => setModalVisible(false)}>
+          <Pressable style={styles.modalContent}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setModalVisible(false)}>
+              <Menu width={26} height={26} />
+            </TouchableOpacity>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Type your message..."
+              value={
+                editing === 'electricalAuditSummaryNotes'
+                  ? electricalAuditSummaryNotes
+                  : electricalAuditTodoPunchList
+              }
+              onChangeText={
+                editing === 'electricalAuditSummaryNotes'
+                  ? setElectricalAuditSummaryNotes
+                  : setElectricalAuditTodoPunchList
+              }
+              multiline
+              maxLength={300}
+            />
+            <Text style={{textAlign: 'right', marginTop: 5}}>
+              {editing === 'electricalAuditSummaryNotes'
+                ? electricalAuditSummaryNotes.length
+                : electricalAuditTodoPunchList.length}
+              /300
+            </Text>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 };

@@ -2,7 +2,7 @@ import axios from 'axios';
 import SQLite from 'react-native-sqlite-storage';
 import Toast from 'react-native-toast-message';
 SQLite.enablePromise(true);
-
+import RNFS from 'react-native-fs';
 export const getDBConnection = async () => {
   return SQLite.openDatabase({name: 'projects.db', location: 'default'});
 };
@@ -11,7 +11,7 @@ export const createProjectTable = async db => {
   await db.executeSql(
     `CREATE TABLE IF NOT EXISTS projects (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      projectId TEXT,
+      projectId TEXT UNIQUE,
       projectTitle TEXT,
       firstName TEXT,
       lastName TEXT,
@@ -28,7 +28,15 @@ export const createProjectTable = async db => {
     );`,
   );
 };
-
+export const dropProjectsTable = async () => {
+  try {
+    const db = await getDBConnection();
+    await db.executeSql('DROP TABLE IF EXISTS projects');
+    console.log('✅ Projects table dropped successfully.');
+  } catch (error) {
+    console.error('❌ Failed to drop projects table:', error.message);
+  }
+};
 export const getAllProjects = async db => {
   const results = await db.executeSql(`SELECT * FROM projects`);
   const projects = [];
@@ -164,7 +172,6 @@ export const updateSignDataOptionInProject = async (
     [updatedJson, projectId],
   );
 };
-
 const auditSyncEndpoints = {
   existing_sign_audit: 'https://www.beeberg.com/api/updateExistingSignAudit',
   electrical_audit: 'https://www.beeberg.com/api/updateElectricalAudit',
@@ -172,24 +179,56 @@ const auditSyncEndpoints = {
   permitting_assessment:
     'https://www.beeberg.com/api/updatePermittingAssessmentAudit',
 };
+const processOfflineImages = async photos => {
+  const processed = [];
+  const seen = new Set();
+  for (const photo of photos || []) {
+    if (seen.has(photo.imageId)) continue;
+    seen.add(photo.imageId);
+    let base64 = photo?.base64;
+    if (!base64 && photo.path) {
+      try {
+        base64 = await RNFS.readFile(photo.path, 'base64');
+      } catch (e) {
+        console.log('❌ Error reading file from FS:', e.message);
+        continue;
+      }
+    }
+    if (base64) {
+      processed.push(base64);
+    }
+  }
+  return processed;
+};
+
 const syncSection = async (sectionKey, sectionData, token) => {
-  console.log(sectionKey, sectionData, token);
   const endpoint = auditSyncEndpoints[sectionKey];
   if (!endpoint || !sectionData) return {success: true};
+
+  if (
+    sectionKey === 'existing_sign_audit' &&
+    sectionData.existingSignAuditPhoto
+  ) {
+    sectionData.existingSignAuditPhoto = await processOfflineImages(
+      sectionData.existingSignAuditPhoto,
+    );
+  }
+
   try {
+    console.log(sectionData);
     const response = await axios.post(endpoint, sectionData, {
       headers: {Authorization: `Bearer ${token}`},
     });
 
     if (response.data.status) {
-      console.log(` Synced ${sectionKey} for signId: ${sectionData.signId}`);
+      console.log(`✅ Synced ${sectionKey} for signId: ${sectionData.signId}`);
       return {success: true};
     } else {
-      console.warn(` Failed to sync ${sectionKey}:`, response.data.message);
+      console.warn(`❌ Failed to sync ${sectionKey}:`, response.data.message);
       return {success: false};
     }
   } catch (error) {
-    console.error(` Error syncing ${sectionKey}:`, error.message);
+    console.error(`🔥 Error syncing ${sectionKey}:`, error.message);
     return {success: false};
   }
 };
@@ -221,7 +260,7 @@ export const syncOfflineAudits = async loginData => {
 
           const syncResults = await Promise.all(
             sectionKeys.map(async key => {
-              if (sign[key]) {
+              if (sign[key] && sign.offlineSync === 0) {
                 return await syncSection(key, sign[key], token);
               }
               return {success: true};
@@ -249,13 +288,6 @@ export const syncOfflineAudits = async loginData => {
         );
       }
     }
-
-    Toast.show({
-      type: 'success',
-      text1: 'Offline changes synced successfully!',
-      visibilityTime: 3000,
-      position: 'top',
-    });
   } catch (err) {
     console.error(err);
     console.error('❌ syncOfflineAudits error:', err.message);

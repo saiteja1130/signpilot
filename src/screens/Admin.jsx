@@ -7,6 +7,7 @@ import {useNavigation} from '@react-navigation/native';
 import {createUsersTable, dropUsersTable} from '../Db/db';
 import {useDispatch} from 'react-redux';
 import {addLoginData} from '../Redux/Slices/LoginData';
+import {dropProjectsTable} from '../Db/ProjectsDb';
 
 const Admin = () => {
   const navigation = useNavigation();
@@ -17,6 +18,7 @@ const Admin = () => {
       onPress={() => {
         if (screen === 'logout') {
           dropUsersTable();
+          dropProjectsTable();
           createUsersTable();
           dispatch(addLoginData(null));
           navigation.replace('Login');

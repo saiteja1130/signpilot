@@ -12,6 +12,8 @@ import Manage from '../screens/Manage.jsx';
 import AddProject from '../screens/AddProject.jsx';
 import CustomerProjectScreen from '../screens/CustomerProjectScreen.jsx';
 import ProgressBar from '../Components/Progressbar.jsx';
+import {dropProjectsTable} from '../Db/ProjectsDb.js';
+import TextInputScreen from '../screens/TextInputScreen.jsx';
 
 const Stack = createNativeStackNavigator();
 
@@ -20,19 +22,27 @@ const StackNavigation = () => {
   const [loading, setLoading] = useState(true);
   const dispatch = useDispatch();
   useEffect(() => {
-    // dropUsersTable();
-    createUsersTable();
-    getUsers(users => {
-      if (users.length > 0) {
-        dispatch(addLoginData(users[0]));
-        setUser(users[0]);
-      } else {
-        setLoading(false);
+    const init = async () => {
+      try {
+        // await dropUsersTable();
+        // await dropProjectsTable();
+        createUsersTable();
+        getUsers(users => {
+          if (users.length > 0) {
+            dispatch(addLoginData(users[0]));
+            setUser(users[0]);
+          } else {
+            setLoading(false);
+          }
+          console.log(users);
+        });
+      } catch (err) {
+        console.error('❌ DB Init Error:', err.message);
       }
-      console.log(users);
-    });
-  }, []);
+    };
 
+    init();
+  }, []);
   useEffect(() => {
     if (user) {
       setLoading(false);
@@ -63,6 +73,14 @@ const StackNavigation = () => {
       <Stack.Screen
         name="Completedsurveys"
         component={Completedsurveys}
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="TextInputScreen"
+        component={TextInputScreen}
         options={{
           headerShown: false,
           animation: 'slide_from_right',

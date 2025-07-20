@@ -3,7 +3,7 @@ import axios from 'axios';
 import {useEffect, useState} from 'react';
 import {Alert, PermissionsAndroid, Platform} from 'react-native';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
-
+import RNFS from 'react-native-fs';
 export const requestCameraPermission = async () => {
   if (Platform.OS === 'android') {
     try {
@@ -47,13 +47,23 @@ export const handleAddPhoto = (setSelectedOptions, key) => {
     {cancelable: true},
   );
 };
+const saveBase64ToFile = async (imageId, base64) => {
+  const path = `${RNFS.DocumentDirectoryPath}/${imageId}.jpg`;
+  try {
+    await RNFS.writeFile(path, base64, 'base64');
+    return path;
+  } catch (err) {
+    console.log('❌ Error saving file:', err.message);
+    return null;
+  }
+};
 export const handleTakePhoto = async (setSelectedOptions, key) => {
+  const generateId = () => Date.now().toString();
   const hasPermission = await requestCameraPermission();
   if (!hasPermission) {
     Alert.alert('Camera permission denied');
     return;
   }
-
   launchCamera(
     {
       mediaType: 'photo',
@@ -61,53 +71,76 @@ export const handleTakePhoto = async (setSelectedOptions, key) => {
       saveToPhotos: true,
       includeBase64: true,
     },
-    response => {
+    async response => {
       if (response.didCancel) {
         console.log('User cancelled camera');
       } else if (response.errorCode) {
         console.log('Camera Error:', response.errorMessage);
       } else if (response.assets && response.assets.length > 0) {
         const asset = response.assets[0];
-        setSelectedOptions(prev => {
-          const prevPhotos = prev[key] || [];
-          return {
-            ...prev,
-            [key]: [...prevPhotos, asset.base64],
-          };
-        });
+        const imageId = generateId();
+        const path = await saveBase64ToFile(imageId, asset.base64);
+
+        if (path) {
+          setSelectedOptions(prev => {
+            const prevPhotos = prev[key] || [];
+            return {
+              ...prev,
+              [key]: [
+                ...prevPhotos,
+                {
+                  imageId,
+                  path,
+                  synced: false,
+                },
+              ],
+            };
+          });
+        }
       }
     },
   );
 };
 
 export const imagePicker = (setSelectedOptions, key) => {
-  try {
-    launchImageLibrary(
-      {
-        mediaType: 'photo',
-        selectionLimit: 1,
-        includeBase64: true,
-      },
-      response => {
-        if (response.didCancel) {
-          console.log('Image picking canceled');
-        } else if (response.errorCode) {
-          console.log('Error:', response.errorMessage);
-        } else if (response.assets && response.assets.length > 0) {
-          const asset = response.assets[0];
+  const generateId = () => Date.now().toString();
+
+  launchImageLibrary(
+    {
+      mediaType: 'photo',
+      includeBase64: true,
+      selectionLimit: 1,
+    },
+    async response => {
+      if (response.didCancel) {
+        console.log('Image picking canceled');
+      } else if (response.errorCode) {
+        console.log('Error:', response.errorMessage);
+      } else if (response.assets && response.assets.length > 0) {
+        const asset = response.assets[0];
+        const imageId = generateId();
+        const path = await saveBase64ToFile(imageId, asset.base64);
+
+        if (path) {
           setSelectedOptions(prev => {
             const prevPhotos = prev[key] || [];
             return {
               ...prev,
-              [key]: [...prevPhotos, asset.base64],
+              [key]: [
+                ...prevPhotos,
+                {
+                  base64: asset?.base64,
+                  imageId,
+                  path,
+                  synced: false,
+                },
+              ],
             };
           });
         }
-      },
-    );
-  } catch (error) {
-    console.log(error);
-  }
+      }
+    },
+  );
 };
 
 export const fetchCustomers = async (admin_id, role, token, setCustomers) => {
