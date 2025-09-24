@@ -14,6 +14,7 @@ import CustomerProjectScreen from '../screens/CustomerProjectScreen.jsx';
 import ProgressBar from '../Components/Progressbar.jsx';
 import {dropProjectsTable} from '../Db/ProjectsDb.js';
 import TextInputScreen from '../screens/TextInputScreen.jsx';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 const Stack = createNativeStackNavigator();
 
@@ -57,60 +58,62 @@ const StackNavigation = () => {
     );
   }
   return (
-    <Stack.Navigator
-      screenOptions={{headerShown: false}}
-      initialRouteName={user?.tokenNumber ? 'Home' : 'Login'}>
-      <Stack.Screen name="Login" component={Login} />
-      <Stack.Screen name="Home" component={Home} />
-      <Stack.Screen
-        name="Menu"
-        component={Admin}
-        options={{
-          headerShown: false,
-          animation: 'slide_from_right',
-        }}
-      />
-      <Stack.Screen
-        name="Completedsurveys"
-        component={Completedsurveys}
-        options={{
-          headerShown: false,
-          animation: 'slide_from_right',
-        }}
-      />
-      <Stack.Screen
-        name="TextInputScreen"
-        component={TextInputScreen}
-        options={{
-          headerShown: false,
-          animation: 'slide_from_right',
-        }}
-      />
-      <Stack.Screen
-        name="Manage"
-        component={Manage}
-        options={{
-          headerShown: false,
-          animation: 'slide_from_right',
-        }}
-      />
-      <Stack.Screen
-        name="AddProject"
-        component={AddProject}
-        options={{
-          headerShown: false,
-          animation: 'slide_from_right',
-        }}
-      />
-      <Stack.Screen
-        name="CustomerProjectScreen"
-        component={CustomerProjectScreen}
-        options={{
-          headerShown: false,
-          animation: 'slide_from_right',
-        }}
-      />
-    </Stack.Navigator>
+    <SafeAreaView style={{flex: 1}}>
+      <Stack.Navigator
+        screenOptions={{headerShown: false}}
+        initialRouteName={user?.tokenNumber ? 'Home' : 'Login'}>
+        <Stack.Screen name="Login" component={Login} />
+        <Stack.Screen name="Home" component={Home} />
+        <Stack.Screen
+          name="Menu"
+          component={Admin}
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="Completedsurveys"
+          component={Completedsurveys}
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="TextInputScreen"
+          component={TextInputScreen}
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="Manage"
+          component={Manage}
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="AddProject"
+          component={AddProject}
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="CustomerProjectScreen"
+          component={CustomerProjectScreen}
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+      </Stack.Navigator>
+    </SafeAreaView>
   );
 };
 

@@ -5,15 +5,18 @@ import StackNavigation from './src/Navigations/StackNavigation';
 import {Provider} from 'react-redux';
 import {store} from './src/Redux/store';
 import Toast from 'react-native-toast-message';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
 
 const App = () => {
   return (
-    <Provider store={store}>
-      <NavigationContainer>
-        <StackNavigation />
-      </NavigationContainer>
-      <Toast />
-    </Provider>
+    <SafeAreaProvider>
+      <Provider store={store}>
+        <NavigationContainer>
+          <StackNavigation />
+        </NavigationContainer>
+        <Toast />
+      </Provider>
+    </SafeAreaProvider>
   );
 };
 

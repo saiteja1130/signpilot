@@ -70,6 +70,7 @@ const Login = () => {
         body: JSON.stringify(data),
       });
       const responsedata = await response.json();
+      console.log('LOGIN RESPONSE:::', responsedata);
       if (responsedata?.status) {
         insertUser(responsedata);
         getUsers(users => {
@@ -77,7 +78,7 @@ const Login = () => {
             dispatch(addLoginData(users[0]));
             navigation.navigate('Home');
           }
-          console.log(users);
+          console.log('LOGIN USERSSSS:::::', users);
         });
         return;
       }
@@ -89,8 +90,8 @@ const Login = () => {
         return;
       }
     } catch (error) {
-      console.log(error);
-      console.log(error);
+      // console.log('LOGIN ERROR:::', error.response.data);
+      console.log('LOGIN ERROR:::', error);
     }
   };
   return (
