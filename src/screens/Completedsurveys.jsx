@@ -14,6 +14,8 @@ import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import ProgressBar from '../Components/Progressbar';
 
 const Completedsurveys = () => {
+  const baseUrl = useSelector(state => state.baseUrl.value);
+
   const navigation = useNavigation();
   const loginData = useSelector(state => state.login.value);
   const [loading, setLoading] = useState(false);
@@ -33,8 +35,9 @@ const Completedsurveys = () => {
         signId: sign?.signId,
         userId: loginData?.userId,
         role: loginData?.role,
+        baseUrl
       });
-      await getCompletedSurveys(loginData, setSubmittedSigns);
+      await getCompletedSurveys(loginData, setSubmittedSigns,baseUrl);
     } catch (error) {
       console.log(error);
     }
@@ -80,7 +83,7 @@ const Completedsurveys = () => {
   useFocusEffect(
     useCallback(() => {
       setLoading(true);
-      getCompletedSurveys(loginData, setSubmittedSigns);
+      getCompletedSurveys(loginData, setSubmittedSigns,baseUrl);
       const timeout = setTimeout(() => {
         setLoading(false);
       }, 1200);

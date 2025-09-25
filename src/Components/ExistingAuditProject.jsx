@@ -20,12 +20,9 @@ import axios from 'axios';
 import {handleAddPhoto} from '../Functions/functions.js';
 import Toast from 'react-native-toast-message';
 import RNFS from 'react-native-fs';
-import {
-  getDBConnection,
-  updateSignDataOptionInProject,
-} from '../Db/ProjectsDb.js';
 
 const ExistingAuditProject = ({handleFetchData}) => {
+  const baseUrl = useSelector(state => state.baseUrl.value);
   const loginData = useSelector(state => state.login.value);
   const signProjectData = useSelector(state => state.signProject.value);
   const [loadingImage, setLoadingImage] = useState(true);
@@ -113,15 +110,11 @@ const ExistingAuditProject = ({handleFetchData}) => {
         surveyModule: 'existing_sign_audit',
       };
       const token = loginData?.tokenNumber;
-      const responce = await axios.post(
-        'https://www.beeberg.com/api/removeFile',
-        data,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const responce = await axios.post(`${baseUrl}/removeFile`, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
       if (responce.data.status) {
         setSelectedOptions(prev => {
           return {
@@ -144,10 +137,6 @@ const ExistingAuditProject = ({handleFetchData}) => {
     const readyImages = selectedOptions?.existingSignAuditPhoto?.map(
       data => data?.base64,
     );
-    const offlineImages = selectedOptions?.existingSignAuditPhoto?.map(data => {
-      const {base64, ...rest} = data;
-      return rest;
-    });
     const bodyData = {
       ...selectedOptions,
       existingSignAuditSummaryNotes,
@@ -155,22 +144,13 @@ const ExistingAuditProject = ({handleFetchData}) => {
       existingSignAuditPhoto: readyImages,
       existingSignAuditDocumentSignCondition,
     };
-    console.log('bodyData', bodyData);
-    const projectId = selectedOptions.projectId;
-    const signId = selectedOptions.signId;
-    const updatedSign = {
-      ...selectedOptions,
-      existingSignAuditSummaryNotes,
-      existingSignAuditTodoPunchList,
-      existingSignAuditPhoto: offlineImages,
-      existingSignAuditDocumentSignCondition,
-    };
-    console.log('updatedSign', updatedSign);
+    // console.log('EXISTING BODY DATA::::', bodyData);
+
     let apiSuccess = false;
     try {
       const token = loginData?.tokenNumber;
       const response = await axios.post(
-        'https://www.beeberg.com/api/updateExistingSignAudit',
+        `${baseUrl}/updateExistingSignAudit`,
         bodyData,
         {
           headers: {
@@ -179,6 +159,7 @@ const ExistingAuditProject = ({handleFetchData}) => {
         },
       );
 
+      // console.log('EXISITING SIGN API RESPONSE:::', response.data);
       if (response?.data?.status) {
         apiSuccess = true;
         Toast.show({
@@ -196,27 +177,6 @@ const ExistingAuditProject = ({handleFetchData}) => {
       Toast.show({
         type: 'info',
         text1: 'Saved Offline. Will sync later.',
-        visibilityTime: 3000,
-        position: 'top',
-      });
-    }
-
-    try {
-      const db = await getDBConnection();
-      await updateSignDataOptionInProject(projectId, signId, {
-        existing_sign_audit: updatedSign,
-        offlineSync: apiSuccess ? 1 : 0,
-      });
-      console.log(
-        '📁 Data saved locally with offlineSync =',
-        apiSuccess ? 1 : 0,
-      );
-      handleFetchData(null, signProjectData);
-    } catch (sqliteError) {
-      console.error(' SQLite Save Error:', sqliteError.message);
-      Toast.show({
-        type: 'error',
-        text1: 'Failed to save offline. Please try again.',
         visibilityTime: 3000,
         position: 'top',
       });
@@ -390,7 +350,9 @@ const ExistingAuditProject = ({handleFetchData}) => {
                               <Photo />
                             </View>
                             <View style={styles.fileNameContainer}>
-                              <Text style={styles.fileNameText}>Hai</Text>
+                              <Text style={styles.fileNameText}>
+                                No File Choosen
+                              </Text>
                             </View>
                           </TouchableOpacity>
                           <View

@@ -8,16 +8,17 @@ import {
   Alert,
   Platform,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import Logo from '../../assets/images/app logo.svg';
 import axios from 'axios';
 import {useNavigation} from '@react-navigation/native';
-import {useDispatch} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {addLoginData} from '../Redux/Slices/LoginData';
-import {createUsersTable, getUsers, insertUser} from '../Db/db';
+import {createUsersTable, dropUsersTable, getUsers, insertUser} from '../Db/db';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 const Login = () => {
+  const baseUrl = useSelector(state => state.baseUrl.value);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({});
@@ -60,8 +61,12 @@ const Login = () => {
     };
     if (!validateFields()) return;
     try {
-      const data = {email, password};
-      const response = await fetch('https://www.beeberg.com/api/login', {
+      const data = {
+        email: email.trim(),
+        password: password.trim(),
+      };
+      console.log(data)
+      const response = await fetch(`${baseUrl}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -94,6 +99,10 @@ const Login = () => {
       console.log('LOGIN ERROR:::', error);
     }
   };
+
+  // useEffect(() => {
+  //   dropUsersTable();
+  // }, []);
   return (
     <View style={styles.container}>
       <View style={styles.logoContainer}>

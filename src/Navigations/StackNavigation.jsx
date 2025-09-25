@@ -12,7 +12,6 @@ import Manage from '../screens/Manage.jsx';
 import AddProject from '../screens/AddProject.jsx';
 import CustomerProjectScreen from '../screens/CustomerProjectScreen.jsx';
 import ProgressBar from '../Components/Progressbar.jsx';
-import {dropProjectsTable} from '../Db/ProjectsDb.js';
 import TextInputScreen from '../screens/TextInputScreen.jsx';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
@@ -26,7 +25,6 @@ const StackNavigation = () => {
     const init = async () => {
       try {
         // await dropUsersTable();
-        // await dropProjectsTable();
         createUsersTable();
         getUsers(users => {
           if (users.length > 0) {

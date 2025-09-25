@@ -23,9 +23,9 @@ import {handleAddPhoto} from '../Functions/functions';
 import RadioButton from './RadioButton';
 const Photos = ({handleFetchData}) => {
   const [active, setActive] = useState('');
+  const baseUrl = useSelector(state => state.baseUrl.value);
   const loginData = useSelector(state => state.login.value);
   const signProjectData = useSelector(state => state.signProject.value);
-  // console.log(signProjectData?.outdoor_photos_and_measurements);
   const [loadingImage, setLoadingImage] = useState(true);
   const signName = signProjectData?.signName;
   const [signDimentionsState, setSignDimensionsState] = useState(false);
@@ -583,7 +583,7 @@ const Photos = ({handleFetchData}) => {
       setLoadingImage(true);
       const token = loginData?.tokenNumber;
       const responce = await axios.post(
-        `https://www.beeberg.com/api/update${signName}PhotosAudit`,
+        `${baseUrl}/update${signName}PhotosAudit`,
         DoorData,
         {
           headers: {
@@ -602,7 +602,7 @@ const Photos = ({handleFetchData}) => {
         setLoadingImage(true);
       }
     } catch (error) {
-      console.log(error);
+      console.log('API ERRORRRRRRRRRRRRRR', error.response.data);
       setLoadingImage(true);
     }
   };
@@ -616,15 +616,11 @@ const Photos = ({handleFetchData}) => {
         surveyModule: 'outdoor_photos_and_measurements',
       };
       const token = loginData?.tokenNumber;
-      const responce = await axios.post(
-        'https://www.beeberg.com/api/removeFile',
-        data,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const responce = await axios.post(`${baseUrl}/removeFile`, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
       if (responce.data.status) {
         setSelectedOptions(prev => {
           return {

@@ -33,6 +33,8 @@ import {Picker} from '@react-native-picker/picker';
 const CustomerProjectScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
+  const baseUrl = useSelector(state => state.baseUrl.value);
+
   const [signId, setSignId] = useState(0);
   const [signData, setSignData] = useState([]);
   const [fullyAsscociatedSigns, setFullyAssociatedSigns] = useState([]);
@@ -127,7 +129,7 @@ const CustomerProjectScreen = () => {
           visibilityTime: 3000,
           position: 'top',
         });
-        getUnsignedSigns(project?.id, token, setFullyAssociatedSigns);
+        getUnsignedSigns(project?.id, token, setFullyAssociatedSigns, baseUrl);
         setIsEditSignModalVisible(false);
         setSelectedSignToEdit(null);
         setIsAssigned(false);
@@ -143,15 +145,11 @@ const CustomerProjectScreen = () => {
   const handleSaveSign = async () => {
     try {
       const data = {...addSignForm};
-      const resonse = await axios.post(
-        `https://www.beeberg.com/api/createSign`,
-        data,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const resonse = await axios.post(`${baseUrl}/createSign`, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
       const signTableId = resonse.data?.signTableId;
       if (signTableId) {
         const updatedData = {
@@ -164,7 +162,7 @@ const CustomerProjectScreen = () => {
         updatedData.customer_id = customerData?.id;
         updatedData.sign_id = signTableId;
         const response = await axios.post(
-          `https://www.beeberg.com/api/changeCustomer`,
+          `${baseUrl}/changeCustomer`,
           updatedData,
           {
             headers: {Authorization: `Bearer ${token}`},
@@ -172,18 +170,19 @@ const CustomerProjectScreen = () => {
         );
         if (response.data.status) {
           const response = await axios.post(
-            `https://www.beeberg.com/api/changeProject`,
+            `${baseUrl}/changeProject`,
             updatedData,
             {
               headers: {Authorization: `Bearer ${token}`},
             },
           );
+          console.log('ADD SIGNNNNN:::', response.data);
         }
       }
       setAddSignModalVisible(false);
-      getUnsignedSigns(project?.id, token, setFullyAssociatedSigns);
+      getUnsignedSigns(project?.id, token, setFullyAssociatedSigns, baseUrl);
     } catch (error) {
-      console.error('Error details:', {
+      console.error('ADD SIGNNNNN Error details:', {
         message: error.message,
         response: error.response?.data,
         status: error.response?.status,
@@ -212,7 +211,7 @@ const CustomerProjectScreen = () => {
 
   useEffect(() => {
     if (signId !== 0) {
-      fetchSigns(signId, token, setSignData);
+      fetchSigns(signId, token, setSignData, baseUrl);
     }
   }, [signId]);
 
@@ -239,7 +238,7 @@ const CustomerProjectScreen = () => {
   }, [selectedSignToEdit]);
 
   useEffect(() => {
-    getUnsignedSigns(project?.id, token, setFullyAssociatedSigns);
+    getUnsignedSigns(project?.id, token, setFullyAssociatedSigns, baseUrl);
   }, []);
   return (
     <ScrollView style={styles.container}>

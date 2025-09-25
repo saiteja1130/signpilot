@@ -18,8 +18,8 @@ import Date1 from '../../assets/images/date.svg';
 import {useSelector} from 'react-redux';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
-import {getDBConnection, updateSignDataOptionInProject} from '../Db/ProjectsDb';
 const PermittingAssenment = ({handleFetchData}) => {
+  const baseUrl = useSelector(state => state.baseUrl.value);
   const [active, setActive] = useState('');
   const signProjectData = useSelector(state => state.signProject.value);
   const loginData = useSelector(state => state.login.value);
@@ -152,21 +152,10 @@ const PermittingAssenment = ({handleFetchData}) => {
       permitEstimatedCost,
       permitAcquisitionFeeText,
     };
-
-    const projectId = selectedOptions.projectId;
-    const signId = selectedOptions.signId;
-
-    const updatedSign = {
-      ...permitData,
-    };
-
-    let apiSuccess = false;
-
     try {
       const token = loginData?.tokenNumber;
-
       const response = await axios.post(
-        'https://www.beeberg.com/api/updatePermittingAssessmentAudit',
+        `${baseUrl}/updatePermittingAssessmentAudit`,
         permitData,
         {
           headers: {
@@ -175,16 +164,15 @@ const PermittingAssenment = ({handleFetchData}) => {
         },
       );
 
+      console.log('PERMITTING ASSESMENT::', response.data);
       if (response?.data?.status) {
         apiSuccess = true;
-
         Toast.show({
           type: 'success',
           text1: response?.data?.message || 'Audit saved successfully.',
           visibilityTime: 3000,
           position: 'top',
         });
-
         handleFetchData(null, signProjectData);
       } else {
         throw new Error('Sync failed with unknown server response.');
@@ -192,33 +180,9 @@ const PermittingAssenment = ({handleFetchData}) => {
     } catch (error) {
       console.log('❌ API Sync failed. Will still save locally.');
       console.log('Error:', error?.response?.data || error?.message);
-
       Toast.show({
         type: 'info',
         text1: 'Saved Offline. Will sync later.',
-        visibilityTime: 3000,
-        position: 'top',
-      });
-    }
-
-    try {
-      const db = await getDBConnection();
-      await updateSignDataOptionInProject(projectId, signId, {
-        permitting_assessment: updatedSign,
-        offlineSync: apiSuccess ? 1 : 0,
-      });
-
-      console.log(
-        `📁 Permitting Assessment saved locally with offlineSync = ${
-          apiSuccess ? 1 : 0
-        }`,
-      );
-      handleFetchData(null, signProjectData);
-    } catch (sqliteError) {
-      console.error('❌ SQLite Save Error:', sqliteError.message);
-      Toast.show({
-        type: 'error',
-        text1: 'Failed to save locally. Please try again.',
         visibilityTime: 3000,
         position: 'top',
       });

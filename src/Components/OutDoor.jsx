@@ -22,11 +22,10 @@ import Up from '../../assets/images/arrow.svg';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
 import {handleAddPhoto} from '../Functions/functions';
-import {getDBConnection, updateSignDataOptionInProject} from '../Db/ProjectsDb';
 const OutDoor = ({handleFetchData}) => {
+  const baseUrl = useSelector(state => state.baseUrl.value);
   const loginData = useSelector(state => state.login.value);
   const signProjectData = useSelector(state => state.signProject.value);
-  // console.log('Exist Outdoor Data:', signProjectData?.sign_general_audit);
   const [active, setActive] = useState('');
   const [state, setState] = useState(null);
   const [signGeneralAuditTodoPunchList, setSignGeneralAuditTodoPunchList] =
@@ -241,20 +240,11 @@ const OutDoor = ({handleFetchData}) => {
       sizeOfLadderOrLift,
     };
 
-    const projectId = selectedOptions.projectId;
-    const signId = selectedOptions.signId;
-
-    const updatedSign = {
-      ...signGeneralData,
-    };
-
-    let apiSuccess = false;
-
     try {
       const token = loginData?.tokenNumber;
 
       const response = await axios.post(
-        'https://www.beeberg.com/api/updateSignGeneralAudit',
+        `${baseUrl}/updateSignGeneralAudit`,
         signGeneralData,
         {
           headers: {
@@ -287,28 +277,6 @@ const OutDoor = ({handleFetchData}) => {
         visibilityTime: 3000,
         position: 'top',
       });
-    }
-    try {
-      const db = await getDBConnection();
-      await updateSignDataOptionInProject(projectId, signId, {
-        sign_general_audit: updatedSign,
-        offlineSync: apiSuccess ? 1 : 0,
-      });
-
-      console.log(
-        `📁 Sign General Audit saved locally with offlineSync = ${
-          apiSuccess ? 1 : 0
-        }`,
-      );
-      handleFetchData(null, signProjectData);
-    } catch (sqliteError) {
-      console.error('❌ SQLite Save Error:', sqliteError.message);
-      Toast.show({
-        type: 'error',
-        text1: 'Failed to save locally. Please try again.',
-        visibilityTime: 3000,
-        position: 'top',
-      });
     } finally {
       setLoadingImage(false);
     }
@@ -324,15 +292,11 @@ const OutDoor = ({handleFetchData}) => {
         surveyModule: 'sign_general_audit',
       };
       const token = loginData?.tokenNumber;
-      const responce = await axios.post(
-        'https://www.beeberg.com/api/removeFile',
-        data,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const responce = await axios.post(`${baseUrl}/removeFile`, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
       if (responce.data.status) {
         setSelectedOptions(prev => {
           return {
@@ -348,6 +312,8 @@ const OutDoor = ({handleFetchData}) => {
       console.log('Error response data:', error.response);
     }
   };
+
+  
   useEffect(() => {
     setTimeout(() => {
       setLoadingImage(false);

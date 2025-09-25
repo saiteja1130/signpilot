@@ -4,6 +4,7 @@ import {useEffect, useState} from 'react';
 import {Alert, PermissionsAndroid, Platform} from 'react-native';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import RNFS from 'react-native-fs';
+
 export const requestCameraPermission = async () => {
   if (Platform.OS === 'android') {
     try {
@@ -143,16 +144,23 @@ export const imagePicker = (setSelectedOptions, key) => {
   );
 };
 
-export const fetchCustomers = async (admin_id, role, token, setCustomers) => {
+export const fetchCustomers = async (
+  admin_id,
+  role,
+  token,
+  setCustomers,
+  baseUrl,
+) => {
   try {
     const response = await axios.get(
-      `https://www.beeberg.com/api/getCustomers/${admin_id}/${role}`,
+      `${baseUrl}/getCustomers/${admin_id}/${role}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       },
     );
+    console.log(response.data);
     if (response.data.status) {
       const customerData = response.data.customers;
       setCustomers(customerData);
@@ -162,20 +170,18 @@ export const fetchCustomers = async (admin_id, role, token, setCustomers) => {
   }
 };
 
-export const fetchSigns = async (signId, token, setSignData) => {
+export const fetchSigns = async (signId, token, setSignData, baseUrl) => {
   try {
-    const response = await axios.get(
-      `https://beeberg.com/api/signsOptions/${signId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+    const response = await axios.get(`${baseUrl}/signsOptions/${signId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-    );
+    });
     setSignData(response.data.signOptions);
-    console.log(response.data.signOptions);
+    console.log('FETCH SIGNS ERRORR::::', response.data);
   } catch (error) {
-    console.log(error.response?.data);
+    console.log('Fetch Sign Error:::::::::', error.response?.data);
+    console.log('Fetch Sign Error22222:::::::::', error);
   }
 };
 
@@ -183,10 +189,11 @@ export const getUnassociatedSigns = async (
   admin_id,
   token,
   setUnassociatedSign,
+  baseUrl,
 ) => {
   try {
     const response = await axios.get(
-      `https://www.beeberg.com/api/getUnAssociatedSigns/${admin_id}`,
+      `${baseUrl}/getUnAssociatedSigns/${admin_id}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -200,14 +207,11 @@ export const getUnassociatedSigns = async (
   }
 };
 
-export const getTeams = async (admin_id, role, token, setTeams) => {
+export const getTeams = async (admin_id, role, token, setTeams, baseUrl) => {
   try {
-    const response = await axios.get(
-      `https://www.beeberg.com/api/team/${admin_id}/${role}`,
-      {
-        headers: {Authorization: `Bearer ${token}`},
-      },
-    );
+    const response = await axios.get(`${baseUrl}/team/${admin_id}/${role}`, {
+      headers: {Authorization: `Bearer ${token}`},
+    });
     if (response.data.status) {
       const data = response.data?.data;
       setTeams(data);
@@ -221,10 +225,11 @@ export const getUnassociatedCustomerSigns = async (
   customer_id,
   token,
   setUnassociatedSign,
+  baseUrl,
 ) => {
   try {
     const response = await axios.get(
-      `https://www.beeberg.com/api/${customer_id}/getUnAttachedSigns`,
+      `${baseUrl}/${customer_id}/getUnAttachedSigns`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -242,21 +247,23 @@ export const getUnsignedSigns = async (
   projectId,
   token,
   setFullyAssociatedSigns,
+  baseUrl,
 ) => {
   try {
     const response = await axios.get(
-      `https://www.beeberg.com/api/${projectId}/getUnAssignSigns`,
+      `${baseUrl}/${projectId}/getUnAssignSigns`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       },
     );
+    console.log('getUnsignedSigns:::', response.data);
     if (response.data?.status) {
       setFullyAssociatedSigns(response.data?.signs || []);
     }
   } catch (error) {
-    console.error('Error creating project:', error.response?.data);
+    console.error('Error creating project:', error);
   }
 };
 
@@ -277,44 +284,37 @@ export const sendUpdateNameMail = async data => {
   }
 };
 export const sendChangeTypeUpdateMail = async data => {
-  const {token, ...rest} = data;
+  const {token, baseUrl, ...rest} = data;
   try {
-    const response = await axios.post(
-      `https://www.beeberg.com/api/sendUpdateMail`,
-      rest,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+    const response = await axios.post(`${baseUrl}/sendUpdateMail`, rest, {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-    );
+    });
   } catch (error) {
     console.error('Error creating project:', error.response?.data);
   }
 };
 export const sendProjectChange = async data => {
-  const {token, ...rest} = data;
+  const {token, baseUrl, ...rest} = data;
   try {
-    const response = await axios.post(
-      `https://www.beeberg.com/api/sendProjectChange`,
-      rest,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+    const response = await axios.post(`${baseUrl}/sendProjectChange`, rest, {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-    );
+    });
+    console.log(response.data);
   } catch (error) {
     console.error('Error creating project:', error.response?.data);
   }
 };
 
-export const getCompletedSurveys = async (data, setSubmittedSigns) => {
+export const getCompletedSurveys = async (data, setSubmittedSigns, baseUrl) => {
   try {
     const {tokenNumber, userId, role} = data;
 
     const response = await axios.get(
-      `https://www.beeberg.com/api/submitted-signs/${userId}/${role}`,
+      `${baseUrl}/submitted-signs/${userId}/${role}`,
       {
         headers: {
           Authorization: `Bearer ${tokenNumber}`,
@@ -330,9 +330,9 @@ export const getCompletedSurveys = async (data, setSubmittedSigns) => {
 
 export const changeSignSubmitStatus = async data => {
   try {
-    const {token, ...rest} = data;
+    const {token, baseUrl, ...rest} = data;
     const response = await axios.post(
-      `https://www.beeberg.com/api/changeSignSubmitStatus`,
+      `${baseUrl}/changeSignSubmitStatus`,
       rest,
       {
         headers: {

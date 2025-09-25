@@ -36,6 +36,7 @@ import {
 import ProgressBar from '../Components/Progressbar';
 
 const Manage = () => {
+  const baseUrl = useSelector(state => state.baseUrl.value);
   const navigation = useNavigation();
   const [addCustomerModalVisible, setAddCustomerModalVisible] = useState(false);
   const [editCustomerModalVisible, setEditCustomerModalVisible] =
@@ -149,15 +150,11 @@ const Manage = () => {
   const handleSave = async () => {
     if (!validateForm()) return;
     try {
-      const response = await axios.post(
-        'https://www.beeberg.com/api/createCustomer',
-        form,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const response = await axios.post(`${baseUrl}/createCustomer`, form, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
       if (response.data.status) {
         Toast.show({
           text1: response?.data?.message,
@@ -165,7 +162,7 @@ const Manage = () => {
           position: 'top',
         });
         setAddCustomerModalVisible(false);
-        fetchCustomers(admin_id, role, token, setCustomers);
+        fetchCustomers(admin_id, role, token, setCustomers, baseUrl);
         setForm({
           company_name: '',
           fname: '',
@@ -210,7 +207,7 @@ const Manage = () => {
       if (response.data.status) {
         setSavedSign(response.data);
         setIsSignCreated(true);
-        getUnassociatedSigns(userId, token, setUnassociatedSign);
+        getUnassociatedSigns(userId, token, setUnassociatedSign, baseUrl);
       }
     } catch (error) {
       console.error('Error creating project:', error.response?.data);
@@ -240,7 +237,7 @@ const Manage = () => {
         });
       }
       setEditCustomerModalVisible(false);
-      fetchCustomers(admin_id, role, token, setCustomers);
+      fetchCustomers(admin_id, role, token, setCustomers, baseUrl);
     } catch (error) {
       console.error('Error updating customer:', error.response?.data);
     }
@@ -301,7 +298,7 @@ const Manage = () => {
         setSavedSign(null);
         setIsEditSignModalVisible(false);
         setSelectedSignToEdit(null);
-        getUnassociatedSigns(userId, token, setUnassociatedSign);
+        getUnassociatedSigns(userId, token, setUnassociatedSign, baseUrl);
         setIsAssigned(false);
         setIsAliasChanged(false);
         setSignIdChanged(false);
@@ -324,7 +321,7 @@ const Manage = () => {
     }
   };
   useEffect(() => {
-    fetchCustomers(admin_id, role, token, setCustomers);
+    fetchCustomers(admin_id, role, token, setCustomers, baseUrl);
 
     setTimeout(() => {
       setLoading(false);
@@ -394,7 +391,7 @@ const Manage = () => {
   };
 
   useEffect(() => {
-    getUnassociatedSigns(userId, token, setUnassociatedSign);
+    getUnassociatedSigns(userId, token, setUnassociatedSign, baseUrl);
   }, []);
   const handleEditInput = (field, value) => {
     setSelectedCustomer(prev => ({
@@ -434,7 +431,9 @@ const Manage = () => {
         </View>
         <View style={styles.iconContainer}>
           <TouchableOpacity
-            onPress={() => fetchCustomers(admin_id, role, token, setCustomers)}>
+            onPress={() =>
+              fetchCustomers(admin_id, role, token, setCustomers, baseUrl)
+            }>
             <Refresh width={36} height={36} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => navigation.navigate('Home')}>

@@ -34,6 +34,8 @@ import {
 import ProgressBar from '../Components/Progressbar';
 
 const AddProject = ({navigation}) => {
+  const baseUrl = useSelector(state => state.baseUrl.value);
+
   const [modalVisible, setModalVisible] = useState(false);
   const [addSignModalVisible, setAddSignModalVisible] = useState(false);
   const [sameAsCustomer, setSameAsCustomer] = useState(false);
@@ -159,7 +161,7 @@ const AddProject = ({navigation}) => {
   const getCustomersAllProjects = async () => {
     try {
       const response = await axios.get(
-        `https://www.beeberg.com/api/${customer_id}/getCustomerProjects`,
+        `${baseUrl}/${customer_id}/getCustomerProjects`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -202,7 +204,7 @@ const AddProject = ({navigation}) => {
 
     try {
       const response = await axios.post(
-        'https://www.beeberg.com/api/createProject',
+        `${baseUrl}/createProject`,
         projectAssignData,
         {
           headers: {
@@ -231,7 +233,7 @@ const AddProject = ({navigation}) => {
         project_id: projectAssignData?.id,
       };
       const response = await axios.post(
-        'https://www.beeberg.com/api/updateProject',
+        `${baseUrl}/updateProject`,
         projectAssignData,
         {
           headers: {
@@ -256,15 +258,11 @@ const AddProject = ({navigation}) => {
   const handleSaveSign = async () => {
     try {
       const data = {...addSignForm};
-      const resonse = await axios.post(
-        `https://www.beeberg.com/api/createSign`,
-        data,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const resonse = await axios.post(`${baseUrl}/createSign`, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
       const signTableId = resonse.data?.signTableId;
       if (signTableId) {
         const updatedData = {
@@ -276,7 +274,7 @@ const AddProject = ({navigation}) => {
         updatedData.customer_id = customerData?.id;
         updatedData.sign_id = signTableId;
         const response = await axios.post(
-          `https://www.beeberg.com/api/changeCustomer`,
+          `${baseUrl}/changeCustomer`,
           updatedData,
           {
             headers: {Authorization: `Bearer ${token}`},
@@ -292,7 +290,12 @@ const AddProject = ({navigation}) => {
       }
 
       setAddSignModalVisible(false);
-      getUnassociatedCustomerSigns(customer_id, token, setUnassociatedSign);
+      getUnassociatedCustomerSigns(
+        customer_id,
+        token,
+        setUnassociatedSign,
+        baseUrl,
+      );
     } catch (error) {
       console.error('Error details:', {
         message: error.message,
@@ -345,7 +348,7 @@ const AddProject = ({navigation}) => {
       );
       const self = teams?.find(data => data.id === userId);
       const others = teams?.find(data => data.id === EditSignForm?.teamId);
-      const project = projects.find(data => data.id === EditSignForm?.teamId);
+      const project = projects.find(data => data.id === EditSignForm?.teamId || EditSignForm?.adminId);
       const updatedData = {
         ...EditSignForm,
         name: EditSignForm?.alias_name,
@@ -362,13 +365,19 @@ const AddProject = ({navigation}) => {
         updatedData.assign_to = others?.role;
         updatedData.teamId = others?.id;
       }
+      // console.log('ALL PROJECTSSS:::', projects);
+      // console.log('PROJECT DATA:::', project);
+      // console.log('EDIT SIGN FORM:::', EditSignForm);
+      // console.log('PAYLOAD:::', updatedData);
+      // return;
       const response = await axios.post(
-        `https://www.beeberg.com/api/${apiEndpointsToSetSigns}`,
+        `${baseUrl}/${apiEndpointsToSetSigns}`,
         updatedData,
         {
           headers: {Authorization: `Bearer ${token}`},
         },
       );
+      console.log('UNATTACHED SIGNS RESPONSEEEEEEE:::', response?.data);
       if (response.data.status) {
         Toast.show({
           text1: response?.data?.message,
@@ -390,6 +399,7 @@ const AddProject = ({navigation}) => {
             alias_name: EditSignForm?.alias_name,
             signId: EditSignForm?.signId,
             optionId: EditSignForm?.optionId,
+            baseUrl,
           });
         }
         if (apiEndpointsToSetSigns === 'changeProject') {
@@ -399,18 +409,24 @@ const AddProject = ({navigation}) => {
             sign_id: EditSignForm?.signId,
             oldProjectName: '',
             oldProject_id: 0,
+            baseUrl,
           });
         }
         setIsEditSignModalVisible(false);
         setSelectedSignToEdit(null);
-        getUnassociatedCustomerSigns(customer_id, token, setUnassociatedSign);
+        getUnassociatedCustomerSigns(
+          customer_id,
+          token,
+          setUnassociatedSign,
+          baseUrl,
+        );
         setIsAssigned(false);
         setIsAliasChanged(false);
         setSignIdChanged(false);
         setCustomerChanged(false);
       }
     } catch (error) {
-      console.log('Axios Error:', error.response?.data);
+      console.log('UNATTACHED SIGNS Error:', error.response?.data);
     }
   };
 
@@ -460,14 +476,20 @@ const AddProject = ({navigation}) => {
     }
     const fetchSignsData = async () => {
       const id = location === 'Outdoor' ? 2 : 1;
-      await fetchSigns(id, token, setSignData);
+      console.log(id, token, baseUrl);
+      await fetchSigns(id, token, setSignData, baseUrl);
     };
     fetchSignsData();
   }, [addSignForm?.signLocation, EditSignForm?.signLocation]);
   useEffect(() => {
-    getUnassociatedCustomerSigns(customer_id, token, setUnassociatedSign);
-    fetchCustomers(admin_id, role, token, setCustomers);
-    getTeams(admin_id, role, token, setTeams);
+    getUnassociatedCustomerSigns(
+      customer_id,
+      token,
+      setUnassociatedSign,
+      baseUrl,
+    );
+    fetchCustomers(admin_id, role, token, setCustomers, baseUrl);
+    getTeams(admin_id, role, token, setTeams, baseUrl);
   }, []);
 
   useEffect(() => {

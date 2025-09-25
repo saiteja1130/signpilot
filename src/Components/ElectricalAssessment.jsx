@@ -22,18 +22,14 @@ import axios from 'axios';
 import Toast from 'react-native-toast-message';
 import {handleAddPhoto} from '../Functions/functions.js';
 import Menu from '../../assets/images/close.svg';
-import {
-  getDBConnection,
-  updateSignDataOptionInProject,
-} from '../Db/ProjectsDb.js';
 
 const ElectricalAssessment = ({handleFetchData}) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editing, setEditing] = useState('');
+  const baseUrl = useSelector(state => state.baseUrl.value);
   const signProjectData = useSelector(state => state.signProject.value);
-  // console.log('Electrical AUdit Data:', signProjectData?.electrical_audit);
-  // console.log(signProjectData?.electrical_audit?.adminName);
   const loginData = useSelector(state => state.login.value);
+  const [loadingImage, setLoadingImage] = useState(true);
   const [electricalAuditTodoPunchList, setElectricalAuditTodoPunchList] =
     useState(signProjectData?.electrical_audit?.electricalAuditTodoPunchList);
   const [electricalAuditSummaryNotes, setElectricalAuditSummaryNotes] =
@@ -103,8 +99,6 @@ const ElectricalAssessment = ({handleFetchData}) => {
   const [typeOfIlluminationInside, setTypeOfIlluminationInside] = useState(
     signProjectData?.electrical_audit?.typeOfIlluminationInside || '',
   );
-  const [loadingImage, setLoadingImage] = useState(true);
-  const dispatch = useDispatch();
 
   const data = [
     {
@@ -185,22 +179,10 @@ const ElectricalAssessment = ({handleFetchData}) => {
       electricalAuditSummaryNotes,
     };
 
-    const projectId = selectedOptions.projectId;
-    const signId = selectedOptions.signId;
-
-    const updatedSign = {
-      ...selectedOptions,
-      typeOfIlluminationInside,
-      electricalAuditTodoPunchList,
-      electricalAuditSummaryNotes,
-    };
-
-    let apiSuccess = false;
-
     try {
       const token = loginData?.tokenNumber;
       const response = await axios.post(
-        'https://www.beeberg.com/api/updateElectricalAudit',
+        `${baseUrl}/updateElectricalAudit`,
         bodyData,
         {
           headers: {
@@ -230,27 +212,6 @@ const ElectricalAssessment = ({handleFetchData}) => {
         visibilityTime: 3000,
         position: 'top',
       });
-    }
-    try {
-      const db = await getDBConnection();
-      await updateSignDataOptionInProject(projectId, signId, {
-        electrical_audit: updatedSign,
-        offlineSync: apiSuccess ? 1 : 0,
-      });
-
-      console.log(
-        '📁 Electrical audit saved locally with offlineSync =',
-        apiSuccess ? 1 : 0,
-      );
-      handleFetchData(null, signProjectData);
-    } catch (sqliteError) {
-      console.error('❌ SQLite Save Error:', sqliteError.message);
-      Toast.show({
-        type: 'error',
-        text1: 'Failed to save offline. Please try again.',
-        visibilityTime: 3000,
-        position: 'top',
-      });
     } finally {
       setLoadingImage(false);
     }
@@ -266,15 +227,11 @@ const ElectricalAssessment = ({handleFetchData}) => {
         surveyModule: 'electrical_audit',
       };
       const token = loginData?.tokenNumber;
-      const responce = await axios.post(
-        'https://www.beeberg.com/api/removeFile',
-        data,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const responce = await axios.post(`${baseUrl}/removeFile`, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
       if (responce.data.status) {
         setSelectedOptions(prev => {
           return {
@@ -290,6 +247,7 @@ const ElectricalAssessment = ({handleFetchData}) => {
       console.log('Error response data:', error.response);
     }
   };
+  
   useEffect(() => {
     setTimeout(() => {
       setLoadingImage(false);

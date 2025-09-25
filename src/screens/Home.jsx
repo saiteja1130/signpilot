@@ -26,22 +26,13 @@ import {addProject} from '../Redux/Slices/ProjectData';
 import {addSignProject} from '../Redux/Slices/SigProject';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {setPhotoState} from '../Redux/Slices/PhotosActive';
-import {dropUsersTable, getUsers} from '../Db/db';
 import Toast from 'react-native-toast-message';
 import {setActiveState} from '../Redux/Slices/Active';
 import ProgressBar from '../Components/Progressbar';
-import {
-  createProjectTable,
-  getAllProjects,
-  getDBConnection,
-  insertOrUpdateProject,
-  syncOfflineAudits,
-} from '../Db/ProjectsDb';
-import NetInfo from '@react-native-community/netinfo';
 import {useNetworkStatus} from '../Functions/functions';
-import {addLoginData} from '../Redux/Slices/LoginData';
 
 const Home = () => {
+  const baseUrl = useSelector(state => state.baseUrl.value);
   const signProjectData = useSelector(state => state.signProject.value);
   const status = useNetworkStatus();
   const navigation = useNavigation();
@@ -63,56 +54,34 @@ const Home = () => {
 
   const fetchData = async (state, previousSignSelected) => {
     console.log('API fetching....');
-    const db = await getDBConnection();
-    await createProjectTable(db);
     try {
       const token = loginData?.tokenNumber;
       const userId = loginData?.userId;
       const role = loginData?.role;
-      const response = await axios.get(
-        `https://www.beeberg.com/api/getData/${userId}/${role}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const response = await axios.get(`${baseUrl}/getData/${userId}/${role}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
+
       if (response.data.status) {
         setResponse(response.data.status);
         const data = response.data.projectData;
         console.log(data);
         setAlldata(data);
-        for (const project of data) {
-          await insertOrUpdateProject(db, project);
-        }
         handleProjectSelection(data, previousSignSelected, state);
       } else {
         setResponse(response.data.status);
       }
     } catch (error) {
-      console.error('Fetch failed, using offline data...', error);
-      if (
-        error?.response?.data.message === 'Unauthorized access - Invalid token'
-      ) {
-        dropUsersTable();
-        navigation.navigate('Login');
-        return;
-      }
-      const data = await getAllProjects(db);
-      if (data.length === 0) {
-        Alert.alert('No offline data available. Please login again.');
-        navigation.navigate('Login');
-        return;
-      }
-      setAlldata(data);
-      console.log(data);
-      setResponse(true);
-      handleProjectSelection(data, previousSignSelected, state);
+      console.error('Fetch failed:', error?.response?.data || error.message);
+      setResponse(false);
     } finally {
       setLoading(false);
       console.log('API fetched....');
     }
   };
+
   const handleProjectSelection = (data, previousSignSelected, state) => {
     console.log(previousSignSelected);
     const titles = data.map(item => item.projectTitle);
@@ -143,6 +112,7 @@ const Home = () => {
     }
     dispatch(setPhotoState(state || null));
   };
+
   const saveSection = async () => {
     const token = loginData?.tokenNumber;
     try {
@@ -163,25 +133,17 @@ const Home = () => {
         role: loginData?.role,
         customerName: signSelected?.customerName,
       };
-      const response = await axios.post(
-        `https://www.beeberg.com/api/sendNotification`,
-        data,
-        {
+      const response = await axios.post(`${baseUrl}/sendNotification`, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.data.status) {
+        const response = await axios.post(`${baseUrl}/sendmail`, data, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        },
-      );
-      if (response.data.status) {
-        const response = await axios.post(
-          `https://www.beeberg.com/api/sendmail`,
-          data,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
+        });
         if (response.data.status) {
           Toast.show({
             text1: 'Send Report Success',
@@ -196,10 +158,10 @@ const Home = () => {
         }
       }
     } catch (error) {
-      console.log(error?.response?.data);
-      console.log(error);
+      console.log(error?.response?.data || error.message);
     }
   };
+
   const filterdata = item => {
     setSelectedProject(item);
     setSignConfirmed(false);
@@ -231,6 +193,7 @@ const Home = () => {
       fetchOnFocus();
     }, [loginData]),
   );
+
   const handleRefresh = async () => {
     setRefreshing(true);
     await new Promise(resolve => {
@@ -239,53 +202,6 @@ const Home = () => {
     });
     setRefreshing(false);
   };
-
-  useEffect(() => {
-    let hasSynced = false;
-    setLoading(true);
-    const unsubscribe = NetInfo.addEventListener(state => {
-      if (state.isConnected && !hasSynced) {
-        console.log('🔁 Syncing once after coming online...');
-        hasSynced = true;
-        setLoading(true);
-
-        syncOfflineAudits(loginData)
-          .then(() => {
-            console.log('✅ Sync complete');
-            Toast.show({
-              type: 'success',
-              text1: `${
-                state ? 'offline' : 'Online'
-              } changes synced successfully!`,
-              visibilityTime: 3000,
-              position: 'top',
-            });
-          })
-          .catch(e => console.log('❌ Sync error', e))
-          .finally(() => {
-            setTimeout(() => {
-              setLoading(false);
-            }, 1200);
-          });
-      }
-      if (!state.isConnected) {
-        hasSynced = false;
-        setLoading(true);
-        console.log('🔌 Offline now...');
-        Toast.show({
-          type: 'success',
-          text1: `${state ? 'offline' : 'Online'} changes synced successfully!`,
-          visibilityTime: 3000,
-          position: 'top',
-        });
-        setTimeout(() => {
-          setLoading(false);
-        }, 1200);
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
   const styles = StyleSheet.create({
     container: {
       flex: 1,
