@@ -13,6 +13,7 @@ import {
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import PhotoEditor from '@baronha/react-native-photo-editor';
 import RNFS from 'react-native-fs';
+import ImageResizer from 'react-native-image-resizer';
 
 const Testpage = () => {
   const [editedImagePath, setEditedImagePath] = useState<string | null>(null);
@@ -73,6 +74,22 @@ const Testpage = () => {
     }
   };
 
+  const compressImage = async (uri: string) => {
+    try {
+      const resizedImage = await ImageResizer.createResizedImage(
+        uri,
+        800,
+        600,
+        'JPEG',
+        80,
+      );
+      console.log('Compressed image path:', resizedImage.uri);
+      return resizedImage.uri;
+    } catch (err) {
+      console.log('Image compression error:', err);
+    }
+  };
+
   // Handle taking photo
   const handleTakePhoto = async () => {
     const hasPermission = await requestPermissions();
@@ -81,14 +98,15 @@ const Testpage = () => {
       return;
     }
 
-    launchCamera({mediaType: 'photo'}, response => {
+    launchCamera({mediaType: 'photo'},async response => {
       if (response.didCancel) return;
       if (response.errorCode) {
         console.log('Camera error:', response.errorMessage);
         return;
       }
       if (response.assets && response.assets[0].uri) {
-        openEditor(response.assets[0].uri);
+        const compressPath: any =await compressImage(response.assets[0].uri);
+        openEditor(compressPath);
       }
     });
   };
@@ -101,14 +119,15 @@ const Testpage = () => {
       return;
     }
 
-    launchImageLibrary({mediaType: 'photo', selectionLimit: 1}, response => {
+    launchImageLibrary({mediaType: 'photo', selectionLimit: 1},async response => {
       if (response.didCancel) return;
       if (response.errorCode) {
         console.log('Picker error:', response.errorMessage);
         return;
       }
       if (response.assets && response.assets[0].uri) {
-        openEditor(response.assets[0].uri);
+        const compressPath: any =await  compressImage(response.assets[0].uri);
+        openEditor(compressPath);
       }
     });
   };
