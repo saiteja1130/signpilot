@@ -1,4 +1,4 @@
-import {Text, View} from 'react-native';
+import {View} from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Login from '../screens/Login';
@@ -12,8 +12,8 @@ import Manage from '../screens/Manage.jsx';
 import AddProject from '../screens/AddProject.jsx';
 import CustomerProjectScreen from '../screens/CustomerProjectScreen.jsx';
 import ProgressBar from '../Components/Progressbar.jsx';
-import TextInputScreen from '../screens/TextInputScreen.jsx';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import TestPage from '../screens/Testpage.tsx';
 
 const Stack = createNativeStackNavigator();
 
@@ -59,9 +59,11 @@ const StackNavigation = () => {
     <SafeAreaView style={{flex: 1}}>
       <Stack.Navigator
         screenOptions={{headerShown: false}}
-        initialRouteName={user?.tokenNumber ? 'Home' : 'Login'}>
+        initialRouteName={user?.tokenNumber ? 'TestPage' : 'TestPage'}>
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Home" component={Home} />
+        <Stack.Screen name="TestPage" component={TestPage} />
+
         <Stack.Screen
           name="Menu"
           component={Admin}
@@ -78,14 +80,7 @@ const StackNavigation = () => {
             animation: 'slide_from_right',
           }}
         />
-        <Stack.Screen
-          name="TextInputScreen"
-          component={TextInputScreen}
-          options={{
-            headerShown: false,
-            animation: 'slide_from_right',
-          }}
-        />
+
         <Stack.Screen
           name="Manage"
           component={Manage}

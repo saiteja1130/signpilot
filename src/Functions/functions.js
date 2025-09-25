@@ -5,6 +5,8 @@ import {Alert, PermissionsAndroid, Platform} from 'react-native';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import RNFS from 'react-native-fs';
 
+// import {PermissionsAndroid, Platform} from 'react-native';
+
 export const requestCameraPermission = async () => {
   if (Platform.OS === 'android') {
     try {
@@ -27,6 +29,36 @@ export const requestCameraPermission = async () => {
     return true;
   }
 };
+
+export const requestMediaPermission = async () => {
+  if (Platform.OS === 'android') {
+    try {
+      let permission;
+
+      if (Platform.Version >= 33) {
+        permission = PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES;
+      } else {
+        permission = PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE;
+      }
+
+      const granted = await PermissionsAndroid.request(permission, {
+        title: 'Media Permission',
+        message: 'App needs access to your photos to select and edit images.',
+        buttonNeutral: 'Ask Me Later',
+        buttonNegative: 'Cancel',
+        buttonPositive: 'OK',
+      });
+
+      return granted === PermissionsAndroid.RESULTS.GRANTED;
+    } catch (err) {
+      console.warn(err);
+      return false;
+    }
+  } else {
+    return true;
+  }
+};
+
 export const handleAddPhoto = (setSelectedOptions, key) => {
   Alert.alert(
     'Add Photo',
@@ -48,6 +80,7 @@ export const handleAddPhoto = (setSelectedOptions, key) => {
     {cancelable: true},
   );
 };
+
 const saveBase64ToFile = async (imageId, base64) => {
   const path = `${RNFS.DocumentDirectoryPath}/${imageId}.jpg`;
   try {
@@ -58,6 +91,7 @@ const saveBase64ToFile = async (imageId, base64) => {
     return null;
   }
 };
+
 export const handleTakePhoto = async (setSelectedOptions, key) => {
   const generateId = () => Date.now().toString();
   const hasPermission = await requestCameraPermission();
@@ -103,7 +137,13 @@ export const handleTakePhoto = async (setSelectedOptions, key) => {
   );
 };
 
-export const imagePicker = (setSelectedOptions, key) => {
+export const imagePicker = async (setSelectedOptions, key) => {
+  const hasPermission = await requestMediaPermission();
+  if (!hasPermission) {
+    Alert.alert('Media permission denied');
+    return;
+  }
+
   const generateId = () => Date.now().toString();
 
   launchImageLibrary(
@@ -283,6 +323,7 @@ export const sendUpdateNameMail = async data => {
     console.error('Error creating project:', error.response?.data);
   }
 };
+
 export const sendChangeTypeUpdateMail = async data => {
   const {token, baseUrl, ...rest} = data;
   try {
@@ -295,6 +336,8 @@ export const sendChangeTypeUpdateMail = async data => {
     console.error('Error creating project:', error.response?.data);
   }
 };
+
+
 export const sendProjectChange = async data => {
   const {token, baseUrl, ...rest} = data;
   try {

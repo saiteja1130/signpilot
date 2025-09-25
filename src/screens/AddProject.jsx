@@ -1,5 +1,5 @@
 import {useRoute} from '@react-navigation/native';
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
-  ActivityIndicator,
   Modal,
   FlatList,
 } from 'react-native';
@@ -88,6 +87,7 @@ const AddProject = ({navigation}) => {
     assign_to: '',
     teamId: '',
   });
+
   const fetchLocationDetails = async pincode => {
     try {
       const response = await axios.get(
@@ -175,6 +175,7 @@ const AddProject = ({navigation}) => {
       console.error('Error fetching projects:', error);
     }
   };
+
   const validateFields = () => {
     const requiredFields = [
       'project_name',
@@ -348,7 +349,9 @@ const AddProject = ({navigation}) => {
       );
       const self = teams?.find(data => data.id === userId);
       const others = teams?.find(data => data.id === EditSignForm?.teamId);
-      const project = projects.find(data => data.id === EditSignForm?.teamId || EditSignForm?.adminId);
+      const project = projects.find(
+        data => data.id === EditSignForm?.teamId || EditSignForm?.adminId,
+      );
       const updatedData = {
         ...EditSignForm,
         name: EditSignForm?.alias_name,
