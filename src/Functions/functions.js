@@ -337,7 +337,6 @@ export const sendChangeTypeUpdateMail = async data => {
   }
 };
 
-
 export const sendProjectChange = async data => {
   const {token, baseUrl, ...rest} = data;
   try {
@@ -397,5 +396,6 @@ export const useNetworkStatus = () => {
     });
     return () => unsubscribe();
   }, []);
+  console.log('isConnected', isConnected);
   return isConnected;
 };
