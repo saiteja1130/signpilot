@@ -18,6 +18,7 @@ import {
 } from '../Functions/functions';
 import {
   createImageTable,
+  dropImageTable,
   getAllImages,
   updatePathInsideImageTable,
 } from '../Db/ProjectDatabase';
@@ -29,7 +30,11 @@ import {
 } from '../Functions/FSfunctions';
 
 const Testpage = () => {
-  const [imageArr, setImageArr] = useState<any[]>([]);
+  const [existingSignAuditPhotos, setExistingSignAuditPhotos] = useState<any[]>(
+    [],
+  );
+  const [electricalAuditPhotos, setElectricalAuditPhotos] = useState<any[]>([]);
+
   const editTheExistingImage = async (item: any) => {
     const path = await getPath(item.path);
     const result: any = await PhotoEditor.open({
@@ -48,7 +53,11 @@ const Testpage = () => {
       'ExistingSignAudit',
       true,
     );
-    updatePathInsideImageTable(item.imageID, permenantPath, setImageArr);
+    updatePathInsideImageTable(
+      item.imageID,
+      permenantPath,
+      setExistingSignAuditPhotos,
+    );
   };
 
   const openEditor = async (uri: string) => {
@@ -75,7 +84,7 @@ const Testpage = () => {
       if (permenantPath !== '') {
         const removingFileName = await getPath(tempPath);
         await RNFS.unlink(removingFileName);
-        getAllImages(setImageArr);
+        getAllImages(setExistingSignAuditPhotos);
       }
       return;
     } catch (e: any) {
@@ -135,16 +144,9 @@ const Testpage = () => {
     );
   };
 
-  useEffect(() => {
-    // dropImageTable();
-    clearCache();
-    createImageTable();
-    getAllImages(setImageArr);
-  }, []);
-
   const readImages = () => {
     let images: any[] = [];
-    imageArr?.forEach(async item => {
+    existingSignAuditPhotos?.forEach(async item => {
       console.log('itemitemitemitemitemitemitem', item);
       const readImage: string = await RNFS.readFile(item.path, 'base64');
       if (readImage) {
@@ -155,35 +157,93 @@ const Testpage = () => {
   };
 
   useEffect(() => {
-    if (imageArr?.length > 0) {
+    if (existingSignAuditPhotos?.length > 0) {
       readImages();
     }
-  }, [imageArr]);
+  }, [existingSignAuditPhotos]);
+
+  useEffect(() => {
+    // dropImageTable();
+    // clearCache();
+    createImageTable();
+    getAllImages(setExistingSignAuditPhotos);
+  }, []);
+
+  const showPhotoOptions = () => {
+    Alert.alert(
+      'Select Photo',
+      'Choose an option',
+      [
+        {
+          text: 'Take Photo',
+          onPress: () => {
+            console.log('Take Photo pressed');
+            handleTakePhoto();
+          },
+        },
+        {
+          text: 'Pick from Gallery',
+          onPress: () => {
+            console.log('Pick from Gallery pressed');
+            handlePickPhoto();
+          },
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ],
+      {cancelable: true},
+    );
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Photo Picker + Editor</Text>
 
-      <View style={styles.buttonRow}>
-        <Button title="📷 Take Photo" onPress={handleTakePhoto} />
-        <Button title="🖼️ Pick from Gallery" onPress={handlePickPhoto} />
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Existing Sign Audit</Text>
+        <View style={styles.buttonRow}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => showPhotoOptions()}>
+            <Text style={styles.buttonText}> No File Choosen</Text>
+          </TouchableOpacity>
+        </View>
+        <ScrollView horizontal contentContainerStyle={styles.photoRow}>
+          {existingSignAuditPhotos.map((item, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.photoCard}
+              onPress={() => editTheExistingImage(item)}>
+              <Image
+                source={{uri: 'file://' + item.path}}
+                style={styles.photo}
+              />
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
-      {imageArr?.length > 0 ? (
-        <>
-          {imageArr.map((item, index) => {
-            return (
-              <TouchableOpacity
-                key={index}
-                onPress={() => editTheExistingImage(item)}>
-                <Image
-                  source={{uri: 'file://' + item.path}}
-                  style={styles.preview}
-                />
-              </TouchableOpacity>
-            );
-          })}
-        </>
-      ) : null}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Electrical Audit</Text>
+        <View style={styles.buttonRow}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => showPhotoOptions()}>
+            <Text style={styles.buttonText}> No File Choosen</Text>
+          </TouchableOpacity>
+        </View>
+        <ScrollView horizontal contentContainerStyle={styles.photoRow}>
+          {electricalAuditPhotos.map((item, index) => (
+            <TouchableOpacity key={index} style={styles.photoCard}>
+              <Image
+                source={{uri: 'file://' + item.path}}
+                style={styles.photo}
+              />
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
     </ScrollView>
   );
 };
@@ -192,20 +252,60 @@ export default Testpage;
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     padding: 20,
+    backgroundColor: '#f7f7f7',
   },
-  title: {fontSize: 20, marginBottom: 20, fontWeight: 'bold'},
-  buttonRow: {flexDirection: 'row', gap: 10, marginBottom: 20},
-  preview: {
-    width: 80,
-    height: 80,
-    marginTop: 10,
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    alignSelf: 'center',
+  },
+  section: {
+    marginBottom: 30,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 10,
+    color: '#333',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 15,
+  },
+  button: {
+    flex: 1,
+    backgroundColor: '#007BFF',
+    paddingVertical: 12,
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ccc',
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  photoRow: {
+    paddingVertical: 5,
+    gap: 10,
+  },
+  photoCard: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
+    overflow: 'hidden',
+    marginRight: 10,
+    backgroundColor: '#fff',
+    elevation: 3, // shadow for Android
+    shadowColor: '#000', // shadow for iOS
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+  },
+  photo: {
+    width: '100%',
+    height: '100%',
   },
 });
 

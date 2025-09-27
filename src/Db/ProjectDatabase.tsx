@@ -43,7 +43,7 @@ export const insertImage = (ImageId: string, path: string) => {
 export const updatePathInsideImageTable = (
   imageID: string,
   newPath: string,
-  setImageArr: any,
+  setter: any,
 ) => {
   db.transaction((tx: any) => {
     tx.executeSql(
@@ -51,7 +51,7 @@ export const updatePathInsideImageTable = (
       [newPath, imageID],
       (_: any, result: any) => {
         console.log(`Image ${imageID} path updated to ${newPath}`, result);
-        getAllImages(setImageArr);
+        getAllImages(setter);
       },
       (_: any, error: any) => {
         console.log(`Error updating image ${imageID}:`, error);
@@ -61,7 +61,7 @@ export const updatePathInsideImageTable = (
   });
 };
 
-export const getAllImages = (setImageArr: any) => {
+export const getAllImages = (setter: any) => {
   db.transaction((tx: any) => {
     tx.executeSql(
       'SELECT * FROM Images',
@@ -71,7 +71,7 @@ export const getAllImages = (setImageArr: any) => {
         for (let i = 0; i < results.rows.length; i++) {
           rows.push(results.rows.item(i));
         }
-        setImageArr(rows);
+        setter(rows);
         console.log('ROWSSSSS:', rows);
       },
       (_: any, error: any) => console.log('Select error', error),
