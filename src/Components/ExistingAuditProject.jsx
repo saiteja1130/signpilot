@@ -17,9 +17,10 @@ import RadioButton from './RadioButton';
 import {useSelector} from 'react-redux';
 import Photo from '../../assets/images/photo.svg';
 import axios from 'axios';
-import {handleAddPhoto} from '../Functions/functions.js';
+import {handleAddPhoto, useNetworkStatus} from '../Functions/functions.js';
 import Toast from 'react-native-toast-message';
 import RNFS from 'react-native-fs';
+import {updateExistingSignAudit} from '../Db/LocalData.tsx';
 
 const ExistingAuditProject = ({handleFetchData}) => {
   const baseUrl = useSelector(state => state.baseUrl.value);
@@ -45,7 +46,9 @@ const ExistingAuditProject = ({handleFetchData}) => {
   const [selectedOptions, setSelectedOptions] = useState({
     existingSignAuditPhotos:
       signProjectData?.existing_sign_audit?.existingSignAuditPhotos,
-    Id: signProjectData?.existing_sign_audit?.id,
+    Id:
+      signProjectData?.existing_sign_audit?.id ||
+      signProjectData?.existing_sign_audit?.Id,
     projectId: signProjectData?.existing_sign_audit?.projectId,
     signId: signProjectData?.existing_sign_audit?.signId,
     optionId: signProjectData?.existing_sign_audit?.optionId,
@@ -132,48 +135,67 @@ const ExistingAuditProject = ({handleFetchData}) => {
     }
   };
 
+  console.log('DAATAATATTATATA::', signProjectData);
+
   const handleSave = async () => {
+    console.log('savinggg....');
+    const status = true;
+
     setLoadingImage(true);
     const readyImages = selectedOptions?.existingSignAuditPhoto?.map(
       data => data?.base64,
     );
+
     const bodyData = {
       ...selectedOptions,
       existingSignAuditSummaryNotes,
       existingSignAuditTodoPunchList,
       existingSignAuditPhoto: readyImages,
       existingSignAuditDocumentSignCondition,
+      signAliasName: signProjectData?.signAliasName,
+      signType: signProjectData?.signType,
     };
     // console.log('EXISTING BODY DATA::::', bodyData);
-
-    let apiSuccess = false;
     try {
-      const token = loginData?.tokenNumber;
-      const response = await axios.post(
-        `${baseUrl}/updateExistingSignAudit`,
-        bodyData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
+      console.log('saved11111....');
+      if (status) {
+        const token = loginData?.tokenNumber;
+        const response = await axios.post(
+          `${baseUrl}/updateExistingSignAudit`,
+          bodyData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           },
-        },
-      );
+        );
+        console.log('saved2222....');
 
-      // console.log('EXISITING SIGN API RESPONSE:::', response.data);
-      if (response?.data?.status) {
-        apiSuccess = true;
-        Toast.show({
-          type: 'success',
-          text1: response?.data?.message || 'Audit saved successfully.',
-          visibilityTime: 3000,
-          position: 'top',
-        });
+        // console.log('EXISITING SIGN API RESPONSE:::', response.data);
+        if (response?.data?.status) {
+          console.log('saved44444....');
+          handleFetchData(null, signProjectData);
+          console.log('saved3333....');
+          Toast.show({
+            type: 'success',
+            text1: response?.data?.message || 'Audit saved successfully.',
+            visibilityTime: 3000,
+            position: 'top',
+          });
+          console.log('saved4444....');
+        } else {
+          throw new Error('Sync failed with unknown server response.');
+        }
       } else {
-        throw new Error('Sync failed with unknown server response.');
+        console.log(bodyData);
+        // return;
+        updateExistingSignAudit(bodyData, 0);
+        console.log('saved66666....');
       }
     } catch (error) {
       console.log(' API Sync failed. Will still save locally.');
       console.log('Error:', error?.response?.data || error?.message);
+      // updateExistingSignAudit(bodyData);
       Toast.show({
         type: 'info',
         text1: 'Saved Offline. Will sync later.',

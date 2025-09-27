@@ -247,7 +247,7 @@ const ElectricalAssessment = ({handleFetchData}) => {
       console.log('Error response data:', error.response);
     }
   };
-  
+
   useEffect(() => {
     setTimeout(() => {
       setLoadingImage(false);
@@ -554,7 +554,7 @@ const ElectricalAssessment = ({handleFetchData}) => {
                       onChangeText={setElectricalAuditTodoPunchList}
                     />
                     <Text style={{textAlign: 'right', marginTop: 5}}>
-                      {electricalAuditTodoPunchList.length}/300
+                      {electricalAuditTodoPunchList?.length}/300
                     </Text>
                   </View>
                   <TouchableOpacity
@@ -577,7 +577,7 @@ const ElectricalAssessment = ({handleFetchData}) => {
                       onChangeText={setElectricalAuditSummaryNotes}
                     />
                     <Text style={{textAlign: 'right', marginTop: 5}}>
-                      {electricalAuditSummaryNotes.length}/300
+                      {electricalAuditSummaryNotes?.length}/300
                     </Text>
                   </View>
                   <TouchableOpacity

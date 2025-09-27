@@ -59,7 +59,7 @@ const StackNavigation = () => {
     <SafeAreaView style={{flex: 1}}>
       <Stack.Navigator
         screenOptions={{headerShown: false}}
-        initialRouteName={user?.tokenNumber ? 'TestPage' : 'TestPage'}>
+        initialRouteName={user?.tokenNumber ? 'Home' : 'Login'}>
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Home" component={Home} />
         <Stack.Screen name="TestPage" component={TestPage} />

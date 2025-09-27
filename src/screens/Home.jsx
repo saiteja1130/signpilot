@@ -30,11 +30,30 @@ import Toast from 'react-native-toast-message';
 import {setActiveState} from '../Redux/Slices/Active';
 import ProgressBar from '../Components/Progressbar';
 import {useNetworkStatus} from '../Functions/functions';
+import {
+  createElectricalAuditTable,
+  createExistingSignAuditTable,
+  createIndoorPhotosAndMeasurementsTable,
+  createLocalDB,
+  createPermittingAssessmentTable,
+  createSignDataOptionsTable,
+  createSignGeneralAuditTable,
+  dropAllTables,
+  fetchAllProjectsData,
+  getUnsyncedExistingSignAudits,
+  insertElectricalAudit,
+  insertExistingSignAudit,
+  insertIndoorPhotosAndMeasurements,
+  insertPermittingAssessment,
+  insertProjectsData,
+  insertSignGeneralAudit,
+} from '../Db/LocalData';
 
 const Home = () => {
   const baseUrl = useSelector(state => state.baseUrl.value);
   const signProjectData = useSelector(state => state.signProject.value);
   const status = useNetworkStatus();
+  // const status = false;
   const navigation = useNavigation();
   const [selectedProject, setSelectedProject] = useState('');
   const [selectedSignValue, setSelectedSignValue] = useState('');
@@ -54,31 +73,54 @@ const Home = () => {
 
   const fetchData = async (state, previousSignSelected) => {
     console.log('API fetching....');
-    try {
-      const token = loginData?.tokenNumber;
-      const userId = loginData?.userId;
-      const role = loginData?.role;
-      const response = await axios.get(`${baseUrl}/getData/${userId}/${role}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+    if (status) {
+      try {
+        const token = loginData?.tokenNumber;
+        const userId = loginData?.userId;
+        const role = loginData?.role;
+        const response = await axios.get(
+          `${baseUrl}/getData/${userId}/${role}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
 
-      if (response.data.status) {
-        setResponse(response.data.status);
-        const data = response.data.projectData;
-        console.log(data);
-        setAlldata(data);
-        handleProjectSelection(data, previousSignSelected, state);
-      } else {
-        setResponse(response.data.status);
+        if (response.data.status) {
+          setResponse(response.data.status);
+          const data = response.data.projectData;
+          console.log('USER PROJECTSSSSSSSSS DATAAA:::::::', data);
+          insertProjectsData(data);
+          insertExistingSignAudit(data, 1);
+          insertElectricalAudit(data);
+          insertPermittingAssessment(data);
+          insertIndoorPhotosAndMeasurements(data);
+          insertSignGeneralAudit(data);
+          fetchAllProjectsData(projects => {
+            console.log('All projects data loaded from SQLite:', projects);
+            setAlldata(projects);
+            handleProjectSelection(projects, previousSignSelected, state);
+          });
+        } else {
+          setResponse(response.data.status);
+        }
+      } catch (error) {
+        console.error('Fetch failed:', error?.response?.data || error.message);
+        setResponse(false);
+      } finally {
+        setLoading(false);
+        console.log('API fetched....');
       }
-    } catch (error) {
-      console.error('Fetch failed:', error?.response?.data || error.message);
-      setResponse(false);
-    } finally {
+    } else {
+      console.log('USER IS OFFLINE USING LOCAL DATABASE::::');
+      fetchAllProjectsData(projects => {
+        console.log('All projects data loaded from SQLite:', projects);
+        setAlldata(projects);
+        handleProjectSelection(projects, previousSignSelected, state);
+      });
+      setResponse(true);
       setLoading(false);
-      console.log('API fetched....');
     }
   };
 
@@ -194,6 +236,64 @@ const Home = () => {
     }, [loginData]),
   );
 
+  useEffect(() => {
+    // dropAllTables();
+    createLocalDB();
+    createSignDataOptionsTable();
+    createExistingSignAuditTable();
+    createElectricalAuditTable();
+    createPermittingAssessmentTable();
+    createIndoorPhotosAndMeasurementsTable();
+    createSignGeneralAuditTable();
+  }, []);
+
+  const syncToOnline = async () => {
+    try {
+      console.log('STARTED SYNCINGGGGG');
+      getUnsyncedExistingSignAudits(async audits => {
+        console.log('audits::::::::::::', audits);
+        // return
+        if (audits.length > 0) {
+          const token = loginData?.tokenNumber;
+          for (const audit of audits) {
+            const data = {
+              ...audit,
+              teamId: loginData?.userId,
+              surveyModule: '',
+            };
+            try {
+              const response = await axios.post(
+                `${baseUrl}/updateExistingSignAudit`,
+                data,
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                },
+              );
+              console.log('RESPONSE SYNCEDDDD::', response.data);
+              updateExistingSignAudit(audit, 1);
+            } catch (err) {
+              console.error(
+                'Error syncing audit ID',
+                audit.Id,
+                err.response.data,
+              );
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.log('RESPONSE SYNCHEDD ERRORRRR::', error);
+    } finally {
+      console.log('STARTED SYNCINGGGGG');
+    }
+  };
+
+  useEffect(() => {
+    syncToOnline();
+  }, []);
+
   const handleRefresh = async () => {
     setRefreshing(true);
     await new Promise(resolve => {
@@ -202,6 +302,7 @@ const Home = () => {
     });
     setRefreshing(false);
   };
+
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -347,6 +448,9 @@ const Home = () => {
           <Logo width={150} height={36} />
         </View>
         <View style={styles.iconContainer}>
+          <TouchableOpacity onPress={() => syncToOnline()}>
+            <Text>Update</Text>
+          </TouchableOpacity>
           {status && (
             <TouchableOpacity onPress={() => handleRefresh()}>
               <Refresh width={36} height={36} />
@@ -531,11 +635,11 @@ const Home = () => {
               {signConfirmed && (
                 <>
                   <ExistingAuditProject handleFetchData={fetchData} />
-                  <ElectricalAssessment handleFetchData={fetchData} />
+                  {/* <ElectricalAssessment handleFetchData={fetchData} /> */}
                   <PermittingAssenment handleFetchData={fetchData} />
                   <Outdoor handleFetchData={fetchData} />
                   {/* <Indoor handleFetchData={fetchData} /> */}
-                  {status && <Photos handleFetchData={fetchData} />}
+                  {<Photos handleFetchData={fetchData} />}
 
                   <View>
                     <TouchableOpacity
