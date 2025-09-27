@@ -117,7 +117,7 @@ const CustomerProjectScreen = () => {
       }
 
       const response = await axios.post(
-        `https://www.beeberg.com/api/${apiEndpointsToSetSigns}`,
+        `${baseUrl}/${apiEndpointsToSetSigns}`,
         updatedData,
         {
           headers: {Authorization: `Bearer ${token}`},

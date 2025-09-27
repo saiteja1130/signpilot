@@ -7,112 +7,77 @@ import {
   Image,
   Alert,
   TouchableOpacity,
-  Platform,
-  PermissionsAndroid,
+  ScrollView,
 } from 'react-native';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import PhotoEditor from '@baronha/react-native-photo-editor';
 import RNFS from 'react-native-fs';
-import ImageResizer from 'react-native-image-resizer';
+import {
+  requestCameraPermission,
+  requestMediaPermission,
+} from '../Functions/functions';
+import {
+  createImageTable,
+  getAllImages,
+  updatePathInsideImageTable,
+} from '../Db/ProjectDatabase';
+import {compressImage} from '../Functions/compressImage';
+import {
+  clearCache,
+  functionToSaveImages,
+  getPath,
+} from '../Functions/FSfunctions';
 
 const Testpage = () => {
-  const [editedImagePath, setEditedImagePath] = useState<string | null>(null);
+  const [imageArr, setImageArr] = useState<any[]>([]);
+  const editTheExistingImage = async (item: any) => {
+    const path = await getPath(item.path);
+    const result: any = await PhotoEditor.open({
+      path,
+      stickers: [],
+    });
+    const tempPath: string = await compressImage(result, 'Final After Editing');
 
-  const formatSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-  };
-
-  // Request permissions
-  const requestPermissions = async () => {
-    if (Platform.OS === 'android') {
-      try {
-        const perms = [PermissionsAndroid.PERMISSIONS.CAMERA];
-        if (Platform.Version >= 33) {
-          perms.push(PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES);
-        } else {
-          perms.push(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE);
-        }
-        const granted = await PermissionsAndroid.requestMultiple(perms);
-        return (
-          granted[PermissionsAndroid.PERMISSIONS.CAMERA] ===
-            PermissionsAndroid.RESULTS.GRANTED &&
-          (Platform.Version >= 33
-            ? granted[PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES] ===
-              PermissionsAndroid.RESULTS.GRANTED
-            : granted[PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE] ===
-              PermissionsAndroid.RESULTS.GRANTED)
-        );
-      } catch (err) {
-        console.warn(err);
-        return false;
-      }
+    if (tempPath !== '') {
+      const fileName = await getPath(result);
+      await RNFS.unlink(fileName);
+      await RNFS.unlink(path);
     }
-    return true;
-  };
-
-  const getPath = async (uri: string) => {
-    if (uri.startsWith('content://')) {
-      const dest = `${RNFS.CachesDirectoryPath}/temp_${Date.now()}.jpg`;
-      await RNFS.copyFile(uri, dest);
-      return dest;
-    }
-    return uri.replace('file://', '');
-  };
-
-  const logFileSize = async (path: string, label: string) => {
-    try {
-      const stats = await RNFS.stat(path);
-      console.log(`${label} size: ${formatSize(Number(stats.size))}`);
-    } catch (e) {
-      console.log(`Error reading size for ${label}:`, e);
-    }
-  };
-
-  //return only string variable
-  const compressImage = async (uri: string, label: string): Promise<string> => {
-    try {
-      const resizedImage = await ImageResizer.createResizedImage(
-        uri,
-        800,
-        600,
-        'JPEG',
-        80,
-      );
-      const uriImage: string = resizedImage.uri;
-      console.log(
-        `${label} compressed path:`,
-        typeof resizedImage.uri,
-        uriImage,
-      );
-      await logFileSize(uriImage, label);
-      return uriImage;
-    } catch (err) {
-      console.log(`${label} compression error:`, err);
-      return '';
-    }
+    const permenantPath = await functionToSaveImages(
+      tempPath,
+      'ExistingSignAudit',
+      true,
+    );
+    updatePathInsideImageTable(item.imageID, permenantPath, setImageArr);
   };
 
   const openEditor = async (uri: string) => {
     try {
       const path = await getPath(uri);
-      await logFileSize(path, 'Before Editing');
-
       const result: any = await PhotoEditor.open({
         path,
         stickers: [],
       });
-
-      console.log('Edited image saved at:', result);
-      await logFileSize(result, 'After Editing (raw)');
-
-      // 🔹 Compress AFTER editing
-      const finalCompressed: string = await compressImage(
+      const tempPath: string = await compressImage(
         result,
         'Final After Editing',
       );
-      setEditedImagePath(finalCompressed);
+      if (tempPath !== '') {
+        const fileName = await getPath(result);
+        await RNFS.unlink(fileName);
+      }
+      console.log('Edited image saved at:', tempPath);
+      const permenantPath = await functionToSaveImages(
+        tempPath,
+        'ExistingSignAudit',
+        false,
+      );
+      if (permenantPath !== '') {
+        const removingFileName = await getPath(tempPath);
+        await RNFS.unlink(removingFileName);
+        getAllImages(setImageArr);
+      }
+      return;
     } catch (e: any) {
       console.log('PhotoEditor error:', e.message);
       Alert.alert('Error', e.message);
@@ -120,7 +85,7 @@ const Testpage = () => {
   };
 
   const handleTakePhoto = async () => {
-    const hasPermission = await requestPermissions();
+    const hasPermission = await requestCameraPermission();
     if (!hasPermission) {
       Alert.alert('Permissions denied');
       return;
@@ -133,7 +98,7 @@ const Testpage = () => {
       }
       if (response.assets && response.assets[0].uri) {
         const originalPath = response.assets[0].uri;
-        await logFileSize(originalPath, 'Original Picked (Camera)');
+
         const compressPath: any = await compressImage(
           originalPath,
           'After Initial Compression',
@@ -144,7 +109,7 @@ const Testpage = () => {
   };
 
   const handlePickPhoto = async () => {
-    const hasPermission = await requestPermissions();
+    const hasPermission = await requestMediaPermission();
     if (!hasPermission) {
       Alert.alert('Permissions denied');
       return;
@@ -159,8 +124,8 @@ const Testpage = () => {
         }
         if (response.assets && response.assets[0].uri) {
           const originalPath = response.assets[0].uri;
-          await logFileSize(originalPath, 'Original Picked (Gallery)');
-          const compressPath: any = await compressImage(
+
+          const compressPath: string = await compressImage(
             originalPath,
             'After Initial Compression',
           );
@@ -170,52 +135,56 @@ const Testpage = () => {
     );
   };
 
-  const downloadImage = async () => {
-    try {
-      const folderPath = `${RNFS.DocumentDirectoryPath}/existingauditphotos`;
-      console.log('folderPath:::', folderPath);
-      const folderExists: boolean = await RNFS.exists(folderPath);
-      if (!folderExists) {
-        await RNFS.mkdir(folderPath);
-        console.log('Folder Created');
+  useEffect(() => {
+    // dropImageTable();
+    clearCache();
+    createImageTable();
+    getAllImages(setImageArr);
+  }, []);
+
+  const readImages = () => {
+    let images: any[] = [];
+    imageArr?.forEach(async item => {
+      console.log('itemitemitemitemitemitemitem', item);
+      const readImage: string = await RNFS.readFile(item.path, 'base64');
+      if (readImage) {
+        images.push(readImage);
       }
-      console.log('Folder Created::', folderExists);
-      const uri =
-        'https://images.unsplash.com/photo-1507149833265-60c372daea22';
-      const fileName = `ExistingAuditPhoto_${Date.now()}.jpg`;
-      const filePath = `${folderPath}/${fileName}`;
-
-      const result = await RNFS.downloadFile({
-        fromUrl: uri,
-        toFile: filePath,
-      }).promise;
-
-      console.log('Download Image:::', result);
-    } catch (error) {
-      console.log('Download Image error:::', error);
-    }
+    });
+    console.log('Images:::::::::::::::', images);
   };
 
   useEffect(() => {
-    downloadImage();
-  }, []);
+    if (imageArr?.length > 0) {
+      readImages();
+    }
+  }, [imageArr]);
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Photo Picker + Editor</Text>
 
       <View style={styles.buttonRow}>
         <Button title="📷 Take Photo" onPress={handleTakePhoto} />
         <Button title="🖼️ Pick from Gallery" onPress={handlePickPhoto} />
       </View>
-
-      {editedImagePath && (
-        <TouchableOpacity onPress={() => openEditor(editedImagePath!)}>
-          <Image source={{uri: editedImagePath}} style={styles.preview} />
-          <Text style={{marginTop: 10}}>Final Image Saved</Text>
-        </TouchableOpacity>
-      )}
-    </View>
+      {imageArr?.length > 0 ? (
+        <>
+          {imageArr.map((item, index) => {
+            return (
+              <TouchableOpacity
+                key={index}
+                onPress={() => editTheExistingImage(item)}>
+                <Image
+                  source={{uri: 'file://' + item.path}}
+                  style={styles.preview}
+                />
+              </TouchableOpacity>
+            );
+          })}
+        </>
+      ) : null}
+    </ScrollView>
   );
 };
 
@@ -231,11 +200,41 @@ const styles = StyleSheet.create({
   title: {fontSize: 20, marginBottom: 20, fontWeight: 'bold'},
   buttonRow: {flexDirection: 'row', gap: 10, marginBottom: 20},
   preview: {
-    width: 200,
-    height: 200,
-    marginTop: 20,
+    width: 80,
+    height: 80,
+    marginTop: 10,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#ccc',
   },
 });
+
+// const downloadImage = async () => {
+//   try {
+//     const folderPath = `${RNFS.DocumentDirectoryPath}/existingauditphotos`;
+//     console.log('folderPath:::', folderPath);
+//     const folderExists: boolean = await RNFS.exists(folderPath);
+//     if (!folderExists) {
+//       await RNFS.mkdir(folderPath);
+//       console.log('Folder Created');
+//     }
+//     console.log('Folder Created::', folderExists);
+//     const uri =
+//       'https://images.unsplash.com/photo-1507149833265-60c372daea22';
+//     const fileName = `ExistingAuditPhoto_${Date.now()}.jpg`;
+//     const filePath = `${folderPath}/${fileName}`;
+
+//     const result = await RNFS.downloadFile({
+//       fromUrl: uri,
+//       toFile: filePath,
+//     }).promise;
+
+//     console.log('Download Image:::', result);
+//   } catch (error) {
+//     console.log('Download Image error:::', error);
+//   }
+// };
+
+// useEffect(() => {
+//   downloadImage();
+// }, []);
