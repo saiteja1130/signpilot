@@ -19,7 +19,6 @@ import Photo from '../../assets/images/photo.svg';
 import axios from 'axios';
 import {handleAddPhoto, useNetworkStatus} from '../Functions/functions.js';
 import Toast from 'react-native-toast-message';
-import RNFS from 'react-native-fs';
 import {updateExistingSignAudit} from '../Db/LocalData.tsx';
 
 const ExistingAuditProject = ({handleFetchData}) => {

@@ -41,12 +41,14 @@ import {
   dropAllTables,
   fetchAllProjectsData,
   getUnsyncedExistingSignAudits,
+  getUnsyncedPermittingAssessments,
   insertElectricalAudit,
   insertExistingSignAudit,
   insertIndoorPhotosAndMeasurements,
   insertPermittingAssessment,
   insertProjectsData,
   insertSignGeneralAudit,
+  updatePermittingAssessment,
 } from '../Db/LocalData';
 
 const Home = () => {
@@ -94,7 +96,7 @@ const Home = () => {
           insertProjectsData(data);
           insertExistingSignAudit(data, 1);
           insertElectricalAudit(data);
-          insertPermittingAssessment(data);
+          insertPermittingAssessment(data, 1);
           insertIndoorPhotosAndMeasurements(data);
           insertSignGeneralAudit(data);
           fetchAllProjectsData(projects => {
@@ -248,10 +250,10 @@ const Home = () => {
   }, []);
 
   const syncToOnline = async () => {
+    console.log('STARTED SYNCINGGGGG');
     try {
-      console.log('STARTED SYNCINGGGGG');
       getUnsyncedExistingSignAudits(async audits => {
-        console.log('audits::::::::::::', audits);
+        console.log('Pending Existing SYNCCCC::::::::::::', audits);
         // return
         if (audits.length > 0) {
           const token = loginData?.tokenNumber;
@@ -271,7 +273,7 @@ const Home = () => {
                   },
                 },
               );
-              console.log('RESPONSE SYNCEDDDD::', response.data);
+              console.log('RESPONSE EXISTINGG SYNCEDDDD::', response.data);
               updateExistingSignAudit(audit, 1);
             } catch (err) {
               console.error(
@@ -284,15 +286,50 @@ const Home = () => {
         }
       });
     } catch (error) {
+      console.log('ERRORRRRRRR!!!!!!!!!!!!!!:', error);
+    }
+    try {
+      getUnsyncedPermittingAssessments(async audits => {
+        console.log('Pending Permitt sync:', audits);
+        // return
+        if (audits.length > 0) {
+          const token = loginData?.tokenNumber;
+          for (const audit of audits) {
+            const data = {
+              ...audit,
+              teamId: loginData?.userId,
+              surveyModule: '',
+            };
+            try {
+              const response = await axios.post(
+                `${baseUrl}/updatePermittingAssessmentAudit`,
+                data,
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                },
+              );
+              console.log('RESPONSE PERMITTT SYNCEDDDD::', response.data);
+              updatePermittingAssessment(audit, 1);
+            } catch (err) {
+              console.error(
+                'Error syncing audit ID',
+                audit.Id,
+                err.response.data,
+              );
+            }
+          }
+        }
+      });
+    } catch (error) {
       console.log('RESPONSE SYNCHEDD ERRORRRR::', error);
-    } finally {
-      console.log('STARTED SYNCINGGGGG');
     }
   };
 
-  useEffect(() => {
-    syncToOnline();
-  }, []);
+  // useEffect(() => {
+  //   syncToOnline();
+  // }, []);
 
   const handleRefresh = async () => {
     setRefreshing(true);

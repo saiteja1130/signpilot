@@ -58,7 +58,7 @@ type ExistingSignAudit = {
 };
 
 type PermittingAssessment = {
-  id: string; // same as signTableId
+  Id: string; // same as signTableId
   projectId: string;
   signId: string;
   optionId: string;
@@ -391,7 +391,7 @@ export const createPermittingAssessmentTable = () => {
     tx.executeSql(
       `
       CREATE TABLE IF NOT EXISTS permitting_assessment (
-        id TEXT PRIMARY KEY,              -- same as signTableId
+        Id TEXT PRIMARY KEY,              -- same as signTableId
         projectId TEXT,
         signId TEXT,
         optionId TEXT,
@@ -413,6 +413,7 @@ export const createPermittingAssessmentTable = () => {
         adminName TEXT,
         createdDate TEXT,
         customerName TEXT,
+         isSynced INTEGER DEFAULT 0,
         FOREIGN KEY (projectId) REFERENCES projects(projectId) ON DELETE CASCADE
       )
       `,
@@ -789,26 +790,28 @@ export const insertElectricalAudit = (projects: any[]) => {
   );
 };
 
-export const insertPermittingAssessment = (projects: any[]) => {
+export const insertPermittingAssessment = (projects: any[], syched: number) => {
   db.transaction(
     (tx: any) => {
       projects.forEach(project => {
         project.signDataOptions?.forEach((option: any) => {
           const audit: PermittingAssessment = option.permitting_assessment;
+          console.log('AUDITTTTPERMITTTTTT:::::::::::::::', audit);
+          const id = option.existing_sign_audit.id;
           if (audit) {
             tx.executeSql(
               `
               INSERT OR REPLACE INTO permitting_assessment (
-                id, projectId, signId, optionId, signAliasName, signType, sign_order,
+                Id, projectId, signId, optionId, signAliasName, signType, sign_order,
                 permitRequired, permitAppliedFor, permitTimeframeFrom, permitTimeframeTo,
                 permitEstimatedCost, permitAcquisitionFee, permitAcquisitionFeeText,
                 electricalSignsAllowed, permittingAssessmentSummaryNotes,
                 permittingAssessmentTodoPunchList, permittingAssessmentspecialInstructions,
-                adminId, adminName, createdDate, customerName
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                adminId, adminName, createdDate, customerName,isSynced
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
               `,
               [
-                audit.id,
+                id,
                 audit.projectId,
                 audit.signId,
                 audit.optionId,
@@ -830,14 +833,15 @@ export const insertPermittingAssessment = (projects: any[]) => {
                 audit.adminName || '',
                 audit.createdDate || '',
                 audit.customerName || '',
+                syched,
               ],
               () =>
                 console.log(
-                  `Inserted permitting_assessment for sign ${audit.id}`,
+                  `Inserted permitting_assessment for sign ${audit.Id}`,
                 ),
               (_: any, error: any) =>
                 console.error(
-                  `Error inserting permitting_assessment ${audit.id}:`,
+                  `Error inserting permitting_assessment ${audit.Id}:`,
                   error,
                 ),
             );
@@ -1298,6 +1302,81 @@ export const updateExistingSignAudit = (
   });
 };
 
+export const updatePermittingAssessment = (
+  audit: PermittingAssessment,
+  syncedValue: number,
+) => {
+  console.log('UPDATINGGGG PERMITTTT:::', audit);
+  db.transaction(
+    (tx: any) => {
+      tx.executeSql(
+        `
+        UPDATE permitting_assessment SET
+          projectId = ?, 
+          signId = ?, 
+          optionId = ?, 
+          signAliasName = ?, 
+          signType = ?, 
+          sign_order = ?, 
+          permitRequired = ?, 
+          permitAppliedFor = ?, 
+          permitTimeframeFrom = ?, 
+          permitTimeframeTo = ?, 
+          permitEstimatedCost = ?, 
+          permitAcquisitionFee = ?, 
+          permitAcquisitionFeeText = ?, 
+          electricalSignsAllowed = ?, 
+          permittingAssessmentSummaryNotes = ?, 
+          permittingAssessmentTodoPunchList = ?, 
+          permittingAssessmentspecialInstructions = ?, 
+          adminId = ?, 
+          adminName = ?, 
+          createdDate = ?, 
+          customerName = ?,
+          isSynced = ?
+        WHERE Id = ?
+        `,
+        [
+          audit.projectId,
+          audit.signId,
+          audit.optionId,
+          audit.signAliasName,
+          audit.signType,
+          audit.sign_order,
+          audit.permitRequired || null,
+          audit.permitAppliedFor || null,
+          audit.permitTimeframeFrom || null,
+          audit.permitTimeframeTo || null,
+          audit.permitEstimatedCost || null,
+          audit.permitAcquisitionFee || null,
+          audit.permitAcquisitionFeeText || null,
+          audit.electricalSignsAllowed || null,
+          audit.permittingAssessmentSummaryNotes || '',
+          audit.permittingAssessmentTodoPunchList || '',
+          audit.permittingAssessmentspecialInstructions || '',
+          audit.adminId || null,
+          audit.adminName || '',
+          audit.createdDate || '',
+          audit.customerName || '',
+          syncedValue,
+          audit.Id,
+        ],
+        () =>
+          console.log(
+            `Updated permitting_assessment ${audit.Id} (isSynced=${syncedValue})`,
+          ),
+        (_: any, error: any) =>
+          console.error(
+            `Error updating permitting_assessment ${audit.Id}:`,
+            error,
+          ),
+      );
+    },
+    (txError: any) => console.error('Transaction ERROR:', txError),
+    () => console.log('permitting_assessment update completed'),
+  );
+};
+
 export const getUnsyncedExistingSignAudits = (
   callback: (data: ExistingSignAudit[]) => void,
 ) => {
@@ -1329,6 +1408,26 @@ export const getUnsyncedExistingSignAudits = (
         console.error('Error fetching unsynced existing_sign_audit:', error);
         callback([]);
         return false; // stops further propagation of error
+      },
+    );
+  });
+};
+
+export const getUnsyncedPermittingAssessments = (
+  callback: (rows: any[]) => void,
+) => {
+  db.transaction((tx: any) => {
+    tx.executeSql(
+      `
+      SELECT * FROM permitting_assessment WHERE isSynced = 0
+      `,
+      [],
+      (_: any, {rows}: any) => {
+        const results = rows.raw ? rows.raw() : rows._array;
+        callback(results);
+      },
+      (_: any, error: any) => {
+        console.error('Error fetching unsynced permitting assessments:', error);
       },
     );
   });

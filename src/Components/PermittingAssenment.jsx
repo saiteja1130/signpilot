@@ -18,6 +18,8 @@ import Date1 from '../../assets/images/date.svg';
 import {useSelector} from 'react-redux';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
+import {updatePermittingAssessment} from '../Db/LocalData';
+
 const PermittingAssenment = ({handleFetchData}) => {
   const baseUrl = useSelector(state => state.baseUrl.value);
   const [active, setActive] = useState('');
@@ -53,7 +55,9 @@ const PermittingAssenment = ({handleFetchData}) => {
     signProjectData?.permitting_assessment?.permitAcquisitionFeeText || '',
   );
   const [selectedOptions, setSelectedOptions] = useState({
-    Id: signProjectData?.permitting_assessment?.id,
+    Id:
+      signProjectData?.permitting_assessment?.id ||
+      signProjectData?.permitting_assessment?.Id,
     projectId: signProjectData?.permitting_assessment?.projectId,
     signId: signProjectData?.permitting_assessment?.signId,
     optionId: signProjectData?.permitting_assessment?.optionId,
@@ -143,6 +147,8 @@ const PermittingAssenment = ({handleFetchData}) => {
     console.log('--- Save Button Pressed ---');
     setLoadingImage(true);
 
+    const status = false;
+
     const permitData = {
       ...selectedOptions,
       permitTimeframeFrom: fromDate?.toISOString() || '',
@@ -151,31 +157,37 @@ const PermittingAssenment = ({handleFetchData}) => {
       permittingAssessmentSummaryNotes,
       permitEstimatedCost,
       permitAcquisitionFeeText,
+      signAliasName: signProjectData?.signAliasName,
+      signType: signProjectData?.signType,
     };
     try {
-      const token = loginData?.tokenNumber;
-      const response = await axios.post(
-        `${baseUrl}/updatePermittingAssessmentAudit`,
-        permitData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
+      if (status) {
+        const token = loginData?.tokenNumber;
+        const response = await axios.post(
+          `${baseUrl}/updatePermittingAssessmentAudit`,
+          permitData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           },
-        },
-      );
+        );
 
-      console.log('PERMITTING ASSESMENT::', response.data);
-      if (response?.data?.status) {
-        apiSuccess = true;
-        Toast.show({
-          type: 'success',
-          text1: response?.data?.message || 'Audit saved successfully.',
-          visibilityTime: 3000,
-          position: 'top',
-        });
-        handleFetchData(null, signProjectData);
+        console.log('PERMITTING ASSESMENT::', response.data);
+        if (response?.data?.status) {
+          apiSuccess = true;
+          Toast.show({
+            type: 'success',
+            text1: response?.data?.message || 'Audit saved successfully.',
+            visibilityTime: 3000,
+            position: 'top',
+          });
+          handleFetchData(null, signProjectData);
+        } else {
+          throw new Error('Sync failed with unknown server response.');
+        }
       } else {
-        throw new Error('Sync failed with unknown server response.');
+        updatePermittingAssessment(permitData, 0);
       }
     } catch (error) {
       console.log('❌ API Sync failed. Will still save locally.');
