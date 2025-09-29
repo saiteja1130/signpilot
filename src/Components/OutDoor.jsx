@@ -24,7 +24,8 @@ import Toast from 'react-native-toast-message';
 import {handleAddPhoto, useNetworkStatus} from '../Functions/functions';
 import {updateSignGeneralAudit} from '../Db/LocalData';
 const OutDoor = ({handleFetchData}) => {
-  const status = useNetworkStatus();
+  // const status = useNetworkStatus();
+  const status = false;
   const baseUrl = useSelector(state => state.baseUrl.value);
   const loginData = useSelector(state => state.login.value);
   const signProjectData = useSelector(state => state.signProject.value);
@@ -277,16 +278,17 @@ const OutDoor = ({handleFetchData}) => {
         }
       } else {
         updateSignGeneralAudit(signGeneralData, 0);
+        handleFetchData(null, signProjectData);
+        Toast.show({
+          type: 'info',
+          text1: 'Saved Offline. Will sync later.',
+          visibilityTime: 3000,
+          position: 'top',
+        });
       }
     } catch (error) {
       console.log('❌ API Sync failed. Will still save locally.');
       console.log('Error:', error?.response?.data || error?.message);
-      Toast.show({
-        type: 'info',
-        text1: 'Saved Offline. Will sync later.',
-        visibilityTime: 3000,
-        position: 'top',
-      });
     } finally {
       setLoadingImage(false);
     }

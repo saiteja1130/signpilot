@@ -25,7 +25,8 @@ import Menu from '../../assets/images/close.svg';
 import {updateElectricalAudit} from '../Db/LocalData';
 
 const ElectricalAssessment = ({handleFetchData}) => {
-  const status = useNetworkStatus();
+  // const status = useNetworkStatus();
+  const status = false;
   const [modalVisible, setModalVisible] = useState(false);
   const [editing, setEditing] = useState('');
   const baseUrl = useSelector(state => state.baseUrl.value);
@@ -183,9 +184,9 @@ const ElectricalAssessment = ({handleFetchData}) => {
       signAliasName: signProjectData?.signAliasName,
       signType: signProjectData?.signType,
     };
-    console.log("BODY DATAAA",bodyData)
+    console.log('BODY DATAAA', bodyData);
     try {
-      if (!status) {
+      if (status) {
         const token = loginData?.tokenNumber;
         const response = await axios.post(
           `${baseUrl}/updateElectricalAudit`,
@@ -210,18 +211,25 @@ const ElectricalAssessment = ({handleFetchData}) => {
         }
       } else {
         updateElectricalAudit(bodyData, 0);
+        handleFetchData(null, signProjectData);
+        Toast.show({
+          type: 'info',
+          text1: 'Saved Offline. Will sync later.',
+          visibilityTime: 3000,
+          position: 'top',
+        });
       }
     } catch (error) {
       console.log('❌ API Sync failed. Will still save locally.');
       console.log('Error:', error?.response?.data || error?.message);
-      Toast.show({
-        type: 'info',
-        text1: 'Saved Offline. Will sync later.',
-        visibilityTime: 3000,
-        position: 'top',
-      });
     } finally {
-      setLoadingImage(false);
+      if (status) {
+        setLoadingImage(false);
+      } else {
+        setTimeout(() => {
+          setLoadingImage(false);
+        }, 1200);
+      }
     }
   };
 

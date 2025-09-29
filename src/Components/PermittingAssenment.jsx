@@ -22,7 +22,8 @@ import {updatePermittingAssessment} from '../Db/LocalData';
 import {useNetworkStatus} from '../Functions/functions';
 
 const PermittingAssenment = ({handleFetchData}) => {
-  const status = useNetworkStatus();
+  // const status = useNetworkStatus();
+  const status = false;
   const baseUrl = useSelector(state => state.baseUrl.value);
   const [active, setActive] = useState('');
   const signProjectData = useSelector(state => state.signProject.value);
@@ -188,18 +189,25 @@ const PermittingAssenment = ({handleFetchData}) => {
         }
       } else {
         updatePermittingAssessment(permitData, 0);
+        handleFetchData(null, signProjectData);
+        Toast.show({
+          type: 'info',
+          text1: 'Saved Offline. Will sync later.',
+          visibilityTime: 3000,
+          position: 'top',
+        });
       }
     } catch (error) {
       console.log('❌ API Sync failed. Will still save locally.');
       console.log('Error:', error?.response?.data || error?.message);
-      Toast.show({
-        type: 'info',
-        text1: 'Saved Offline. Will sync later.',
-        visibilityTime: 3000,
-        position: 'top',
-      });
     } finally {
-      setLoadingImage(false);
+      if (status) {
+        setLoadingImage(false);
+      } else {
+        setTimeout(() => {
+          setLoadingImage(false);
+        }, 1200);
+      }
     }
   };
 

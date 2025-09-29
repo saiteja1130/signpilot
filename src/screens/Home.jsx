@@ -58,7 +58,8 @@ import {
 const Home = () => {
   const baseUrl = useSelector(state => state.baseUrl.value);
   const signProjectData = useSelector(state => state.signProject.value);
-  const status = useNetworkStatus();
+  // const status = useNetworkStatus();
+  const status = false;
   const navigation = useNavigation();
   const [selectedProject, setSelectedProject] = useState('');
   const [selectedSignValue, setSelectedSignValue] = useState('');
@@ -78,8 +79,8 @@ const Home = () => {
 
   const fetchData = async (state, previousSignSelected) => {
     console.log('API fetching....');
-    if (status) {
-      try {
+    try {
+      if (status) {
         const token = loginData?.tokenNumber;
         const userId = loginData?.userId;
         const role = loginData?.role;
@@ -109,23 +110,31 @@ const Home = () => {
           });
         } else {
           setResponse(response.data.status);
+          console.log(
+            'USER PROJECTSSSSSSSSS FALSEE RESPONSEEEE:::::::',
+            response.data,
+          );
         }
-      } catch (error) {
-        console.error('Fetch failed:', error?.response?.data || error.message);
-        setResponse(false);
-      } finally {
+      } else {
+        console.log('USER IS OFFLINE USING LOCAL DATABASE::::');
+        fetchAllProjectsData(projects => {
+          console.log('All projects data loaded from SQLite:', projects);
+          if (projects.length > 0) {
+            setAlldata(projects);
+            handleProjectSelection(projects, previousSignSelected, state);
+          } else {
+            console.log('No Projects Assigned');
+          }
+        });
+        setResponse(true);
         setLoading(false);
-        console.log('API fetched....');
       }
-    } else {
-      console.log('USER IS OFFLINE USING LOCAL DATABASE::::');
-      fetchAllProjectsData(projects => {
-        console.log('All projects data loaded from SQLite:', projects);
-        setAlldata(projects);
-        handleProjectSelection(projects, previousSignSelected, state);
-      });
-      setResponse(true);
+    } catch (error) {
+      console.error('Fetch failed:', error?.response?.data || error.message);
+      setResponse(false);
+    } finally {
       setLoading(false);
+      console.log('API fetched....');
     }
   };
 
@@ -397,12 +406,10 @@ const Home = () => {
           }
         }
       });
-    } catch (error) {}
+    } catch (error) {
+      console.log('RESPONSE SYNCHEDD ERRORRRR::', error);
+    }
   };
-
-  // useEffect(() => {
-  //   syncToOnline();
-  // }, []);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -558,9 +565,6 @@ const Home = () => {
           <Logo width={150} height={36} />
         </View>
         <View style={styles.iconContainer}>
-          <TouchableOpacity onPress={() => syncToOnline()}>
-            <Text>Update</Text>
-          </TouchableOpacity>
           {status && (
             <TouchableOpacity onPress={() => handleRefresh()}>
               <Refresh width={36} height={36} />
