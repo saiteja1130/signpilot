@@ -56,8 +56,8 @@ import {
 const Home = () => {
   const baseUrl = useSelector(state => state.baseUrl.value);
   const signProjectData = useSelector(state => state.signProject.value);
-  const status = useNetworkStatus();
-  // const status = false;
+  // const status = useNetworkStatus();
+  const status = false;
   const navigation = useNavigation();
   const [selectedProject, setSelectedProject] = useState('');
   const [selectedSignValue, setSelectedSignValue] = useState('');
@@ -710,7 +710,7 @@ const Home = () => {
               {signConfirmed && (
                 <>
                   <ExistingAuditProject handleFetchData={fetchData} />
-                  {/* <ElectricalAssessment handleFetchData={fetchData} /> */}
+                  <ElectricalAssessment handleFetchData={fetchData} />
                   <PermittingAssenment handleFetchData={fetchData} />
                   <Outdoor handleFetchData={fetchData} />
                   {/* <Indoor handleFetchData={fetchData} /> */}

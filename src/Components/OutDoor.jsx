@@ -330,6 +330,7 @@ const OutDoor = ({handleFetchData}) => {
     }, 800);
   }, [loadingImage]);
 
+
   return (
     <View>
       <TouchableOpacity
@@ -350,7 +351,11 @@ const OutDoor = ({handleFetchData}) => {
             {signProjectData?.sign_general_audit?.projectTitle ||
               'Project Name'}
           </Text>
-          <Text style={styles.auditTitle}>Outdoor Sign General Audit</Text>
+          <Text style={styles.auditTitle}>
+            {signProjectData?.signId === '1'
+              ? 'Indoor Sign General Audit'
+              : 'Outdoor Sign General Audit'}
+          </Text>
           <Text style={styles.projectName}>
             {signProjectData?.sign_general_audit?.signType ||
               'Digital indoor free standing'}

@@ -254,7 +254,12 @@ const ElectricalAssessment = ({handleFetchData}) => {
     }, 800);
   }, [loadingImage]);
 
-  if (signProjectData?.electrical_audit === undefined) {
+  const optionIds = ['2', '3', '5', '7', '13', '14', '21'];
+  console.log('first', signProjectData?.electrical_audit?.optionId);
+  if (
+    optionIds.includes(signProjectData?.electrical_audit?.optionId) ||
+    signProjectData?.electrical_audit?.optionId === undefined
+  ) {
     return <View></View>;
   }
 
@@ -646,8 +651,8 @@ const ElectricalAssessment = ({handleFetchData}) => {
             />
             <Text style={{textAlign: 'right', marginTop: 5}}>
               {editing === 'electricalAuditSummaryNotes'
-                ? electricalAuditSummaryNotes.length
-                : electricalAuditTodoPunchList.length}
+                ? electricalAuditSummaryNotes?.length
+                : electricalAuditTodoPunchList?.length}
               /300
             </Text>
           </Pressable>
