@@ -20,6 +20,7 @@ import axios from 'axios';
 import {handleAddPhoto, useNetworkStatus} from '../Functions/functions.js';
 import Toast from 'react-native-toast-message';
 import {updateExistingSignAudit} from '../Db/LocalData.tsx';
+import {showPhotoOptions} from '../Functions/ImagePickFunctions.tsx';
 
 const ExistingAuditProject = ({handleFetchData}) => {
   const status = useNetworkStatus();
@@ -356,12 +357,14 @@ const ExistingAuditProject = ({handleFetchData}) => {
                           />
                           <TouchableOpacity
                             style={styles.imageCon}
-                            onPress={() =>
-                              handleAddPhoto(
+                            onPress={() => {
+                              showPhotoOptions(
                                 setSelectedOptions,
                                 'existingSignAuditPhoto',
-                              )
-                            }>
+                                'ExistingAudit',
+                              );
+                              updateExistingSignAudit();
+                            }}>
                             <View style={styles.photoButton}>
                               <Text style={styles.photoText}>add photo</Text>
                               <Photo />
@@ -382,58 +385,31 @@ const ExistingAuditProject = ({handleFetchData}) => {
                             {loadingImage ? (
                               <ActivityIndicator size="small" color="#FF9239" />
                             ) : (
-                              (() => {
-                                const localPhotos =
-                                  selectedOptions?.existingSignAuditPhoto || [];
-                                const serverPhotos =
-                                  selectedOptions?.existingSignAuditPhotos ||
-                                  [];
-                                const uniqueImagesMap = new Map();
-                                [...localPhotos, ...serverPhotos]
-                                  .filter(
-                                    photo =>
-                                      photo?.imageId &&
-                                      (photo?.path || photo?.url),
-                                  )
-                                  .forEach(photo => {
-                                    if (!uniqueImagesMap.has(photo.imageId)) {
-                                      uniqueImagesMap.set(photo.imageId, photo);
-                                    }
-                                  });
-                                const uniqueImages = Array.from(
-                                  uniqueImagesMap.values(),
-                                );
-                                return uniqueImages.length > 0
-                                  ? uniqueImages.map((data, index) => {
-                                      const uri = data.path
-                                        ? `file://${data.path}`
-                                        : data.url;
-                                      return (
-                                        <View
-                                          key={index}
-                                          style={styles.imageContainer}>
-                                          <Image
-                                            source={{uri}}
-                                            style={styles.image}
-                                          />
-                                          <TouchableOpacity
-                                            onPress={() =>
-                                              handleRemoveImage(
-                                                data.imageId,
-                                                'existingSignAuditPhoto',
-                                              )
-                                            }
-                                            style={styles.removeButton}>
-                                            <Text
-                                              style={styles.removeButtonText}>
-                                              ×
-                                            </Text>
-                                          </TouchableOpacity>
-                                        </View>
-                                      );
-                                    })
-                                  : null;
-                              })()
+                              selectedOptions.existingSignAuditPhoto?.map(
+                                (item, index) => (
+                                  <View
+                                    key={index}
+                                    style={styles.imageContainer}>
+                                    <Image
+                                      source={{uri: `file://${item.path}`}}
+                                      style={styles.image}
+                                    />
+                                    <TouchableOpacity
+                                      // onPress={() =>
+                                      //   handleRemoveImage(
+                                      //     data.imageId,
+                                      //     'electricalAuditPhoto',
+                                      //     'electricalAuditPhotos',
+                                      //   )
+                                      // }
+                                      style={styles.removeButton}>
+                                      <Text style={styles.removeButtonText}>
+                                        ×
+                                      </Text>
+                                    </TouchableOpacity>
+                                  </View>
+                                ),
+                              )
                             )}
                           </View>
                         </View>

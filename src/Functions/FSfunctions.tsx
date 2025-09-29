@@ -53,13 +53,6 @@ export const functionToSaveImages = async (
       console.log('Folder Created::::::::');
     }
     await RNFS.writeFile(fileName, readBase64, 'base64');
-    const existsFile: boolean = await RNFS.exists(fileName);
-    if (!existsFile) {
-      console.log('File Not Found::');
-      return '';
-    }
-    const ImageId: string = Date.now().toString();
-    if (!state) insertImage(ImageId, fileName);
     return fileName;
   } catch (error) {
     console.log('Image Saving Error::', error);
