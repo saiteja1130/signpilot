@@ -22,6 +22,7 @@ import Toast from 'react-native-toast-message';
 import {updateExistingSignAudit} from '../Db/LocalData.tsx';
 
 const ExistingAuditProject = ({handleFetchData}) => {
+  const status = useNetworkStatus();
   const baseUrl = useSelector(state => state.baseUrl.value);
   const loginData = useSelector(state => state.login.value);
   const signProjectData = useSelector(state => state.signProject.value);
@@ -138,7 +139,6 @@ const ExistingAuditProject = ({handleFetchData}) => {
 
   const handleSave = async () => {
     console.log('savinggg....');
-    const status = true;
 
     setLoadingImage(true);
     const readyImages = selectedOptions?.existingSignAuditPhoto?.map(

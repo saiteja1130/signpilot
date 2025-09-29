@@ -21,9 +21,10 @@ import Down from '../../assets/images/down.svg';
 import Up from '../../assets/images/arrow.svg';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
-import {handleAddPhoto} from '../Functions/functions';
+import {handleAddPhoto, useNetworkStatus} from '../Functions/functions';
 import {updateSignGeneralAudit} from '../Db/LocalData';
 const OutDoor = ({handleFetchData}) => {
+  const status = useNetworkStatus();
   const baseUrl = useSelector(state => state.baseUrl.value);
   const loginData = useSelector(state => state.login.value);
   const signProjectData = useSelector(state => state.signProject.value);
@@ -236,8 +237,6 @@ const OutDoor = ({handleFetchData}) => {
     console.log('--- Save Button Pressed ---');
     setLoadingImage(true);
 
-    const status = false;
-
     const signGeneralData = {
       ...selectedOptions,
       signGeneralAuditSummaryNotes,
@@ -329,7 +328,6 @@ const OutDoor = ({handleFetchData}) => {
       setLoadingImage(false);
     }, 800);
   }, [loadingImage]);
-
 
   return (
     <View>

@@ -20,10 +20,12 @@ import RadioButton from './RadioButton';
 import {useDispatch, useSelector} from 'react-redux';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
-import {handleAddPhoto} from '../Functions/functions.js';
+import {handleAddPhoto, useNetworkStatus} from '../Functions/functions.js';
 import Menu from '../../assets/images/close.svg';
+import {updateElectricalAudit} from '../Db/LocalData';
 
 const ElectricalAssessment = ({handleFetchData}) => {
+  const status = useNetworkStatus();
   const [modalVisible, setModalVisible] = useState(false);
   const [editing, setEditing] = useState('');
   const baseUrl = useSelector(state => state.baseUrl.value);
@@ -69,7 +71,9 @@ const ElectricalAssessment = ({handleFetchData}) => {
       signProjectData?.electrical_audit?.electricalAuditTodoPunchList,
     electricalAuditspecialInstructions:
       signProjectData?.electrical_audit?.electricalAuditspecialInstructions,
-    Id: signProjectData?.electrical_audit?.id,
+    Id:
+      signProjectData?.electrical_audit?.id ||
+      signProjectData?.electrical_audit?.Id,
     isElectricPresentAtTheSign:
       signProjectData?.electrical_audit?.isElectricPresentAtTheSign,
     isPowerLiveAtSignLocation:
@@ -171,37 +175,41 @@ const ElectricalAssessment = ({handleFetchData}) => {
 
   const handleSave = async () => {
     setLoadingImage(true);
-
     const bodyData = {
       ...selectedOptions,
       typeOfIlluminationInside,
       electricalAuditTodoPunchList,
       electricalAuditSummaryNotes,
+      signAliasName: signProjectData?.signAliasName,
+      signType: signProjectData?.signType,
     };
-
+    console.log("BODY DATAAA",bodyData)
     try {
-      const token = loginData?.tokenNumber;
-      const response = await axios.post(
-        `${baseUrl}/updateElectricalAudit`,
-        bodyData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
+      if (!status) {
+        const token = loginData?.tokenNumber;
+        const response = await axios.post(
+          `${baseUrl}/updateElectricalAudit`,
+          bodyData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           },
-        },
-      );
+        );
 
-      if (response?.data?.status) {
-        apiSuccess = true;
-        Toast.show({
-          type: 'success',
-          text1: response?.data?.message || 'Audit saved successfully.',
-          visibilityTime: 3000,
-          position: 'top',
-        });
-        handleFetchData(null, signProjectData);
+        if (response?.data?.status) {
+          Toast.show({
+            type: 'success',
+            text1: response?.data?.message || 'Audit saved successfully.',
+            visibilityTime: 3000,
+            position: 'top',
+          });
+          handleFetchData(null, signProjectData);
+        } else {
+          throw new Error('Sync failed with unknown server response.');
+        }
       } else {
-        throw new Error('Sync failed with unknown server response.');
+        updateElectricalAudit(bodyData, 0);
       }
     } catch (error) {
       console.log('❌ API Sync failed. Will still save locally.');

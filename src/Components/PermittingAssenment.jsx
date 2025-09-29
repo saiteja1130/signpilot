@@ -19,8 +19,10 @@ import {useSelector} from 'react-redux';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
 import {updatePermittingAssessment} from '../Db/LocalData';
+import {useNetworkStatus} from '../Functions/functions';
 
 const PermittingAssenment = ({handleFetchData}) => {
+  const status = useNetworkStatus();
   const baseUrl = useSelector(state => state.baseUrl.value);
   const [active, setActive] = useState('');
   const signProjectData = useSelector(state => state.signProject.value);
@@ -146,8 +148,6 @@ const PermittingAssenment = ({handleFetchData}) => {
   const handleSave = async () => {
     console.log('--- Save Button Pressed ---');
     setLoadingImage(true);
-
-    const status = false;
 
     const permitData = {
       ...selectedOptions,

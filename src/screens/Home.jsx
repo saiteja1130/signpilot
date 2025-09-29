@@ -40,6 +40,7 @@ import {
   createSignGeneralAuditTable,
   dropAllTables,
   fetchAllProjectsData,
+  getUnsyncedElectricalAudits,
   getUnsyncedExistingSignAudits,
   getUnsyncedPermittingAssessments,
   getUnsyncedSignGeneralAudits,
@@ -49,6 +50,7 @@ import {
   insertPermittingAssessment,
   insertProjectsData,
   insertSignGeneralAudit,
+  updateElectricalAudit,
   updatePermittingAssessment,
   updateSignGeneralAudit,
 } from '../Db/LocalData';
@@ -56,8 +58,7 @@ import {
 const Home = () => {
   const baseUrl = useSelector(state => state.baseUrl.value);
   const signProjectData = useSelector(state => state.signProject.value);
-  // const status = useNetworkStatus();
-  const status = false;
+  const status = useNetworkStatus();
   const navigation = useNavigation();
   const [selectedProject, setSelectedProject] = useState('');
   const [selectedSignValue, setSelectedSignValue] = useState('');
@@ -97,7 +98,7 @@ const Home = () => {
           console.log('USER PROJECTSSSSSSSSS DATAAA:::::::', data);
           insertProjectsData(data);
           insertExistingSignAudit(data, 1);
-          insertElectricalAudit(data);
+          insertElectricalAudit(data, 1);
           insertPermittingAssessment(data, 1);
           insertIndoorPhotosAndMeasurements(data);
           insertSignGeneralAudit(data, 1);
@@ -363,6 +364,40 @@ const Home = () => {
     } catch (error) {
       console.log('RESPONSE SYNCHEDD ERRORRRR::', error);
     }
+    try {
+      getUnsyncedElectricalAudits(async audits => {
+        console.log('PENDINGG ELECTRICAL AUDITS', audits);
+        if (audits.length > 0) {
+          const token = loginData?.tokenNumber;
+          for (const audit of audits) {
+            const data = {
+              ...audit,
+              teamId: loginData?.userId,
+              surveyModule: '',
+            };
+            try {
+              const response = await axios.post(
+                `${baseUrl}/updateElectricalAudit`,
+                data,
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                },
+              );
+              console.log('RESPONSE SIGNGENERAL SYNCEDDDD::', response.data);
+              updateElectricalAudit(audit, 1);
+            } catch (err) {
+              console.error(
+                'Error syncing audit ID',
+                audit.Id,
+                err.response.data,
+              );
+            }
+          }
+        }
+      });
+    } catch (error) {}
   };
 
   // useEffect(() => {

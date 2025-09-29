@@ -212,7 +212,7 @@ type SignGeneralAudit = {
 };
 
 type ElectricalAudit = {
-  id: string;
+  Id: string;
   projectId: string;
   signId: string;
   optionId: string;
@@ -237,10 +237,10 @@ type ElectricalAudit = {
   anyAccessibilityIssues?: string | null;
 
   electricalAuditDocumentAccessibilityIssues?: string | null;
-  electricalAuditPhotoFromAdmin?: string | null; // JSON or string path
+  electricalAuditPhotoFromAdmin?: any[] | null; // JSON or string path
   electricalAuditPhotos?: any[] | null;
   electricalAuditPhoto?: any[] | null;
-  electricTagsPhotoFromAdmin?: string | null;
+  electricTagsPhotoFromAdmin?: any[] | null;
   electricTagsPhotos?: any[] | null;
   electricTagsPhoto?: any[] | null;
 
@@ -352,7 +352,7 @@ export const createElectricalAuditTable = () => {
     tx.executeSql(
       `
       CREATE TABLE IF NOT EXISTS electrical_audit (
-        id TEXT PRIMARY KEY,             -- unique per signTable
+        Id TEXT PRIMARY KEY,
         projectId TEXT,
         signId TEXT,
         optionId TEXT,
@@ -360,7 +360,7 @@ export const createElectricalAuditTable = () => {
         signType TEXT,
         sign_order TEXT,
 
-        -- ✅ KEEP ONLY THESE (remove the rest)
+        -- ✅ Existing fields
         doesTheExistingSignIlluminate TEXT,
         isElectricPresentAtTheSign TEXT,
         isPowerLiveAtSignLocation TEXT,
@@ -370,7 +370,6 @@ export const createElectricalAuditTable = () => {
         anyKnownRepairorMaintenanceToElectricalEquipmentRequired TEXT,
         electricSubcontractorNeeded TEXT,
         electricTagsorCertificationsPresent TEXT,
-
         electricalAuditSummaryNotes TEXT,
         electricalAuditTodoPunchList TEXT,
         electricalAuditspecialInstructions TEXT,
@@ -380,12 +379,25 @@ export const createElectricalAuditTable = () => {
         adminName TEXT,
         createdDate TEXT,
         customerName TEXT,
+        isSynced INTEGER,
+
+        -- ✅ Newly added fields
+        projectTitle TEXT,
+        teamId TEXT,
+        typeOfIlluminationInside TEXT,
+        electricalAuditPhotoFromAdmin TEXT,
+        electricalAuditPhotos TEXT,
+        electricalAuditPhoto TEXT,
+        electricTagsPhotoFromAdmin TEXT,
+        electricTagsPhotos TEXT,
+        electricTagsPhoto TEXT,
+        surveyModule TEXT,
 
         FOREIGN KEY (projectId) REFERENCES projects(projectId) ON DELETE CASCADE
       )
       `,
       [],
-      () => console.log('electrical_audit table created successfully'),
+      () => console.log('electrical_audit table created/updated successfully'),
       (_: any, error: any) =>
         console.error('Error creating electrical_audit table:', error),
     );
@@ -729,17 +741,21 @@ export const insertExistingSignAudit = (projects: any[], syched: number) => {
   );
 };
 
-export const insertElectricalAudit = (projects: any[]) => {
+export const insertElectricalAudit = (projects: any[], syched: number) => {
   db.transaction(
     (tx: any) => {
       projects.forEach(project => {
         project.signDataOptions?.forEach((option: any) => {
-          const audit: ElectricalAudit = option.electrical_audit;
+          const audit: ElectricalAudit = option?.electrical_audit;
+          if (option?.electrical_audit === undefined) return;
+          console.log('ELECTRICALLL AUDITTTT', audit);
+          const id = option?.electrical_audit?.id;
+          console.log('IDDDDDD', id);
           if (audit) {
             tx.executeSql(
               `
-              INSERT OR REPLACE INTO electrical_audit (
-                id, projectId, signId, optionId, signAliasName, signType, sign_order,
+                INSERT OR REPLACE INTO electrical_audit (
+                Id, projectId, signId, optionId, signAliasName, signType, sign_order,
                 doesTheExistingSignIlluminate,
                 isElectricPresentAtTheSign,
                 isPowerLiveAtSignLocation,
@@ -756,11 +772,20 @@ export const insertElectricalAudit = (projects: any[]) => {
                 adminId,
                 adminName,
                 createdDate,
-                customerName
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                customerName,
+                isSynced,
+                typeOfIlluminationInside,
+                electricalAuditPhotoFromAdmin,
+                electricalAuditPhotos,
+                electricalAuditPhoto,
+                electricTagsPhotoFromAdmin,
+                electricTagsPhotos,
+                electricTagsPhoto,
+                surveyModule
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
               `,
               [
-                audit.id,
+                id,
                 audit.projectId,
                 audit.signId,
                 audit.optionId,
@@ -785,12 +810,21 @@ export const insertElectricalAudit = (projects: any[]) => {
                 audit.adminName || '',
                 audit.createdDate || '',
                 audit.customerName || '',
+                syched,
+                audit.typeOfIlluminationInside || null,
+                JSON.stringify(audit.electricalAuditPhotoFromAdmin || []),
+                JSON.stringify(audit.electricalAuditPhotos || []),
+                JSON.stringify(audit.electricalAuditPhoto || []),
+                JSON.stringify(audit.electricTagsPhotoFromAdmin || []),
+                JSON.stringify(audit.electricTagsPhotos || []),
+                JSON.stringify(audit.electricTagsPhoto || []),
+                audit.surveyModule || null,
               ],
               () =>
-                console.log(`Inserted electrical_audit for sign ${audit.id}`),
+                console.log(`Inserted electrical_audit for sign ${audit.Id}`),
               (_: any, error: any) =>
                 console.error(
-                  `Error inserting electrical_audit ${audit.id}:`,
+                  `Error inserting electrical_audit ${audit.Id}:`,
                   error,
                 ),
             );
@@ -1226,6 +1260,54 @@ export const fetchAllProjectsData = (callback: (projects: any[]) => void) => {
                             audit.existingSignAuditPhotos,
                           );
                         if (
+                          prop === 'electrical_audit' &&
+                          audit.electricalAuditPhotoFromAdmin
+                        ) {
+                          audit.electricalAuditPhotoFromAdmin = JSON.parse(
+                            audit.electricalAuditPhotoFromAdmin,
+                          );
+                        }
+                        if (
+                          prop === 'electrical_audit' &&
+                          audit.electricalAuditPhotos
+                        ) {
+                          audit.electricalAuditPhotos = JSON.parse(
+                            audit.electricalAuditPhotos,
+                          );
+                        }
+                        if (
+                          prop === 'electrical_audit' &&
+                          audit.electricalAuditPhoto
+                        ) {
+                          audit.electricalAuditPhoto = JSON.parse(
+                            audit.electricalAuditPhoto,
+                          );
+                        }
+                        if (
+                          prop === 'electrical_audit' &&
+                          audit.electricTagsPhotoFromAdmin
+                        ) {
+                          audit.electricTagsPhotoFromAdmin = JSON.parse(
+                            audit.electricTagsPhotoFromAdmin,
+                          );
+                        }
+                        if (
+                          prop === 'electrical_audit' &&
+                          audit.electricTagsPhotos
+                        ) {
+                          audit.electricTagsPhotos = JSON.parse(
+                            audit.electricTagsPhotos,
+                          );
+                        }
+                        if (
+                          prop === 'electrical_audit' &&
+                          audit.electricTagsPhoto
+                        ) {
+                          audit.electricTagsPhoto = JSON.parse(
+                            audit.electricTagsPhoto,
+                          );
+                        }
+                        if (
                           prop === 'sign_general_audit' &&
                           audit.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto
                         ) {
@@ -1377,6 +1459,103 @@ export const updateExistingSignAudit = (
       (_: any, error: any) =>
         console.error(
           `Error updating existing_sign_audit ${auditData.Id}:`,
+          error,
+        ),
+    );
+  });
+};
+
+export const updateElectricalAudit = (
+  auditData: ElectricalAudit,
+  syncedValue: number,
+) => {
+  console.log('ELECTRICAL AUDITTT UPDATEEE::', auditData);
+  db.transaction((tx: any) => {
+    tx.executeSql(
+      `
+      UPDATE electrical_audit
+      SET
+        projectId = ?,
+        signId = ?,
+        optionId = ?,
+        signAliasName = ?,
+        signType = ?,
+        sign_order = ?,
+        doesTheExistingSignIlluminate = ?,
+        isElectricPresentAtTheSign = ?,
+        isPowerLiveAtSignLocation = ?,
+        powerWithinNeededDistance = ?,
+        electric120Vor220V = ?,
+        anyAccessibilityIssues = ?,
+        anyKnownRepairorMaintenanceToElectricalEquipmentRequired = ?,
+        electricSubcontractorNeeded = ?,
+        electricTagsorCertificationsPresent = ?,
+        electricalAuditSummaryNotes = ?,
+        electricalAuditTodoPunchList = ?,
+        electricalAuditspecialInstructions = ?,
+        electricalAuditDocumentAccessibilityIssues = ?,
+        adminId = ?,
+        adminName = ?,
+        createdDate = ?,
+        customerName = ?,
+        projectTitle = ?,
+        teamId = ?,
+        typeOfIlluminationInside = ?,
+        electricalAuditPhotoFromAdmin = ?,
+        electricalAuditPhotos = ?,
+        electricalAuditPhoto = ?,
+        electricTagsPhotoFromAdmin = ?,
+        electricTagsPhotos = ?,
+        electricTagsPhoto = ?,
+        surveyModule = ?,
+        isSynced = ?
+      WHERE Id = ?
+      `,
+      [
+        auditData.projectId,
+        auditData.signId,
+        auditData.optionId,
+        auditData.signAliasName,
+        auditData.signType,
+        auditData.sign_order,
+        auditData.doesTheExistingSignIlluminate || null,
+        auditData.isElectricPresentAtTheSign || null,
+        auditData.isPowerLiveAtSignLocation || null,
+        auditData.powerWithinNeededDistance || null,
+        auditData.electric120Vor220V || null,
+        auditData.anyAccessibilityIssues || null,
+        auditData.anyKnownRepairorMaintenanceToElectricalEquipmentRequired ||
+          null,
+        auditData.electricSubcontractorNeeded || null,
+        auditData.electricTagsorCertificationsPresent || null,
+        auditData.electricalAuditSummaryNotes || '',
+        auditData.electricalAuditTodoPunchList || '',
+        auditData.electricalAuditspecialInstructions || '',
+        auditData.electricalAuditDocumentAccessibilityIssues || '',
+        auditData.adminId || null,
+        auditData.adminName || '',
+        auditData.createdDate || '',
+        auditData.customerName || '',
+
+        // ✅ These were missing / out of order:
+        auditData.projectTitle || '',
+        auditData.teamId || null,
+        auditData.typeOfIlluminationInside || null,
+        JSON.stringify(auditData.electricalAuditPhotoFromAdmin || []),
+        JSON.stringify(auditData.electricalAuditPhotos || []),
+        JSON.stringify(auditData.electricalAuditPhoto || []),
+        JSON.stringify(auditData.electricTagsPhotoFromAdmin || []),
+        JSON.stringify(auditData.electricTagsPhotos || []),
+        JSON.stringify(auditData.electricTagsPhoto || []),
+
+        auditData.surveyModule || null,
+        syncedValue,
+        auditData.Id,
+      ],
+      () => console.log(`✅ Updated electrical_audit ${auditData.Id}`),
+      (_: any, error: any) =>
+        console.error(
+          `❌ Error updating electrical_audit ${auditData.Id}:`,
           error,
         ),
     );
@@ -1635,6 +1814,49 @@ export const getUnsyncedExistingSignAudits = (
         console.error('Error fetching unsynced existing_sign_audit:', error);
         callback([]);
         return false; // stops further propagation of error
+      },
+    );
+  });
+};
+
+export const getUnsyncedElectricalAudits = (
+  callback: (rows: any[]) => void,
+) => {
+  db.transaction((tx: any) => {
+    tx.executeSql(
+      `
+      SELECT * FROM electrical_audit WHERE isSynced = 0
+      `,
+      [],
+      (_: any, result: any) => {
+        const rows = result.rows.raw().map((item: any) => {
+          return {
+            ...item,
+            electricalAuditPhotos: item.electricalAuditPhotos
+              ? JSON.parse(item.electricalAuditPhotos)
+              : null,
+            electricalAuditPhoto: item.electricalAuditPhoto
+              ? JSON.parse(item.electricalAuditPhoto)
+              : null,
+            electricTagsPhotos: item.electricTagsPhotos
+              ? JSON.parse(item.electricTagsPhotos)
+              : null,
+            electricTagsPhoto: item.electricTagsPhoto
+              ? JSON.parse(item.electricTagsPhoto)
+              : null,
+            electricalAuditPhotoFromAdmin: item.electricalAuditPhotoFromAdmin
+              ? JSON.parse(item.electricalAuditPhotoFromAdmin)
+              : null,
+            electricTagsPhotoFromAdmin: item.electricTagsPhotoFromAdmin
+              ? JSON.parse(item.electricTagsPhotoFromAdmin)
+              : null,
+          };
+        });
+
+        callback(rows);
+      },
+      (_: any, error: any) => {
+        console.error('Error fetching unsynced electrical_audit:', error);
       },
     );
   });
