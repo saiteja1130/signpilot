@@ -150,7 +150,7 @@ type IndoorPhotosAndMeasurements = {
 };
 
 type SignGeneralAudit = {
-  id: string; // same as signTableId
+  Id: string; // same as signTableId
   projectId: string;
   signId: string;
   optionId: string;
@@ -203,6 +203,12 @@ type SignGeneralAudit = {
   signGeneralAuditdocumentPotentialSafetyIssues?: string | null;
   signGeneralAuditSummaryNotes?: string;
   signGeneralAuditTodoPunchList?: string;
+  facilityDiagramOrSketchProvidedFile?: string;
+  anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto?: any[];
+  anyAccessibilityObstructionsDocumentAccessibilityIssuesPhotos?: any[];
+  anyPotentialSafetyIssuesPhoto?: any[];
+  anyPotentialSafetyIssuesPhotos?: any[];
+  facilityDiagramOrSketchProvidedPhoto?: any[];
 };
 
 type ElectricalAudit = {
@@ -513,7 +519,7 @@ export const createSignGeneralAuditTable = () => {
     tx.executeSql(
       `
       CREATE TABLE IF NOT EXISTS sign_general_audit (
-        id TEXT PRIMARY KEY,
+        Id TEXT PRIMARY KEY,
         projectId TEXT,
         signId TEXT,
         optionId TEXT,
@@ -564,6 +570,13 @@ export const createSignGeneralAuditTable = () => {
         signGeneralAuditdocumentPotentialSafetyIssues TEXT,
         signGeneralAuditSummaryNotes TEXT,
         signGeneralAuditTodoPunchList TEXT,
+        facilityDiagramOrSketchProvidedFile TEXT,
+        anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto TEXT,
+        anyPotentialSafetyIssuesPhoto TEXT,
+        anyAccessibilityObstructionsDocumentAccessibilityIssuesPhotos TEXT,
+        anyPotentialSafetyIssuesPhotos TEXT,
+        facilityDiagramOrSketchProvidedPhoto TEXT,
+        isSynced INTEGER,
         FOREIGN KEY (projectId) REFERENCES projects(projectId) ON DELETE CASCADE
       )
       `,
@@ -797,7 +810,7 @@ export const insertPermittingAssessment = (projects: any[], syched: number) => {
         project.signDataOptions?.forEach((option: any) => {
           const audit: PermittingAssessment = option.permitting_assessment;
           console.log('AUDITTTTPERMITTTTTT:::::::::::::::', audit);
-          const id = option.existing_sign_audit.id;
+          const id = option.permitting_assessment.id;
           if (audit) {
             tx.executeSql(
               `
@@ -984,17 +997,19 @@ export const insertIndoorPhotosAndMeasurements = (projects: any[]) => {
   );
 };
 
-export const insertSignGeneralAudit = (projects: any[]) => {
+export const insertSignGeneralAudit = (projects: any[], syched: number) => {
   db.transaction(
     (tx: any) => {
       projects.forEach(project => {
         project.signDataOptions?.forEach((option: any) => {
           const audit: SignGeneralAudit = option.sign_general_audit;
+          console.log('AUDITTTTPERMITTTTTT:::::::::::::::', audit);
+          const id = option.sign_general_audit.id;
           if (audit) {
             tx.executeSql(
               `
               INSERT OR REPLACE INTO sign_general_audit (
-                id, projectId, signId, optionId, signAliasName, signType, sign_order,
+                Id, projectId, signId, optionId, signAliasName, signType, sign_order,
                 createdDate, adminId, adminName, customerName,
                 attachedOrHanging, attachmentType, bannerOrSignMaterial,
                 channelLetterMaterial, colorOrExistingColorMatch,
@@ -1013,11 +1028,19 @@ export const insertSignGeneralAudit = (projects: any[]) => {
                 anyAccessibilityObstructions, anyPotentialSafetyIssues,
                 signGeneralAuditDocumentAccessibilityIssues,
                 signGeneralAuditdocumentPotentialSafetyIssues,
-                signGeneralAuditSummaryNotes, signGeneralAuditTodoPunchList
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                signGeneralAuditSummaryNotes,
+                 signGeneralAuditTodoPunchList,
+                 facilityDiagramOrSketchProvidedFile,
+                 anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto,
+                 anyPotentialSafetyIssuesPhoto,
+                 anyAccessibilityObstructionsDocumentAccessibilityIssuesPhotos,
+                 anyPotentialSafetyIssuesPhotos,
+                 facilityDiagramOrSketchProvidedPhoto,
+                 isSynced
+              ) VALUES (?, ?, ?, ?, ?,?,?,?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
               `,
               [
-                audit.id,
+                id,
                 audit.projectId,
                 audit.signId,
                 audit.optionId,
@@ -1068,12 +1091,27 @@ export const insertSignGeneralAudit = (projects: any[]) => {
                 audit.signGeneralAuditdocumentPotentialSafetyIssues || null,
                 audit.signGeneralAuditSummaryNotes || '',
                 audit.signGeneralAuditTodoPunchList || '',
+                audit.facilityDiagramOrSketchProvidedFile || null,
+                JSON.stringify(
+                  audit?.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto ||
+                    [],
+                ),
+                JSON.stringify(audit.anyPotentialSafetyIssuesPhoto || []),
+                JSON.stringify(
+                  audit?.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhotos ||
+                    [],
+                ),
+                JSON.stringify(audit.anyPotentialSafetyIssuesPhotos || []),
+                JSON.stringify(
+                  audit.facilityDiagramOrSketchProvidedPhoto || [],
+                ),
+                syched,
               ],
               () =>
-                console.log(`Inserted sign_general_audit for sign ${audit.id}`),
+                console.log(`Inserted sign_general_audit for sign ${audit.Id}`),
               (_: any, error: any) =>
                 console.error(
-                  `Error inserting sign_general_audit ${audit.id}:`,
+                  `Error inserting sign_general_audit ${audit.Id}:`,
                   error,
                 ),
             );
@@ -1187,6 +1225,49 @@ export const fetchAllProjectsData = (callback: (projects: any[]) => void) => {
                           audit.existingSignAuditPhotos = JSON.parse(
                             audit.existingSignAuditPhotos,
                           );
+                        if (
+                          prop === 'sign_general_audit' &&
+                          audit.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto
+                        ) {
+                          audit.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto =
+                            JSON.parse(
+                              audit.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto,
+                            );
+                        }
+                        if (
+                          prop === 'sign_general_audit' &&
+                          audit.anyPotentialSafetyIssuesPhoto
+                        ) {
+                          audit.anyPotentialSafetyIssuesPhoto = JSON.parse(
+                            audit.anyPotentialSafetyIssuesPhoto,
+                          );
+                        }
+                        if (
+                          prop === 'sign_general_audit' &&
+                          audit.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhotos
+                        ) {
+                          audit.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhotos =
+                            JSON.parse(
+                              audit.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhotos,
+                            );
+                        }
+                        if (
+                          prop === 'sign_general_audit' &&
+                          audit.anyPotentialSafetyIssuesPhotos
+                        ) {
+                          audit.anyPotentialSafetyIssuesPhotos = JSON.parse(
+                            audit.anyPotentialSafetyIssuesPhotos,
+                          );
+                        }
+                        if (
+                          prop === 'sign_general_audit' &&
+                          audit.facilityDiagramOrSketchProvidedPhoto
+                        ) {
+                          audit.facilityDiagramOrSketchProvidedPhoto =
+                            JSON.parse(
+                              audit.facilityDiagramOrSketchProvidedPhoto,
+                            );
+                        }
                         option[prop] = audit;
                       } else {
                         option[prop] = null;
@@ -1377,6 +1458,152 @@ export const updatePermittingAssessment = (
   );
 };
 
+export const updateSignGeneralAudit = (
+  auditData: SignGeneralAudit,
+  syncedValue: number,
+) => {
+  console.log('UPDATINGGGG SIGNGENERAL:::', auditData);
+  // return
+  db.transaction((tx: any) => {
+    tx.executeSql(
+      `
+      UPDATE sign_general_audit
+      SET
+        projectId = ?,
+        signId = ?,
+        optionId = ?,
+        signAliasName = ?,
+        signType = ?,
+        sign_order = ?,
+        createdDate = ?,
+        adminId = ?,
+        adminName = ?,
+        customerName = ?,
+        attachedOrHanging = ?,
+        attachmentType = ?,
+        bannerOrSignMaterial = ?,
+        channelLetterMaterial = ?,
+        colorOrExistingColorMatch = ?,
+        communicationsType = ?,
+        contentManagementSoftwareRequired = ?,
+        contentManagementNotes = ?,
+        copyTypeOrStyle = ?,
+        documentSubstrateCondition = ?,
+        extMaterialThickness = ?,
+        faceMaterialsData = ?,
+        facilityDiagramOrSketchProvided = ?,
+        generalDescriptionOfPlacementOfSign = ?,
+        interactiveDisplay = ?,
+        ladderOrLiftRequired = ?,
+        material = ?,
+        materialThickness = ?,
+        numberOfScreens = ?,
+        panFlatCarvedOrSandblastedLetterData = ?,
+        racewayOrFlush = ?,
+        recentlyPainted = ?,
+        replaceOrUseExisting = ?,
+        resolution = ?,
+        rgbOrMonochrome = ?,
+        singleOrDoubleFaced = ?,
+        siteCovered = ?,
+        siteWeatherDependent = ?,
+        sizeOfLadderOrLift = ?,
+        surfaceQualityData = ?,
+        typeOfAwning = ?,
+        wallOrSubstrateType = ?,
+        adhesionTestRequired = ?,
+        adhesionTestResult = ?,
+        anyAccessibilityObstructions = ?,
+        anyPotentialSafetyIssues = ?,
+        signGeneralAuditDocumentAccessibilityIssues = ?,
+        signGeneralAuditdocumentPotentialSafetyIssues = ?,
+        signGeneralAuditSummaryNotes = ?,
+        signGeneralAuditTodoPunchList = ?,
+        facilityDiagramOrSketchProvidedFile = ?,
+        anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto = ?,
+        anyPotentialSafetyIssuesPhoto = ?,
+        anyAccessibilityObstructionsDocumentAccessibilityIssuesPhotos = ?,
+        anyPotentialSafetyIssuesPhotos = ?,
+        facilityDiagramOrSketchProvidedPhoto = ?,
+        isSynced = ?
+      WHERE Id = ?
+      `,
+      [
+        auditData.projectId,
+        auditData.signId,
+        auditData.optionId,
+        auditData.signAliasName,
+        auditData.signType,
+        auditData.sign_order,
+        auditData.createdDate || '',
+        auditData.adminId || null,
+        auditData.adminName || '',
+        auditData.customerName || '',
+        auditData.attachedOrHanging || null,
+        auditData.attachmentType || null,
+        auditData.bannerOrSignMaterial || null,
+        auditData.channelLetterMaterial || null,
+        auditData.colorOrExistingColorMatch || null,
+        auditData.communicationsType || null,
+        auditData.contentManagementSoftwareRequired || null,
+        auditData.contentManagementNotes || null,
+        auditData.copyTypeOrStyle || null,
+        auditData.documentSubstrateCondition || null,
+        auditData.extMaterialThickness || null,
+        auditData.faceMaterialsData || null,
+        auditData.facilityDiagramOrSketchProvided || null,
+        auditData.generalDescriptionOfPlacementOfSign || null,
+        auditData.interactiveDisplay || null,
+        auditData.ladderOrLiftRequired || null,
+        auditData.material || null,
+        auditData.materialThickness || null,
+        auditData.numberOfScreens || null,
+        auditData.panFlatCarvedOrSandblastedLetterData || null,
+        auditData.racewayOrFlush || null,
+        auditData.recentlyPainted || null,
+        auditData.replaceOrUseExisting || null,
+        auditData.resolution || null,
+        auditData.rgbOrMonochrome || null,
+        auditData.singleOrDoubleFaced || null,
+        auditData.siteCovered || null,
+        auditData.siteWeatherDependent || null,
+        auditData.sizeOfLadderOrLift || null,
+        auditData.surfaceQualityData || null,
+        auditData.typeOfAwning || null,
+        auditData.wallOrSubstrateType || null,
+        auditData.adhesionTestRequired || null,
+        auditData.adhesionTestResult || null,
+        auditData.anyAccessibilityObstructions || null,
+        auditData.anyPotentialSafetyIssues || null,
+        auditData.signGeneralAuditDocumentAccessibilityIssues || null,
+        auditData.signGeneralAuditdocumentPotentialSafetyIssues || null,
+        auditData.signGeneralAuditSummaryNotes || '',
+        auditData.signGeneralAuditTodoPunchList || '',
+        auditData.facilityDiagramOrSketchProvidedFile || null,
+        JSON.stringify(
+          auditData.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto ||
+            [],
+        ),
+        JSON.stringify(auditData.anyPotentialSafetyIssuesPhoto || []),
+        JSON.stringify(
+          auditData.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhotos ||
+            [],
+        ),
+        JSON.stringify(auditData.anyPotentialSafetyIssuesPhotos || []),
+        JSON.stringify(auditData.facilityDiagramOrSketchProvidedPhoto || []),
+        syncedValue,
+        auditData.Id,
+      ],
+      () => console.log(`Updated sign_general_audit ${auditData.Id}`),
+      (_: any, error: any) =>
+        console.error(
+          `Error updating sign_general_audit ${auditData.Id}:`,
+          error,
+        ),
+    );
+  });
+};
+
 export const getUnsyncedExistingSignAudits = (
   callback: (data: ExistingSignAudit[]) => void,
 ) => {
@@ -1428,6 +1655,50 @@ export const getUnsyncedPermittingAssessments = (
       },
       (_: any, error: any) => {
         console.error('Error fetching unsynced permitting assessments:', error);
+      },
+    );
+  });
+};
+
+export const getUnsyncedSignGeneralAudits = (
+  callback: (rows: SignGeneralAudit[]) => void,
+) => {
+  db.transaction((tx: any) => {
+    tx.executeSql(
+      `SELECT * FROM sign_general_audit WHERE isSynced = 0`,
+      [],
+      (_: any, result: any) => {
+        const rows = result.rows.raw().map((row: any) => {
+          return {
+            ...row,
+            anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto:
+              row.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto
+                ? JSON.parse(
+                    row.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto,
+                  )
+                : [],
+            anyPotentialSafetyIssuesPhoto: row.anyPotentialSafetyIssuesPhoto
+              ? JSON.parse(row.anyPotentialSafetyIssuesPhoto)
+              : [],
+            anyAccessibilityObstructionsDocumentAccessibilityIssuesPhotos:
+              row.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhotos
+                ? JSON.parse(
+                    row.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhotos,
+                  )
+                : [],
+            anyPotentialSafetyIssuesPhotos: row.anyPotentialSafetyIssuesPhotos
+              ? JSON.parse(row.anyPotentialSafetyIssuesPhotos)
+              : [],
+            facilityDiagramOrSketchProvidedPhoto:
+              row.facilityDiagramOrSketchProvidedPhoto
+                ? JSON.parse(row.facilityDiagramOrSketchProvidedPhoto)
+                : [],
+          } as SignGeneralAudit;
+        });
+        callback(rows);
+      },
+      (_: any, error: any) => {
+        console.error('Error fetching unsynced sign_general_audit:', error);
       },
     );
   });

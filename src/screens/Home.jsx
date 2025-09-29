@@ -42,6 +42,7 @@ import {
   fetchAllProjectsData,
   getUnsyncedExistingSignAudits,
   getUnsyncedPermittingAssessments,
+  getUnsyncedSignGeneralAudits,
   insertElectricalAudit,
   insertExistingSignAudit,
   insertIndoorPhotosAndMeasurements,
@@ -49,6 +50,7 @@ import {
   insertProjectsData,
   insertSignGeneralAudit,
   updatePermittingAssessment,
+  updateSignGeneralAudit,
 } from '../Db/LocalData';
 
 const Home = () => {
@@ -98,7 +100,7 @@ const Home = () => {
           insertElectricalAudit(data);
           insertPermittingAssessment(data, 1);
           insertIndoorPhotosAndMeasurements(data);
-          insertSignGeneralAudit(data);
+          insertSignGeneralAudit(data, 1);
           fetchAllProjectsData(projects => {
             console.log('All projects data loaded from SQLite:', projects);
             setAlldata(projects);
@@ -312,6 +314,42 @@ const Home = () => {
               );
               console.log('RESPONSE PERMITTT SYNCEDDDD::', response.data);
               updatePermittingAssessment(audit, 1);
+            } catch (err) {
+              console.error(
+                'Error syncing audit ID',
+                audit.Id,
+                err.response.data,
+              );
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.log('RESPONSE SYNCHEDD ERRORRRR::', error);
+    }
+    try {
+      getUnsyncedSignGeneralAudits(async audits => {
+        console.log('PENDING SIGNGENERAL AUDITSSS:::', audits);
+        if (audits.length > 0) {
+          const token = loginData?.tokenNumber;
+          for (const audit of audits) {
+            const data = {
+              ...audit,
+              teamId: loginData?.userId,
+              surveyModule: '',
+            };
+            try {
+              const response = await axios.post(
+                `${baseUrl}/updateSignGeneralAudit`,
+                data,
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                },
+              );
+              console.log('RESPONSE SIGNGENERAL SYNCEDDDD::', response.data);
+              updateSignGeneralAudit(audit, 1);
             } catch (err) {
               console.error(
                 'Error syncing audit ID',

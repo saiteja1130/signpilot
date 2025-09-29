@@ -22,6 +22,7 @@ import Up from '../../assets/images/arrow.svg';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
 import {handleAddPhoto} from '../Functions/functions';
+import {updateSignGeneralAudit} from '../Db/LocalData';
 const OutDoor = ({handleFetchData}) => {
   const baseUrl = useSelector(state => state.baseUrl.value);
   const loginData = useSelector(state => state.login.value);
@@ -127,7 +128,9 @@ const OutDoor = ({handleFetchData}) => {
     signProjectData?.sign_general_audit?.sizeOfLadderOrLift || '',
   );
   const [selectedOptions, setSelectedOptions] = useState({
-    Id: signProjectData?.sign_general_audit?.id,
+    Id:
+      signProjectData?.sign_general_audit?.id ||
+      signProjectData?.sign_general_audit?.Id,
     projectId: signProjectData?.sign_general_audit?.projectId,
     signId: signProjectData?.sign_general_audit?.signId,
     optionId: signProjectData?.sign_general_audit?.optionId,
@@ -233,44 +236,52 @@ const OutDoor = ({handleFetchData}) => {
     console.log('--- Save Button Pressed ---');
     setLoadingImage(true);
 
+    const status = false;
+
     const signGeneralData = {
       ...selectedOptions,
       signGeneralAuditSummaryNotes,
       signGeneralAuditTodoPunchList,
       sizeOfLadderOrLift,
+      signAliasName: signProjectData?.signAliasName,
+      signType: signProjectData?.signType,
     };
+    // console.log(signGeneralData);
+
+    // return;
 
     try {
-      const token = loginData?.tokenNumber;
+      if (status) {
+        const token = loginData?.tokenNumber;
 
-      const response = await axios.post(
-        `${baseUrl}/updateSignGeneralAudit`,
-        signGeneralData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
+        const response = await axios.post(
+          `${baseUrl}/updateSignGeneralAudit`,
+          signGeneralData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           },
-        },
-      );
+        );
 
-      if (response?.data?.status) {
-        apiSuccess = true;
+        if (response?.data?.status) {
+          Toast.show({
+            type: 'success',
+            text1: response?.data?.message || 'Audit saved successfully.',
+            visibilityTime: 3000,
+            position: 'top',
+          });
 
-        Toast.show({
-          type: 'success',
-          text1: response?.data?.message || 'Audit saved successfully.',
-          visibilityTime: 3000,
-          position: 'top',
-        });
-
-        handleFetchData(null, signProjectData);
+          handleFetchData(null, signProjectData);
+        } else {
+          throw new Error('Sync failed with unknown server response.');
+        }
       } else {
-        throw new Error('Sync failed with unknown server response.');
+        updateSignGeneralAudit(signGeneralData, 0);
       }
     } catch (error) {
       console.log('❌ API Sync failed. Will still save locally.');
       console.log('Error:', error?.response?.data || error?.message);
-
       Toast.show({
         type: 'info',
         text1: 'Saved Offline. Will sync later.',
@@ -313,7 +324,6 @@ const OutDoor = ({handleFetchData}) => {
     }
   };
 
-  
   useEffect(() => {
     setTimeout(() => {
       setLoadingImage(false);

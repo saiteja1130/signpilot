@@ -196,7 +196,7 @@ const Manage = () => {
   const handleSaveSign = async () => {
     try {
       const response = await axios.post(
-        `https://www.beeberg.com/api/createSign`,
+        `${baseUrl}/createSign`,
         addSignForm,
         {
           headers: {
@@ -223,7 +223,7 @@ const Manage = () => {
         lname: selectedCustomer?.last_name,
       };
       const response = await axios.post(
-        `https://www.beeberg.com/api/updateCustomer`,
+        `${baseUrl}/updateCustomer`,
         updateCustomerData,
         {
           headers: {Authorization: `Bearer ${token}`},
@@ -239,7 +239,7 @@ const Manage = () => {
       setEditCustomerModalVisible(false);
       fetchCustomers(admin_id, role, token, setCustomers, baseUrl);
     } catch (error) {
-      console.error('Error updating customer:', error.response?.data);
+      console.error('Error updating customer:', error);
     }
   };
 
@@ -257,7 +257,7 @@ const Manage = () => {
       updatedData.admin_id = admin_id;
       updatedData.customer_id = customer?.id;
       const response = await axios.post(
-        `https://www.beeberg.com/api/${apiEndpointsToSetSigns}`,
+        `${baseUrl}/${apiEndpointsToSetSigns}`,
         updatedData,
         {
           headers: {Authorization: `Bearer ${token}`},
@@ -342,7 +342,7 @@ const Manage = () => {
     }
     const fetchSignsData = async () => {
       const id = location === 'Outdoor' ? 2 : 1;
-      await fetchSigns(id, token, setSignData);
+      await fetchSigns(id, token, setSignData ,baseUrl);
     };
     fetchSignsData();
   }, [addSignForm?.signLocation, EditSignForm?.signLocation]);
