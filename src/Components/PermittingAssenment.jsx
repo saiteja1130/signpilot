@@ -22,8 +22,7 @@ import {updatePermittingAssessment} from '../Db/LocalData';
 import {useNetworkStatus} from '../Functions/functions';
 
 const PermittingAssenment = ({handleFetchData}) => {
-  // const status = useNetworkStatus();
-  const status = false;
+  const status = useNetworkStatus();
   const baseUrl = useSelector(state => state.baseUrl.value);
   const [active, setActive] = useState('');
   const signProjectData = useSelector(state => state.signProject.value);

@@ -22,8 +22,7 @@ import Toast from 'react-native-toast-message';
 import {updateExistingSignAudit} from '../Db/LocalData.tsx';
 
 const ExistingAuditProject = ({handleFetchData}) => {
-  // const status = useNetworkStatus();
-  const status = false;
+  const status = useNetworkStatus();
   const baseUrl = useSelector(state => state.baseUrl.value);
   const loginData = useSelector(state => state.login.value);
   const signProjectData = useSelector(state => state.signProject.value);

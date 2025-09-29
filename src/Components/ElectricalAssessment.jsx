@@ -25,8 +25,7 @@ import Menu from '../../assets/images/close.svg';
 import {updateElectricalAudit} from '../Db/LocalData';
 
 const ElectricalAssessment = ({handleFetchData}) => {
-  // const status = useNetworkStatus();
-  const status = false;
+  const status = useNetworkStatus();
   const [modalVisible, setModalVisible] = useState(false);
   const [editing, setEditing] = useState('');
   const baseUrl = useSelector(state => state.baseUrl.value);
