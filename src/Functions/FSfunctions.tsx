@@ -42,6 +42,8 @@ export const functionToSaveImages = async (
   tempPath: string = '',
   key: string,
   state: boolean,
+  status: boolean,
+  oldFile?: string,
 ): Promise<string> => {
   try {
     const readBase64 = await getBase64FromFile(tempPath);
@@ -53,6 +55,10 @@ export const functionToSaveImages = async (
       console.log('Folder Created::::::::');
     }
     await RNFS.writeFile(fileName, readBase64, 'base64');
+    if (status && oldFile) {
+      console.log('REMOVING OLD FILE::');
+      await RNFS.unlink(oldFile);
+    }
     return fileName;
   } catch (error) {
     console.log('Image Saving Error::', error);

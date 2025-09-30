@@ -12,6 +12,9 @@ export const openEditor = async (
   setter: any,
   key: string,
   folderName: string,
+  status: boolean,
+  ImageIdOld: number,
+  saveTo: boolean,
 ) => {
   try {
     const path = await getPath(uri);
@@ -25,17 +28,55 @@ export const openEditor = async (
       await RNFS.unlink(fileName);
     }
     console.log('Edited image saved at:', tempPath);
-    const permenantPath = await functionToSaveImages(tempPath, key, setter);
-    if (permenantPath !== '') {
-      const removingFileName = await getPath(tempPath);
-      await RNFS.unlink(removingFileName);
+    let permenantPath = tempPath;
+    if (saveTo) {
+      permenantPath = await functionToSaveImages(
+        tempPath,
+        key,
+        setter,
+        status,
+        path,
+      );
     }
-    const ImageId = Date.now();
+    // if (permenantPath !== '') {
+    //   const removingFileName = await getPath(tempPath);
+    //   await RNFS.unlink(removingFileName);
+    // }
+    let ImageId: number;
 
-    setter((prev: any) => ({
-      ...prev,
-      [key]: [...(prev[key] || []), {ImageId, path: permenantPath}],
-    }));
+    if (!status) {
+      ImageId = Date.now();
+    } else {
+      ImageId = ImageIdOld;
+    }
+
+    setter((prev: any) => {
+      const existingArray = prev[key] || [];
+      if (status) {
+        const indexToReplace = existingArray.findIndex(
+          (item: any) => item.ImageId === ImageId,
+        );
+
+        if (indexToReplace !== -1) {
+          const updatedArray = [...existingArray];
+          updatedArray[indexToReplace] = {ImageId, path: permenantPath};
+          return {
+            ...prev,
+            [key]: updatedArray,
+          };
+        }
+
+        return {
+          ...prev,
+          [key]: [...existingArray, {ImageId, path: permenantPath}],
+        };
+      }
+      return {
+        ...prev,
+        [key]: [...existingArray, {ImageId, path: permenantPath}],
+      };
+    });
+
     return;
   } catch (e: any) {
     console.log('PhotoEditor error:', e.message);
@@ -47,6 +88,7 @@ export const showPhotoOptions = (
   setter: any,
   key: string,
   folderName: string,
+  saveTo: boolean,
 ) => {
   Alert.alert(
     'Select Photo',
@@ -56,14 +98,14 @@ export const showPhotoOptions = (
         text: 'Take Photo',
         onPress: () => {
           console.log('Take Photo pressed');
-          handleTakePhoto(setter, key, folderName);
+          handleTakePhoto(setter, key, folderName, saveTo);
         },
       },
       {
         text: 'Pick from Gallery',
         onPress: () => {
           console.log('Pick from Gallery pressed');
-          handlePickPhoto(setter, key, folderName);
+          handlePickPhoto(setter, key, folderName, saveTo);
         },
       },
       {
@@ -79,6 +121,7 @@ const handleTakePhoto = async (
   setter: any,
   key: string,
   folderName: string,
+  saveTo: boolean,
 ) => {
   const hasPermission = await requestCameraPermission();
   if (!hasPermission) {
@@ -98,7 +141,7 @@ const handleTakePhoto = async (
         originalPath,
         'After Initial Compression',
       );
-      openEditor(compressPath, setter, key, folderName);
+      openEditor(compressPath, setter, key, folderName, false, 12, saveTo);
     }
   });
 };
@@ -107,6 +150,7 @@ const handlePickPhoto = async (
   setter: any,
   key: string,
   folderName: string,
+  saveTo: boolean,
 ) => {
   const hasPermission = await requestMediaPermission();
   if (!hasPermission) {
@@ -128,7 +172,7 @@ const handlePickPhoto = async (
           originalPath,
           'After Initial Compression',
         );
-        openEditor(compressPath, setter, key, folderName);
+        openEditor(compressPath, setter, key, folderName, false, 12, saveTo);
       }
     },
   );

@@ -20,7 +20,10 @@ import axios from 'axios';
 import {handleAddPhoto, useNetworkStatus} from '../Functions/functions.js';
 import Toast from 'react-native-toast-message';
 import {updateExistingSignAudit} from '../Db/LocalData.tsx';
-import {showPhotoOptions} from '../Functions/ImagePickFunctions.tsx';
+import {
+  openEditor,
+  showPhotoOptions,
+} from '../Functions/ImagePickFunctions.tsx';
 
 const ExistingAuditProject = ({handleFetchData}) => {
   const status = useNetworkStatus();
@@ -362,8 +365,8 @@ const ExistingAuditProject = ({handleFetchData}) => {
                                 setSelectedOptions,
                                 'existingSignAuditPhoto',
                                 'ExistingAudit',
+                                false,
                               );
-                              updateExistingSignAudit();
                             }}>
                             <View style={styles.photoButton}>
                               <Text style={styles.photoText}>add photo</Text>
@@ -386,29 +389,55 @@ const ExistingAuditProject = ({handleFetchData}) => {
                               <ActivityIndicator size="small" color="#FF9239" />
                             ) : (
                               selectedOptions.existingSignAuditPhoto?.map(
-                                (item, index) => (
-                                  <View
-                                    key={index}
-                                    style={styles.imageContainer}>
-                                    <Image
-                                      source={{uri: `file://${item.path}`}}
-                                      style={styles.image}
-                                    />
+                                (item, index) => {
+                                  console.log('itemitemitemitem', item);
+                                  console.log(
+                                    'FINAL URI:',
+                                    item.path.startsWith('file://')
+                                      ? item.path
+                                      : `file://${item.path}`,
+                                  );
+                                  return (
                                     <TouchableOpacity
-                                      // onPress={() =>
-                                      //   handleRemoveImage(
-                                      //     data.imageId,
-                                      //     'electricalAuditPhoto',
-                                      //     'electricalAuditPhotos',
-                                      //   )
-                                      // }
-                                      style={styles.removeButton}>
-                                      <Text style={styles.removeButtonText}>
-                                        ×
-                                      </Text>
+                                      key={index}
+                                      onPress={() => {
+                                        openEditor(
+                                          item.path,
+                                          setSelectedOptions,
+                                          'existingSignAuditPhoto',
+                                          'ExistingAudit',
+                                          true,
+                                          item.ImageId,
+                                        );
+                                      }}>
+                                      <View
+                                        key={index}
+                                        style={styles.imageContainer}>
+                                        <Image
+                                          source={{
+                                            uri: item.path.startsWith('file://')
+                                              ? item.path
+                                              : `file://${item.path}`,
+                                          }}
+                                          style={styles.image}
+                                        />
+                                        <TouchableOpacity
+                                          // onPress={() =>
+                                          //   handleRemoveImage(
+                                          //     data.imageId,
+                                          //     'electricalAuditPhoto',
+                                          //     'electricalAuditPhotos',
+                                          //   )
+                                          // }
+                                          style={styles.removeButton}>
+                                          <Text style={styles.removeButtonText}>
+                                            ×
+                                          </Text>
+                                        </TouchableOpacity>
+                                      </View>
                                     </TouchableOpacity>
-                                  </View>
-                                ),
+                                  );
+                                },
                               )
                             )}
                           </View>
