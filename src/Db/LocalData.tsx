@@ -1,3 +1,4 @@
+import {downloadImagesArray} from '../Functions/FSfunctions';
 import {db} from './db';
 
 type Project = {
@@ -325,7 +326,7 @@ export const createExistingSignAuditTable = () => {
         isTheSignIlluminated TEXT,
         existingSignAuditDocumentSignCondition TEXT,
         existingSignAuditPhotoFromAdmin TEXT,   -- store JSON string if array
-        existingSignAuditPhotos TEXT,           -- store JSON string if array
+        existingSignAuditPhotos TEXT,        -- store JSON string if array
         existingSignAuditSummaryNotes TEXT,
         existingSignAuditTodoPunchList TEXT,
         existingSignspecialInstructions TEXT,
@@ -669,76 +670,81 @@ export const insertProjectsData = (projects: Project[]) => {
   });
 };
 
-export const insertExistingSignAudit = (projects: any[], syched: number) => {
-  db.transaction(
-    (tx: any) => {
-      projects.forEach(project => {
-        project.signDataOptions?.forEach((option: any) => {
-          const audit: ExistingSignAudit = option.existing_sign_audit;
-          console.log('AUDITTTT', audit);
-          const id = option.existing_sign_audit.id;
-          if (audit) {
-            tx.executeSql(
-              `
-              INSERT OR REPLACE INTO existing_sign_audit (
-                Id, projectId, signId, signAliasName, signType, sign_order,
-                isThisReplacementSign, oldSignStillPresent, isTheSignIlluminated,
-                existingSignAuditDocumentSignCondition,
-                existingSignAuditPhotoFromAdmin,
-                existingSignAuditPhotos,
-                existingSignAuditSummaryNotes,
-                existingSignAuditTodoPunchList,
-                existingSignspecialInstructions,
-                removalScheduled,
-                adminId,
-                adminName,
-                createdDate,
-                customerName,
-                optionId,
-                isSynced
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)
-              `,
-              [
-                id,
-                audit.projectId,
-                audit.signId,
-                audit.signAliasName,
-                audit.signType,
-                audit.sign_order,
-                audit.isThisReplacementSign,
-                audit.oldSignStillPresent,
-                audit.isTheSignIlluminated,
-                audit.existingSignAuditDocumentSignCondition || null,
-                JSON.stringify(audit.existingSignAuditPhotoFromAdmin || []),
-                JSON.stringify(audit.existingSignAuditPhotos || []),
-                audit.existingSignAuditSummaryNotes || '',
-                audit.existingSignAuditTodoPunchList || '',
-                audit.existingSignspecialInstructions || '',
-                audit.removalScheduled || 'no',
-                audit.adminId || null,
-                audit.adminName || '',
-                audit.createdDate || '',
-                audit.customerName || '',
-                audit.optionId || '',
-                syched,
-              ],
-              () =>
-                console.log(
-                  `Inserted existing_sign_audit for sign ${audit.Id}`,
-                ),
-              (_: any, error: any) =>
-                console.error(
-                  `Error inserting existing_sign_audit ${audit.Id}:`,
-                  error,
-                ),
-            );
-          }
-        });
-      });
-    },
-    (txError: any) => console.error('Transaction ERROR:', txError),
-    () => console.log('All existing_sign_audit data inserted successfully'),
-  );
+export const insertExistingSignAudit = async (
+  projects: any[],
+  syched: number,
+) => {
+  for (const project of projects) {
+    for (const option of project.signDataOptions || []) {
+      const audit: ExistingSignAudit = option.existing_sign_audit;
+      if (!audit) continue;
+      const id = option.existing_sign_audit?.id;
+      const loadedImages = await downloadImagesArray(
+        audit.existingSignAuditPhotos || [],
+        'ExistingAudit',
+      );
+      console.log('loadedImages', loadedImages);
+      db.transaction(
+        (tx: any) => {
+          tx.executeSql(
+            `
+            INSERT OR REPLACE INTO existing_sign_audit (
+              Id, projectId, signId, signAliasName, signType, sign_order,
+              isThisReplacementSign, oldSignStillPresent, isTheSignIlluminated,
+              existingSignAuditDocumentSignCondition,
+              existingSignAuditPhotoFromAdmin,
+              existingSignAuditPhotos,
+              existingSignAuditPhoto,
+              existingSignAuditSummaryNotes,
+              existingSignAuditTodoPunchList,
+              existingSignspecialInstructions,
+              removalScheduled,
+              adminId,
+              adminName,
+              createdDate,
+              customerName,
+              optionId,
+              isSynced
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `,
+            [
+              id,
+              audit.projectId,
+              audit.signId,
+              audit.signAliasName,
+              audit.signType,
+              audit.sign_order,
+              audit.isThisReplacementSign,
+              audit.oldSignStillPresent,
+              audit.isTheSignIlluminated,
+              audit.existingSignAuditDocumentSignCondition || null,
+              JSON.stringify(audit.existingSignAuditPhotoFromAdmin || []),
+              JSON.stringify(loadedImages || []), // ✅ Use downloaded images
+              JSON.stringify(audit.existingSignAuditPhoto || []),
+              audit.existingSignAuditSummaryNotes || '',
+              audit.existingSignAuditTodoPunchList || '',
+              audit.existingSignspecialInstructions || '',
+              audit.removalScheduled || 'no',
+              audit.adminId || null,
+              audit.adminName || '',
+              audit.createdDate || '',
+              audit.customerName || '',
+              audit.optionId || '',
+              syched,
+            ],
+            () => console.log(`Inserted existing_sign_audit for sign ${id}`),
+            (_: any, error: any) =>
+              console.error(
+                `Error inserting existing_sign_audit ${id}:`,
+                error,
+              ),
+          );
+        },
+        (txError: any) => console.error('Transaction ERROR:', txError),
+        () => console.log('All existing_sign_audit data inserted successfully'),
+      );
+    }
+  }
 };
 
 export const insertElectricalAudit = (projects: any[], syched: number) => {

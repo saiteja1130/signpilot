@@ -14,6 +14,8 @@ import CustomerProjectScreen from '../screens/CustomerProjectScreen.jsx';
 import ProgressBar from '../Components/Progressbar.jsx';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import TestPage from '../screens/Testpage.tsx';
+import RNFS from 'react-native-fs';
+import {deleteFolders} from '../Functions/FSfunctions.tsx';
 
 const Stack = createNativeStackNavigator();
 
@@ -24,7 +26,6 @@ const StackNavigation = () => {
   useEffect(() => {
     const init = async () => {
       try {
-        // await dropUsersTable();
         createUsersTable();
         getUsers(users => {
           if (users.length > 0) {
@@ -41,7 +42,9 @@ const StackNavigation = () => {
     };
 
     init();
+    deleteFolders();
   }, []);
+
   useEffect(() => {
     if (user) {
       setLoading(false);

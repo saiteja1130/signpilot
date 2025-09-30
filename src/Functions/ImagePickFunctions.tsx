@@ -5,7 +5,6 @@ import {requestCameraPermission, requestMediaPermission} from './functions';
 import {functionToSaveImages, getPath} from './FSfunctions';
 import PhotoEditor from '@baronha/react-native-photo-editor';
 import RNFS from 'react-native-fs';
-import {getAllImages} from '../Db/ProjectDatabase';
 
 export const openEditor = async (
   uri: string,
@@ -22,58 +21,47 @@ export const openEditor = async (
       path,
       stickers: [],
     });
-    const tempPath: string = await compressImage(result, 'Final After Editing');
-    if (tempPath !== '') {
-      const fileName = await getPath(result);
-      await RNFS.unlink(fileName);
+    if (result && result !== path) {
+      const fileExists = await RNFS.exists(path);
+      if (fileExists) {
+        await RNFS.unlink(path);
+      }
     }
-    console.log('Edited image saved at:', tempPath);
-    let permenantPath = tempPath;
+    const tempPath: string = await compressImage(result, 'Final After Editing');
+    console.log('Edited image temp path:', tempPath);
+    let permanentPath = tempPath;
     if (saveTo) {
-      permenantPath = await functionToSaveImages(
+      permanentPath = await functionToSaveImages(
         tempPath,
         key,
         setter,
         status,
-        path,
       );
     }
-    // if (permenantPath !== '') {
-    //   const removingFileName = await getPath(tempPath);
-    //   await RNFS.unlink(removingFileName);
-    // }
-    let ImageId: number;
-
-    if (!status) {
-      ImageId = Date.now();
-    } else {
-      ImageId = ImageIdOld;
+    if (tempPath && tempPath !== permanentPath) {
+      const tempFileExists = await RNFS.exists(tempPath);
+      console.log('tempfile', tempFileExists);
+      if (tempFileExists) {
+        await RNFS.unlink(tempPath);
+        console.log('Temporary file removed:', tempPath);
+      }
     }
-
+    const ImageId = status ? ImageIdOld : Date.now();
     setter((prev: any) => {
       const existingArray = prev[key] || [];
       if (status) {
         const indexToReplace = existingArray.findIndex(
           (item: any) => item.ImageId === ImageId,
         );
-
         if (indexToReplace !== -1) {
           const updatedArray = [...existingArray];
-          updatedArray[indexToReplace] = {ImageId, path: permenantPath};
-          return {
-            ...prev,
-            [key]: updatedArray,
-          };
+          updatedArray[indexToReplace] = {ImageId, path: permanentPath};
+          return {...prev, [key]: updatedArray};
         }
-
-        return {
-          ...prev,
-          [key]: [...existingArray, {ImageId, path: permenantPath}],
-        };
       }
       return {
         ...prev,
-        [key]: [...existingArray, {ImageId, path: permenantPath}],
+        [key]: [...existingArray, {ImageId, path: permanentPath}],
       };
     });
 
@@ -136,12 +124,7 @@ const handleTakePhoto = async (
     }
     if (response.assets && response.assets[0].uri) {
       const originalPath = response.assets[0].uri;
-
-      const compressPath: any = await compressImage(
-        originalPath,
-        'After Initial Compression',
-      );
-      openEditor(compressPath, setter, key, folderName, false, 12, saveTo);
+      openEditor(originalPath, setter, key, folderName, false, 12, saveTo);
     }
   });
 };
@@ -167,12 +150,7 @@ const handlePickPhoto = async (
       }
       if (response.assets && response.assets[0].uri) {
         const originalPath = response.assets[0].uri;
-
-        const compressPath: string = await compressImage(
-          originalPath,
-          'After Initial Compression',
-        );
-        openEditor(compressPath, setter, key, folderName, false, 12, saveTo);
+        openEditor(originalPath, setter, key, folderName, false, 12, saveTo);
       }
     },
   );

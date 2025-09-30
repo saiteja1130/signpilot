@@ -19,13 +19,18 @@ import Photo from '../../assets/images/photo.svg';
 import axios from 'axios';
 import {handleAddPhoto, useNetworkStatus} from '../Functions/functions.js';
 import Toast from 'react-native-toast-message';
-import {updateExistingSignAudit} from '../Db/LocalData.tsx';
+import {
+  insertExistingSignAudit,
+  updateExistingSignAudit,
+} from '../Db/LocalData.tsx';
 import {
   openEditor,
   showPhotoOptions,
 } from '../Functions/ImagePickFunctions.tsx';
+import {deleteFolders, getBase64Array} from '../Functions/FSfunctions.tsx';
 
 const ExistingAuditProject = ({handleFetchData}) => {
+  const allData = useSelector(state => state.allData.value);
   const status = useNetworkStatus();
   const baseUrl = useSelector(state => state.baseUrl.value);
   const loginData = useSelector(state => state.login.value);
@@ -82,6 +87,8 @@ const ExistingAuditProject = ({handleFetchData}) => {
     existingSignAuditSummaryNotes: existingSignAuditSummaryNotes,
   });
 
+  console.log('selectedOptions', selectedOptions);
+
   const data = [
     {
       question: 'Is this a replacement sign?',
@@ -111,20 +118,26 @@ const ExistingAuditProject = ({handleFetchData}) => {
   ];
 
   const handleRemoveImage = async (imageId1, fieldName1) => {
+    console.log('REMOVINGGGGGGGG');
     try {
       setLoadingImage(true);
       const data = {
         imageId: imageId1,
-        Id: signProjectData?.existing_sign_audit?.id,
+        Id:
+          signProjectData?.existing_sign_audit?.id ||
+          signProjectData?.existing_sign_audit?.Id,
         fieldName: fieldName1,
         surveyModule: 'existing_sign_audit',
       };
+      console.log('REMOVINGGGGGGGG 2222222222');
       const token = loginData?.tokenNumber;
       const responce = await axios.post(`${baseUrl}/removeFile`, data, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+      console.log('REMOVINGGGGGGGG 333333333333');
+      console.log('responce.data.', responce.data);
       if (responce.data.status) {
         setSelectedOptions(prev => {
           return {
@@ -133,31 +146,39 @@ const ExistingAuditProject = ({handleFetchData}) => {
               responce.data.data?.existingSignAuditPhotos,
           };
         });
+        console.log('REMOVINGGGGGGGG444444444444');
+        await handleFetchData(null, signProjectData);
         setTimeout(() => {
           setLoadingImage(false);
         }, 1000);
+        console.log('REMOVINGGGGGGGG5655555555555555');
       }
     } catch (error) {
-      console.log('Error response data:', error);
+      console.log('Error:', error.response?.data || error.message);
+      console.log('Error response data:', error.responce.data);
+      console.log('REMOVINGGGGGGGG666666666666666');
+      x;
     }
   };
 
   const handleSave = async () => {
     console.log('savinggg....');
     setLoadingImage(true);
-    const readyImages = selectedOptions?.existingSignAuditPhoto?.map(
-      data => data?.base64,
+
+    const base64s = await getBase64Array(
+      selectedOptions.existingSignAuditPhoto,
     );
+
     const bodyData = {
       ...selectedOptions,
+      existingSignAuditPhoto: base64s,
       existingSignAuditSummaryNotes,
       existingSignAuditTodoPunchList,
-      existingSignAuditPhoto: readyImages,
       existingSignAuditDocumentSignCondition,
       signAliasName: signProjectData?.signAliasName,
       signType: signProjectData?.signType,
     };
-    // console.log('EXISTING BODY DATA::::', bodyData);
+    console.log('EXISTING BODY DATA::::', bodyData);
     try {
       if (status) {
         const token = loginData?.tokenNumber;
@@ -170,8 +191,9 @@ const ExistingAuditProject = ({handleFetchData}) => {
             },
           },
         );
-        // console.log('EXISITING SIGN API RESPONSE:::', response.data);
+        console.log('EXISITING SIGN API RESPONSE:::', response.data);
         if (response?.data?.status) {
+          await deleteFolders();
           handleFetchData(null, signProjectData);
           Toast.show({
             type: 'success',
@@ -206,6 +228,24 @@ const ExistingAuditProject = ({handleFetchData}) => {
     }
   };
 
+  const fetchData = () => {
+    // console.log('FETCHINGGGG');
+    // insertExistingSignAudit(allData);
+    // console.log('ALL DATA', allData);
+  };
+
+  // let ExistingAuditPhotoApi = [
+  //   ...selectedOptions.existingSignAuditPhotos,
+  //   ...selectedOptions.existingSignAuditPhoto,
+  // ];
+
+  // useEffect(() => {
+  //   ExistingAuditPhotoApi = [
+  //     ...selectedOptions.existingSignAuditPhotos,
+  //     ...selectedOptions.existingSignAuditPhoto,
+  //   ];
+  // }, [selectedOptions.existingSignAuditPhotos]);
+
   useEffect(() => {
     setTimeout(() => {
       setLoadingImage(false);
@@ -217,6 +257,7 @@ const ExistingAuditProject = ({handleFetchData}) => {
         onPress={() => {
           if (active === '') {
             setActive('Audit');
+            fetchData();
           } else {
             setActive('');
           }
@@ -374,7 +415,10 @@ const ExistingAuditProject = ({handleFetchData}) => {
                             </View>
                             <View style={styles.fileNameContainer}>
                               <Text style={styles.fileNameText}>
-                                No File Choosen
+                                {selectedOptions.existingSignAuditPhoto
+                                  ?.length > 0
+                                  ? `${selectedOptions.existingSignAuditPhoto?.length} File Choosen`
+                                  : 'No File Choosen'}
                               </Text>
                             </View>
                           </TouchableOpacity>
@@ -388,7 +432,7 @@ const ExistingAuditProject = ({handleFetchData}) => {
                             {loadingImage ? (
                               <ActivityIndicator size="small" color="#FF9239" />
                             ) : (
-                              selectedOptions.existingSignAuditPhoto?.map(
+                              selectedOptions.existingSignAuditPhotos.map(
                                 (item, index) => {
                                   console.log('itemitemitemitem', item);
                                   console.log(
@@ -404,7 +448,7 @@ const ExistingAuditProject = ({handleFetchData}) => {
                                         openEditor(
                                           item.path,
                                           setSelectedOptions,
-                                          'existingSignAuditPhoto',
+                                          'existingSignAuditPhotos',
                                           'ExistingAudit',
                                           true,
                                           item.ImageId,
@@ -422,13 +466,13 @@ const ExistingAuditProject = ({handleFetchData}) => {
                                           style={styles.image}
                                         />
                                         <TouchableOpacity
-                                          // onPress={() =>
-                                          //   handleRemoveImage(
-                                          //     data.imageId,
-                                          //     'electricalAuditPhoto',
-                                          //     'electricalAuditPhotos',
-                                          //   )
-                                          // }
+                                          onPress={() =>
+                                            handleRemoveImage(
+                                              item.imageId,
+                                              'electricalAuditPhoto',
+                                              'electricalAuditPhotos',
+                                            )
+                                          }
                                           style={styles.removeButton}>
                                           <Text style={styles.removeButtonText}>
                                             ×

@@ -43,7 +43,6 @@ export const functionToSaveImages = async (
   key: string,
   state: boolean,
   status: boolean,
-  oldFile?: string,
 ): Promise<string> => {
   try {
     const readBase64 = await getBase64FromFile(tempPath);
@@ -55,13 +54,81 @@ export const functionToSaveImages = async (
       console.log('Folder Created::::::::');
     }
     await RNFS.writeFile(fileName, readBase64, 'base64');
-    if (status && oldFile) {
-      console.log('REMOVING OLD FILE::');
-      await RNFS.unlink(oldFile);
-    }
     return fileName;
   } catch (error) {
     console.log('Image Saving Error::', error);
     return '';
+  }
+};
+
+export const getBase64Array = async (
+  imageArray: {ImageId: number; path: string}[],
+) => {
+  const base64Array: string[] = [];
+
+  for (const img of imageArray) {
+    try {
+      // Read file as base64
+      const base64Data = await RNFS.readFile(img.path, 'base64');
+      base64Array.push(base64Data);
+    } catch (error) {
+      console.log('Error reading file as base64:', img.path, error);
+    }
+  }
+
+  return base64Array;
+};
+
+export const downloadImagesArray = async (
+  images: {imageId: string; url: string}[],
+  key: string,
+) => {
+  console.log('DOWNLOADING IMAGESS:', key);
+  return Promise.all(
+    images.map(async img => {
+      try {
+        const fileExtension = img.url.split('.').pop() || 'jpg';
+        const folderPath = `${RNFS.DocumentDirectoryPath}/${key}`;
+        if (!(await RNFS.exists(folderPath))) {
+          await RNFS.mkdir(folderPath);
+          console.log('FOLDER CREATED::');
+        }
+        const filePath = `${folderPath}/${Date.now()}.${fileExtension}`;
+
+        const result = await RNFS.downloadFile({
+          fromUrl: img.url,
+          toFile: filePath,
+        }).promise;
+
+        console.log('IMAGE RESULTTT:::', result);
+        if (
+          result.statusCode === 200 ||
+          result.statusCode === 201 ||
+          !result.statusCode
+        ) {
+          return {
+            imageId: img.imageId,
+            path: filePath,
+          };
+        } else {
+          console.log('Failed to download image:', img.url, result.statusCode);
+          return {imageId: img.imageId, path: null};
+        }
+      } catch (error) {
+        console.log('Error downloading image:', img.url, error);
+        return {imageId: img.imageId, path: null};
+      }
+    }),
+  );
+};
+
+export const deleteFolders = async () => {
+  try {
+    const folderPath = `${RNFS.DocumentDirectoryPath}/ExistingAudit`;
+    const folderExists: boolean = await RNFS.exists(folderPath);
+    if (folderExists) await RNFS.unlink(folderPath);
+    console.log('FOLDER DELETEDDDD');
+  } catch (error) {
+    console.log('DELETING FOLDER ERROR');
   }
 };

@@ -54,12 +54,12 @@ import {
   updatePermittingAssessment,
   updateSignGeneralAudit,
 } from '../Db/LocalData';
+import {addData} from '../Redux/Slices/Alldata';
 
 const Home = () => {
   const baseUrl = useSelector(state => state.baseUrl.value);
   const signProjectData = useSelector(state => state.signProject.value);
   const status = useNetworkStatus();
-
   const navigation = useNavigation();
   const [selectedProject, setSelectedProject] = useState('');
   const [selectedSignValue, setSelectedSignValue] = useState('');
@@ -96,18 +96,23 @@ const Home = () => {
         if (response.data.status) {
           setResponse(response.data.status);
           const data = response.data.projectData;
+          dispatch(addData(data));
           console.log('USER PROJECTSSSSSSSSS DATAAA:::::::', data);
-          insertProjectsData(data);
-          insertExistingSignAudit(data, 1);
-          insertElectricalAudit(data, 1);
-          insertPermittingAssessment(data, 1);
-          insertIndoorPhotosAndMeasurements(data);
-          insertSignGeneralAudit(data, 1);
-          fetchAllProjectsData(projects => {
-            console.log('All projects data loaded from SQLite:', projects);
-            setAlldata(projects);
-            handleProjectSelection(projects, previousSignSelected, state);
-          });
+          await Promise.all([
+            insertProjectsData(data),
+            insertExistingSignAudit(data, 1),
+            insertElectricalAudit(data, 1),
+            insertPermittingAssessment(data, 1),
+            insertIndoorPhotosAndMeasurements(data),
+            insertSignGeneralAudit(data, 1),
+          ]);
+          setTimeout(() => {
+            fetchAllProjectsData(projects => {
+              console.log('All projects data loaded from SQLite:', projects);
+              setAlldata(projects);
+              handleProjectSelection(projects, previousSignSelected, state);
+            });
+          }, 1200);
         } else {
           setResponse(response.data.status);
           console.log(
