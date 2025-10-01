@@ -25,6 +25,7 @@ import {
 } from '../Db/LocalData.tsx';
 import {
   openEditor,
+  openEditorforUpdate,
   showPhotoOptions,
 } from '../Functions/ImagePickFunctions.tsx';
 import {deleteFolders, getBase64Array} from '../Functions/FSfunctions.tsx';
@@ -148,6 +149,7 @@ const ExistingAuditProject = ({handleFetchData}) => {
         });
         console.log('REMOVINGGGGGGGG444444444444');
         await handleFetchData(null, signProjectData);
+        setActive('Audit');
         setTimeout(() => {
           setLoadingImage(false);
         }, 1000);
@@ -157,7 +159,6 @@ const ExistingAuditProject = ({handleFetchData}) => {
       console.log('Error:', error.response?.data || error.message);
       console.log('Error response data:', error.responce.data);
       console.log('REMOVINGGGGGGGG666666666666666');
-      x;
     }
   };
 
@@ -233,18 +234,6 @@ const ExistingAuditProject = ({handleFetchData}) => {
     // insertExistingSignAudit(allData);
     // console.log('ALL DATA', allData);
   };
-
-  // let ExistingAuditPhotoApi = [
-  //   ...selectedOptions.existingSignAuditPhotos,
-  //   ...selectedOptions.existingSignAuditPhoto,
-  // ];
-
-  // useEffect(() => {
-  //   ExistingAuditPhotoApi = [
-  //     ...selectedOptions.existingSignAuditPhotos,
-  //     ...selectedOptions.existingSignAuditPhoto,
-  //   ];
-  // }, [selectedOptions.existingSignAuditPhotos]);
 
   useEffect(() => {
     setTimeout(() => {
@@ -415,9 +404,9 @@ const ExistingAuditProject = ({handleFetchData}) => {
                             </View>
                             <View style={styles.fileNameContainer}>
                               <Text style={styles.fileNameText}>
-                                {selectedOptions.existingSignAuditPhoto
+                                {selectedOptions?.existingSignAuditPhoto
                                   ?.length > 0
-                                  ? `${selectedOptions.existingSignAuditPhoto?.length} File Choosen`
+                                  ? `${selectedOptions?.existingSignAuditPhoto?.length} File Choosen`
                                   : 'No File Choosen'}
                               </Text>
                             </View>
@@ -432,7 +421,9 @@ const ExistingAuditProject = ({handleFetchData}) => {
                             {loadingImage ? (
                               <ActivityIndicator size="small" color="#FF9239" />
                             ) : (
-                              selectedOptions.existingSignAuditPhotos.map(
+                              selectedOptions?.existingSignAuditPhotos?.length >
+                                0 &&
+                              selectedOptions?.existingSignAuditPhotos?.map(
                                 (item, index) => {
                                   console.log('itemitemitemitem', item);
                                   console.log(
@@ -445,13 +436,16 @@ const ExistingAuditProject = ({handleFetchData}) => {
                                     <TouchableOpacity
                                       key={index}
                                       onPress={() => {
-                                        openEditor(
+                                        openEditorforUpdate(
                                           item.path,
                                           setSelectedOptions,
                                           'existingSignAuditPhotos',
                                           'ExistingAudit',
                                           true,
-                                          item.ImageId,
+                                          item.imageId,
+                                          baseUrl,
+                                          loginData?.tokenNumber,
+                                          true,
                                         );
                                       }}>
                                       <View

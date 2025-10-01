@@ -52,9 +52,9 @@ const Completedsurveys = () => {
           style={styles.row}
           onPress={() => toggleDetails(index)}>
           <Icon name="folder" size={20} color="#f2962f" />
-          <Text style={styles.title}>{item.projectName}</Text>
-          <Text style={styles.dueDate}>
-            {item.latestSignSubmittedDate || 'No date'}
+          <Text style={styles.title}>{item?.projectName}</Text>
+          <Text style={styles?.dueDate}>
+            {item?.latestSignSubmittedDate || 'No date'}
           </Text>
           <Icon
             name={isExpanded ? 'keyboard-arrow-up' : 'keyboard-arrow-right'}
@@ -71,8 +71,8 @@ const Completedsurveys = () => {
               </TouchableOpacity>
 
               <Icon name="assignment" size={20} color="#007aff" />
-              <Text style={styles.detailText}>
-                Survey Module: {sign.aliasName}
+              <Text style={styles?.detailText}>
+                Survey Module: {sign?.aliasName}
               </Text>
             </View>
           ))}
@@ -91,16 +91,8 @@ const Completedsurveys = () => {
     }, [loginData]),
   );
 
-  if (loading) {
-    return (
-      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-        <ProgressBar duration={1000} />
-      </View>
-    );
-  }
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <View style={styles.logoContainer}>
           <Logo width={150} height={36} />
@@ -115,7 +107,6 @@ const Completedsurveys = () => {
         </View>
       </View>
 
-      {/* List */}
       <View style={{padding: 18}}>
         <View style={styles.header1}>
           <Icon name="check-box" size={20} color="#007aff" />

@@ -195,15 +195,11 @@ const Manage = () => {
 
   const handleSaveSign = async () => {
     try {
-      const response = await axios.post(
-        `${baseUrl}/createSign`,
-        addSignForm,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const response = await axios.post(`${baseUrl}/createSign`, addSignForm, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
       if (response.data.status) {
         setSavedSign(response.data);
         setIsSignCreated(true);
@@ -342,7 +338,7 @@ const Manage = () => {
     }
     const fetchSignsData = async () => {
       const id = location === 'Outdoor' ? 2 : 1;
-      await fetchSigns(id, token, setSignData ,baseUrl);
+      await fetchSigns(id, token, setSignData, baseUrl);
     };
     fetchSignsData();
   }, [addSignForm?.signLocation, EditSignForm?.signLocation]);
@@ -414,14 +410,6 @@ const Manage = () => {
       return;
     }
   }, [selectedSignToEdit]);
-
-  if (loading) {
-    return (
-      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-        <ProgressBar duration={1000} />
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>

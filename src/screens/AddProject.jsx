@@ -520,13 +520,7 @@ const AddProject = ({navigation}) => {
     }
     setErrors({});
   }, [sameAsCustomer, customerData]);
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ProgressBar duration={1000} />
-      </View>
-    );
-  }
+
   return (
     <View style={styles.mainContainer}>
       <View style={styles.header}>

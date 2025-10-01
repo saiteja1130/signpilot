@@ -1,8 +1,12 @@
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import {compressImage} from './compressImage';
 import {Alert} from 'react-native';
-import {requestCameraPermission, requestMediaPermission} from './functions';
-import {functionToSaveImages, getPath} from './FSfunctions';
+import {
+  requestCameraPermission,
+  requestMediaPermission,
+  updateFile,
+} from './functions';
+import {functionToSaveImages, getBase64FromFile, getPath} from './FSfunctions';
 import PhotoEditor from '@baronha/react-native-photo-editor';
 import RNFS from 'react-native-fs';
 
@@ -31,12 +35,7 @@ export const openEditor = async (
     console.log('Edited image temp path:', tempPath);
     let permanentPath = tempPath;
     if (saveTo) {
-      permanentPath = await functionToSaveImages(
-        tempPath,
-        key,
-        setter,
-        status,
-      );
+      permanentPath = await functionToSaveImages(tempPath, key, setter, status);
     }
     if (tempPath && tempPath !== permanentPath) {
       const tempFileExists = await RNFS.exists(tempPath);
@@ -66,6 +65,89 @@ export const openEditor = async (
     });
 
     return;
+  } catch (e: any) {
+    console.log('PhotoEditor error:', e.message);
+    Alert.alert('Error', e.message);
+  }
+};
+
+export const openEditorforUpdate = async (
+  uri: string,
+  setter: any,
+  key: string,
+  folderName: string,
+  status: boolean,
+  ImageIdOld: number,
+  baseUrl: string,
+  tokenNumber: string,
+  saveTo: boolean, // ✅ moved to the last position
+) => {
+  try {
+    const path = await getPath(uri);
+
+    const result: any = await PhotoEditor.open({
+      path,
+      stickers: [],
+    });
+
+    if (result && result !== path) {
+      const fileExists = await RNFS.exists(path);
+      if (fileExists) {
+        await RNFS.unlink(path);
+      }
+    }
+
+    const tempPath: string = await compressImage(result, 'Final After Editing');
+    console.log('Edited image temp path:', tempPath);
+
+    let permanentPath = tempPath;
+    if (saveTo) {
+      permanentPath = await functionToSaveImages(tempPath, key, setter, status);
+    }
+
+    if (tempPath && tempPath !== permanentPath) {
+      const tempFileExists = await RNFS.exists(tempPath);
+      console.log('tempfile', tempFileExists);
+      if (tempFileExists) {
+        await RNFS.unlink(tempPath);
+        console.log('Temporary file removed:', tempPath);
+      }
+    }
+
+    const imageId = status ? ImageIdOld : Date.now();
+
+    console.log('ImageId', imageId);
+
+    setter((prev: any) => {
+      const existingArray = prev[key] || [];
+
+      if (status) {
+        const indexToReplace = existingArray.findIndex(
+          (item: any) => item.imageId === imageId,
+        );
+        if (indexToReplace !== -1) {
+          const updatedArray = [...existingArray];
+          updatedArray[indexToReplace] = {imageId, path: permanentPath};
+          return {...prev, [key]: updatedArray};
+        }
+      }
+
+      return {
+        ...prev,
+        [key]: [...existingArray, {imageId, path: permanentPath}],
+      };
+    });
+
+    const readBase64 = await getBase64FromFile(permanentPath);
+    await updateFile({
+      baseUrl,
+      tokenNumber,
+      imageId: imageId,
+      image: readBase64,
+      module: 'existing_sign_audit',
+      field: 'existingAuditPhotos',
+      moduleId: 1,
+    });
   } catch (e: any) {
     console.log('PhotoEditor error:', e.message);
     Alert.alert('Error', e.message);

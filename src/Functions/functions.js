@@ -389,15 +389,36 @@ export const changeSignSubmitStatus = async data => {
 };
 
 export const useNetworkStatus = () => {
-  const [isConnected, setIsConnected] = useState(true);
+  const [isConnected, setIsConnected] = useState(null);
+
   useEffect(() => {
+    NetInfo.fetch().then(state => {
+      setIsConnected(state.isConnected);
+    });
+
     const unsubscribe = NetInfo.addEventListener(state => {
       setIsConnected(state.isConnected);
     });
+
     return () => unsubscribe();
   }, []);
-  console.log('isConnected', isConnected);
+
   return isConnected;
 };
 
-
+export const updateFile = async data => {
+  try {
+    console.log(data);
+    const {tokenNumber, baseUrl, ...rest} = data;
+    console.log(`${baseUrl}/updateFile`);
+    const response = await axios.post(`${baseUrl}/updateFile`, rest, {
+      headers: {
+        Authorization: `Bearer ${tokenNumber}`,
+      },
+    });
+    console.log('UPDATE FILE RESPONSE:::', response.data);
+  } catch (error) {
+    console.log('UPDATE FILE ERRORRR', error);
+    console.log('UPDATE FILE ERRORRR', error.response.data);
+  }
+};

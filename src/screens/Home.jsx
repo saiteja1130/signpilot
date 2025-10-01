@@ -30,6 +30,7 @@ import Toast from 'react-native-toast-message';
 import {setActiveState} from '../Redux/Slices/Active';
 import ProgressBar from '../Components/Progressbar';
 import {useNetworkStatus} from '../Functions/functions';
+import NetInfo from '@react-native-community/netinfo';
 import {
   createElectricalAuditTable,
   createExistingSignAuditTable,
@@ -59,7 +60,7 @@ import {addData} from '../Redux/Slices/Alldata';
 const Home = () => {
   const baseUrl = useSelector(state => state.baseUrl.value);
   const signProjectData = useSelector(state => state.signProject.value);
-  const status = useNetworkStatus();
+  const isConnected = useNetworkStatus();
   const navigation = useNavigation();
   const [selectedProject, setSelectedProject] = useState('');
   const [selectedSignValue, setSelectedSignValue] = useState('');
@@ -80,10 +81,11 @@ const Home = () => {
   const fetchData = async (state, previousSignSelected) => {
     console.log('API fetching....');
     try {
-      if (status) {
+      if (isConnected === true) {
         const token = loginData?.tokenNumber;
         const userId = loginData?.userId;
         const role = loginData?.role;
+
         const response = await axios.get(
           `${baseUrl}/getData/${userId}/${role}`,
           {
@@ -97,7 +99,8 @@ const Home = () => {
           setResponse(response.data.status);
           const data = response.data.projectData;
           dispatch(addData(data));
-          console.log('USER PROJECTSSSSSSSSS DATAAA:::::::', data);
+          console.log('USER PROJECTS DATA:', data);
+
           await Promise.all([
             insertProjectsData(data),
             insertExistingSignAudit(data, 1),
@@ -106,6 +109,7 @@ const Home = () => {
             insertIndoorPhotosAndMeasurements(data),
             insertSignGeneralAudit(data, 1),
           ]);
+
           setTimeout(() => {
             fetchAllProjectsData(projects => {
               console.log('All projects data loaded from SQLite:', projects);
@@ -115,15 +119,12 @@ const Home = () => {
           }, 1200);
         } else {
           setResponse(response.data.status);
-          console.log(
-            'USER PROJECTSSSSSSSSS FALSEE RESPONSEEEE:::::::',
-            response.data,
-          );
+          console.log('FALSE RESPONSE:', response.data);
         }
-      } else {
-        console.log('USER IS OFFLINE USING LOCAL DATABASE::::');
+      } else if (isConnected === false) {
+        console.log('OFFLINE - USING LOCAL DATABASE');
         fetchAllProjectsData(projects => {
-          console.log('All projects data loaded from SQLite:', projects);
+          console.log('Projects from SQLite:', projects);
           if (projects.length > 0) {
             setAlldata(projects);
             handleProjectSelection(projects, previousSignSelected, state);
@@ -132,7 +133,10 @@ const Home = () => {
           }
         });
         setResponse(true);
-        setLoading(false);
+        setTimeout(() => {
+          setLoading(false);
+        }, 1500);
+        return;
       }
     } catch (error) {
       console.error('Fetch failed:', error?.response?.data || error.message);
@@ -245,14 +249,13 @@ const Home = () => {
   useFocusEffect(
     useCallback(() => {
       const fetchOnFocus = async () => {
-        if (Object.keys(loginData).length > 0) {
+        if (Object.keys(loginData).length > 0 && isConnected !== null) {
           setLoading(true);
           await fetchData();
-          setLoading(false);
         }
       };
       fetchOnFocus();
-    }, [loginData]),
+    }, [loginData,isConnected]),
   );
 
   useEffect(() => {
@@ -570,12 +573,12 @@ const Home = () => {
           <Logo width={150} height={36} />
         </View>
         <View style={styles.iconContainer}>
-          {status && (
+          {isConnected && (
             <TouchableOpacity onPress={() => handleRefresh()}>
               <Refresh width={36} height={36} />
             </TouchableOpacity>
           )}
-          {status && (
+          {isConnected && (
             <TouchableOpacity onPress={() => navigation.navigate('Menu')}>
               <Menu width={36} height={36} />
             </TouchableOpacity>
