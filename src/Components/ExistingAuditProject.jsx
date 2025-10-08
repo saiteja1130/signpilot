@@ -19,8 +19,12 @@ import Photo from '../../assets/images/photo.svg';
 import axios from 'axios';
 import {handleAddPhoto, useNetworkStatus} from '../Functions/functions.js';
 import Toast from 'react-native-toast-message';
+import RNFS from 'react-native-fs';
+import NetInfo from '@react-native-community/netinfo';
 import {
+  createOfflineRemoveTable,
   insertExistingSignAudit,
+  insertOfflineRemove,
   updateExistingSignAudit,
 } from '../Db/LocalData.tsx';
 import {
@@ -28,7 +32,11 @@ import {
   openEditorforUpdate,
   showPhotoOptions,
 } from '../Functions/ImagePickFunctions.tsx';
-import {deleteFolders, getBase64Array} from '../Functions/FSfunctions.tsx';
+import {
+  deleteFolders,
+  getBase64Array,
+  getPath,
+} from '../Functions/FSfunctions.tsx';
 
 const ExistingAuditProject = ({handleFetchData}) => {
   const allData = useSelector(state => state.allData.value);
@@ -88,7 +96,7 @@ const ExistingAuditProject = ({handleFetchData}) => {
     existingSignAuditSummaryNotes: existingSignAuditSummaryNotes,
   });
 
-  console.log('selectedOptions', selectedOptions);
+  // console.log('selectedOptions', selectedOptions);
 
   const data = [
     {
@@ -118,7 +126,7 @@ const ExistingAuditProject = ({handleFetchData}) => {
     },
   ];
 
-  const handleRemoveImage = async (imageId1, fieldName1) => {
+  const handleRemoveImage = async (imageId1, fieldName1, dummy, path) => {
     console.log('REMOVINGGGGGGGG');
     try {
       setLoadingImage(true);
@@ -129,36 +137,46 @@ const ExistingAuditProject = ({handleFetchData}) => {
           signProjectData?.existing_sign_audit?.Id,
         fieldName: fieldName1,
         surveyModule: 'existing_sign_audit',
+        moduleId: signProjectData?.existing_sign_audit?.id,
       };
-      console.log('REMOVINGGGGGGGG 2222222222');
-      const token = loginData?.tokenNumber;
-      const responce = await axios.post(`${baseUrl}/removeFile`, data, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      console.log('REMOVINGGGGGGGG 333333333333');
-      console.log('responce.data.', responce.data);
-      if (responce.data.status) {
-        setSelectedOptions(prev => {
-          return {
+
+      const netState = await NetInfo.fetch();
+      const isConnected = netState.isConnected;
+
+      if (isConnected) {
+        const token = loginData?.tokenNumber;
+        const response = await axios.post(`${baseUrl}/removeFile`, data, {
+          headers: {Authorization: `Bearer ${token}`},
+        });
+
+        if (response.data.status) {
+          setSelectedOptions(prev => ({
             ...prev,
             existingSignAuditPhotos:
-              responce.data.data?.existingSignAuditPhotos,
-          };
-        });
-        console.log('REMOVINGGGGGGGG444444444444');
-        await handleFetchData(null, signProjectData);
-        setActive('Audit');
-        setTimeout(() => {
-          setLoadingImage(false);
-        }, 1000);
-        console.log('REMOVINGGGGGGGG5655555555555555');
+              response.data.data?.existingSignAuditPhotos,
+          }));
+          const fullPath = await getPath(path);
+          await RNFS.unlink(fullPath);
+          await handleFetchData(null, signProjectData);
+          setActive('Audit');
+        }
+      } else {
+        createOfflineRemoveTable();
+        insertOfflineRemove(data);
+        const fullPath = await getPath(path);
+        console.log('FULLLPATHHH:::', fullPath);
+        await RNFS.unlink(`file://${fullPath}`);
+        console.log('Device offline: remove request stored locally');
       }
     } catch (error) {
       console.log('Error:', error.response?.data || error.message);
-      console.log('Error response data:', error.responce.data);
-      console.log('REMOVINGGGGGGGG666666666666666');
+      createOfflineRemoveTable();
+      insertOfflineRemove(data);
+      const fullPath = await getPath(path);
+      await RNFS.unlink(fullPath);
+      console.log('Failed to remove online: stored offline for sync');
+    } finally {
+      setTimeout(() => setLoadingImage(false), 1000);
     }
   };
 
@@ -465,6 +483,7 @@ const ExistingAuditProject = ({handleFetchData}) => {
                                               item.imageId,
                                               'electricalAuditPhoto',
                                               'electricalAuditPhotos',
+                                              item.path,
                                             )
                                           }
                                           style={styles.removeButton}>

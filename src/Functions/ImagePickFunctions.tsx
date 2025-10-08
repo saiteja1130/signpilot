@@ -150,7 +150,7 @@ export const openEditorforUpdate = async (
     });
   } catch (e: any) {
     console.log('PhotoEditor error:', e.message);
-    Alert.alert('Error', e.message);
+    // Alert.alert('Error', e.message);
   }
 };
 

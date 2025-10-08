@@ -1942,6 +1942,8 @@ export const dropAllTables = () => {
       'permitting_assessment',
       'indoor_photos_and_measurements',
       'sign_general_audit',
+      'offline_images',
+      'offline_remove_images',
     ];
 
     tables.forEach(table => {
@@ -1953,5 +1955,126 @@ export const dropAllTables = () => {
           console.error(`Error dropping table ${table}:`, error),
       );
     });
+  });
+};
+
+export const createOfflineImagesTable = () => {
+  db.transaction((tx: any) => {
+    tx.executeSql(
+      `CREATE TABLE IF NOT EXISTS offline_images (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        imageId TEXT,
+        image TEXT,
+        module TEXT,
+        field TEXT,
+        moduleId INTEGER,
+        synced INTEGER DEFAULT 0
+      );`,
+      [],
+      () => console.log('offline_images table created'),
+      (error: any) =>
+        console.log('Error creating offline_images table:', error),
+    );
+  });
+};
+
+type UpdateImageData = {
+  imageId: number;
+  image: string;
+  field: string;
+  moduleId: number;
+  module: string;
+};
+
+export const insertOfflineImage = (imageData: UpdateImageData) => {
+  const {imageId, image, module, field, moduleId} = imageData;
+  db.transaction((tx: any) => {
+    tx.executeSql(
+      `INSERT INTO offline_images (imageId, image, module, field, moduleId, synced)
+       VALUES (?, ?, ?, ?, ?, 0);`,
+      [imageId, image, module, field, moduleId],
+      () => console.log('Offline image stored'),
+      (error: any) => console.log('Error inserting offline image:', error),
+    );
+  });
+};
+
+export const getAllOfflineImages = (callback: (data: any[]) => void) => {
+  db.transaction((tx: any) => {
+    tx.executeSql(
+      `SELECT * FROM offline_images;`,
+      [],
+      (_: any, results: any) => {
+        const rows = results.rows;
+        const data = [];
+        for (let i = 0; i < rows.length; i++) {
+          data.push(rows.item(i));
+        }
+        callback(data);
+      },
+      (error: any) => console.log('Error fetching all offline images:', error),
+    );
+  });
+};
+
+export const createOfflineRemoveTable = () => {
+  db.transaction((tx: any) => {
+    tx.executeSql(
+      `CREATE TABLE IF NOT EXISTS offline_remove_images (
+        offlineId INTEGER PRIMARY KEY AUTOINCREMENT,
+        imageId TEXT,
+        fieldName TEXT,
+        surveyModule TEXT,
+        moduleId TEXT,
+        Id INTEGER,
+        synced INTEGER DEFAULT 0
+      );`,
+      [],
+      () => console.log('offline_remove_images table created'),
+      (error: any) =>
+        console.log('Error creating offline_remove_images table:', error),
+    );
+  });
+};
+
+export const insertOfflineRemove = (data: any) => {
+  const {imageId, fieldName, surveyModule, moduleId, Id} = data;
+  db.transaction((tx: any) => {
+    tx.executeSql(
+      `INSERT INTO offline_remove_images (imageId, fieldName, surveyModule, moduleId, Id, synced) VALUES (?, ?, ?, ?, ?, 0);`,
+      [imageId, fieldName, surveyModule, moduleId, Id],
+      () => console.log('Offline remove request stored'),
+      (error: any) =>
+        console.log('Error storing offline remove request:', error),
+    );
+  });
+};
+
+type OfflineRemoveImage = {
+  id: number;
+  imageId: string;
+  module: string;
+  field: string;
+  moduleId: number;
+};
+
+export const getAllRemovedImages = (
+  callback: (data: OfflineRemoveImage[]) => void,
+) => {
+  db.transaction((tx: any) => {
+    tx.executeSql(
+      `SELECT * FROM offline_remove_images;`,
+      [],
+      (_: any, results: any) => {
+        const rows = results.rows;
+        const data: OfflineRemoveImage[] = [];
+        for (let i = 0; i < rows.length; i++) {
+          const item = rows.item(i);
+          data.push(item);
+        }
+        callback(data);
+      },
+      (error: any) => console.log('Error fetching removed images:', error),
+    );
   });
 };

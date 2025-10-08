@@ -4,6 +4,16 @@ import {useEffect, useState} from 'react';
 import {Alert, PermissionsAndroid, Platform} from 'react-native';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import RNFS from 'react-native-fs';
+import {
+  createOfflineImagesTable,
+  getAllOfflineImages,
+  getAllRemovedImages,
+  getUnsyncedElectricalAudits,
+  getUnsyncedExistingSignAudits,
+  getUnsyncedPermittingAssessments,
+  getUnsyncedSignGeneralAudits,
+  insertOfflineImage,
+} from '../Db/LocalData';
 
 // import {PermissionsAndroid, Platform} from 'react-native';
 
@@ -408,17 +418,252 @@ export const useNetworkStatus = () => {
 
 export const updateFile = async data => {
   try {
-    console.log(data);
     const {tokenNumber, baseUrl, ...rest} = data;
-    console.log(`${baseUrl}/updateFile`);
-    const response = await axios.post(`${baseUrl}/updateFile`, rest, {
-      headers: {
-        Authorization: `Bearer ${tokenNumber}`,
-      },
-    });
-    console.log('UPDATE FILE RESPONSE:::', response.data);
+
+    const netState = await NetInfo.fetch();
+    const isConnected = netState.isConnected;
+
+    console.log('NETWORK STATUS:', isConnected);
+
+    if (isConnected) {
+      const response = await axios.post(`${baseUrl}/updateFile`, rest, {
+        headers: {
+          Authorization: `Bearer ${tokenNumber}`,
+        },
+      });
+      console.log('UPDATE FILE RESPONSE:::', response.data);
+      return {success: true, online: true};
+    } else {
+      createOfflineImagesTable();
+      insertOfflineImage({
+        imageId: rest.imageId,
+        image: rest.image,
+        field: rest.field,
+        moduleId: rest.moduleId,
+        module: rest.module,
+      });
+      console.log('OFFLINE — image stored locally');
+      return;
+    }
   } catch (error) {
-    console.log('UPDATE FILE ERRORRR', error);
-    console.log('UPDATE FILE ERRORRR', error.response.data);
+    console.log('UPDATE FILE ERRORRR', error?.response?.data || error.message);
+
+    // insertOfflineImage({
+    //   imageId: data.imageId,
+    //   image: data.image,
+    //   field: data.field,
+    //   moduleId: data.moduleId,
+    //   module: data.module,
+    // });
+    console.log('FAILED TO UPLOAD — stored offline');
+
+    return;
+  }
+};
+
+export const syncToOnline = async (loginData,baseUrl) => {
+  console.log('STARTED SYNCINGGGGG');
+  try {
+    getUnsyncedExistingSignAudits(async audits => {
+      console.log('Pending Existing SYNCCCC::::::::::::', audits);
+      // return
+      if (audits.length > 0) {
+        const token = loginData?.tokenNumber;
+        for (const audit of audits) {
+          const data = {
+            ...audit,
+            teamId: loginData?.userId,
+            surveyModule: '',
+          };
+          try {
+            const response = await axios.post(
+              `${baseUrl}/updateExistingSignAudit`,
+              data,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              },
+            );
+            console.log('RESPONSE EXISTINGG SYNCEDDDD::', response.data);
+            updateExistingSignAudit(audit, 1);
+          } catch (err) {
+            console.error(
+              'Error syncing audit ID',
+              audit.Id,
+              err.response.data,
+            );
+          }
+        }
+      }
+    });
+  } catch (error) {
+    console.log('ERRORRRRRRR!!!!!!!!!!!!!!:', error);
+  }
+  // try {
+  //   getUnsyncedPermittingAssessments(async audits => {
+  //     console.log('Pending Permitt sync:', audits);
+  //     // return
+  //     if (audits.length > 0) {
+  //       const token = loginData?.tokenNumber;
+  //       for (const audit of audits) {
+  //         const data = {
+  //           ...audit,
+  //           teamId: loginData?.userId,
+  //           surveyModule: '',
+  //         };
+  //         try {
+  //           const response = await axios.post(
+  //             `${baseUrl}/updatePermittingAssessmentAudit`,
+  //             data,
+  //             {
+  //               headers: {
+  //                 Authorization: `Bearer ${token}`,
+  //               },
+  //             },
+  //           );
+  //           console.log('RESPONSE PERMITTT SYNCEDDDD::', response.data);
+  //           updatePermittingAssessment(audit, 1);
+  //         } catch (err) {
+  //           console.error(
+  //             'Error syncing audit ID',
+  //             audit.Id,
+  //             err.response.data,
+  //           );
+  //         }
+  //       }
+  //     }
+  //   });
+  // } catch (error) {
+  //   console.log('RESPONSE SYNCHEDD ERRORRRR::', error);
+  // }
+  // try {
+  //   getUnsyncedSignGeneralAudits(async audits => {
+  //     console.log('PENDING SIGNGENERAL AUDITSSS:::', audits);
+  //     if (audits.length > 0) {
+  //       const token = loginData?.tokenNumber;
+  //       for (const audit of audits) {
+  //         const data = {
+  //           ...audit,
+  //           teamId: loginData?.userId,
+  //           surveyModule: '',
+  //         };
+  //         try {
+  //           const response = await axios.post(
+  //             `${baseUrl}/updateSignGeneralAudit`,
+  //             data,
+  //             {
+  //               headers: {
+  //                 Authorization: `Bearer ${token}`,
+  //               },
+  //             },
+  //           );
+  //           console.log('RESPONSE SIGNGENERAL SYNCEDDDD::', response.data);
+  //           updateSignGeneralAudit(audit, 1);
+  //         } catch (err) {
+  //           console.error(
+  //             'Error syncing audit ID',
+  //             audit.Id,
+  //             err.response.data,
+  //           );
+  //         }
+  //       }
+  //     }
+  //   });
+  // } catch (error) {
+  //   console.log('RESPONSE SYNCHEDD ERRORRRR::', error);
+  // }
+  // try {
+  //   getUnsyncedElectricalAudits(async audits => {
+  //     console.log('PENDINGG ELECTRICAL AUDITS', audits);
+  //     if (audits.length > 0) {
+  //       const token = loginData?.tokenNumber;
+  //       for (const audit of audits) {
+  //         const data = {
+  //           ...audit,
+  //           teamId: loginData?.userId,
+  //           surveyModule: '',
+  //         };
+  //         try {
+  //           const response = await axios.post(
+  //             `${baseUrl}/updateElectricalAudit`,
+  //             data,
+  //             {
+  //               headers: {
+  //                 Authorization: `Bearer ${token}`,
+  //               },
+  //             },
+  //           );
+  //           console.log('RESPONSE SIGNGENERAL SYNCEDDDD::', response.data);
+  //           updateElectricalAudit(audit, 1);
+  //         } catch (err) {
+  //           console.error(
+  //             'Error syncing audit ID',
+  //             audit.Id,
+  //             err.response.data,
+  //           );
+  //         }
+  //       }
+  //     }
+  //   });
+  // } catch (error) {
+  //   console.log('RESPONSE SYNCHEDD ERRORRRR::', error);
+  // }
+  try {
+    getAllOfflineImages(async audits => {
+      console.log('PENDINGG ELECTRICAL AUDITS', audits);
+      if (audits.length > 0) {
+        const token = loginData?.tokenNumber;
+        for (const audit of audits) {
+          const data = {
+            ...audit,
+            teamId: loginData?.userId,
+          };
+          try {
+            const response = await axios.post(`${baseUrl}/updateFile`, data, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
+            console.log('RESPONSE SIGNGENERAL SYNCEDDDD::', response.data);
+          } catch (err) {
+            console.error(
+              'Error syncing audit ID',
+              audit.Id,
+              err.response.data,
+            );
+          }
+        }
+      }
+    });
+  } catch (error) {
+    console.log('RESPONSE SYNCHEDD ERRORRRR::', error);
+  }
+  
+  try {
+    getAllRemovedImages(async audits => {
+      console.log('PENDINGG REMOVED IMAGE AUDITS', audits);
+      if (audits.length > 0) {
+        const token = loginData?.tokenNumber;
+        for (const audit of audits) {
+          const data = {
+            ...audit,
+            teamId: loginData?.userId,
+          };
+          try {
+            const response = await axios.post(`${baseUrl}/removeFile`, data, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
+            console.log('RESPONSE SIGNGENERAL SYNCEDDDD::', response.data);
+          } catch (err) {
+            console.error('Error syncing audit ID', err.response.data);
+          }
+        }
+      }
+    });
+  } catch (error) {
+    console.log('RESPONSE SYNCHEDD ERRORRRR::', error);
   }
 };

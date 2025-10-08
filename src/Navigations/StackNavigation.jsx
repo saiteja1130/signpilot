@@ -16,6 +16,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import TestPage from '../screens/Testpage.tsx';
 import RNFS from 'react-native-fs';
 import {deleteFolders} from '../Functions/FSfunctions.tsx';
+import {syncToOnline} from '../Functions/functions.js';
 
 const Stack = createNativeStackNavigator();
 
