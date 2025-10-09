@@ -681,7 +681,7 @@ export const insertExistingSignAudit = async (
       const id = option.existing_sign_audit?.id;
       const loadedImages = await downloadImagesArray(
         audit.existingSignAuditPhotos || [],
-        'ExistingAudit',
+        'existingSignAuditPhotos',
       );
       console.log('loadedImages', loadedImages);
       db.transaction(
@@ -1988,13 +1988,33 @@ type UpdateImageData = {
 
 export const insertOfflineImage = (imageData: UpdateImageData) => {
   const {imageId, image, module, field, moduleId} = imageData;
+
   db.transaction((tx: any) => {
     tx.executeSql(
-      `INSERT INTO offline_images (imageId, image, module, field, moduleId, synced)
-       VALUES (?, ?, ?, ?, ?, 0);`,
-      [imageId, image, module, field, moduleId],
-      () => console.log('Offline image stored'),
-      (error: any) => console.log('Error inserting offline image:', error),
+      `SELECT * FROM offline_images WHERE imageId = ?;`,
+      [imageId],
+      (tx: any, results: any) => {
+        if (results.rows.length > 0) {
+          tx.executeSql(
+            `UPDATE offline_images 
+             SET image = ?, synced = 0 
+             WHERE imageId = ?;`,
+            [image, imageId],
+            () => console.log('Offline image updated'),
+            (error: any) => console.log('Error updating offline image:', error),
+          );
+        } else {
+          tx.executeSql(
+            `INSERT INTO offline_images (imageId, image, module, field, moduleId, synced)
+             VALUES (?, ?, ?, ?, ?, 0);`,
+            [imageId, image, module, field, moduleId],
+            () => console.log('Offline image inserted'),
+            (error: any) =>
+              console.log('Error inserting offline image:', error),
+          );
+        }
+      },
+      (error: any) => console.log('Error checking image existence:', error),
     );
   });
 };

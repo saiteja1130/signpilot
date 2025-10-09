@@ -51,6 +51,7 @@ import {
 import {addData} from '../Redux/Slices/Alldata';
 import {createUsersTable, dropUsersTable} from '../Db/db';
 import {addLoginData} from '../Redux/Slices/LoginData';
+import {clearCache, deleteFolders} from '../Functions/FSfunctions';
 
 const Home = () => {
   const baseUrl = useSelector(state => state.baseUrl.value);
@@ -156,7 +157,7 @@ const Home = () => {
   };
 
   const handleProjectSelection = (data, previousSignSelected, state) => {
-    console.log(previousSignSelected);
+    // console.log(previousSignSelected);
     const titles = data.map(item => item.projectTitle);
     SetProjectTitles(titles);
     let currentProject =
@@ -269,6 +270,7 @@ const Home = () => {
           await syncToOnline(loginData, baseUrl);
         }
       };
+      clearCache();
       syncingOnline();
       setTimeout(() => {
         fetchOnFocus();
@@ -289,6 +291,10 @@ const Home = () => {
 
   const handleRefresh = async () => {
     setRefreshing(true);
+    if (isConnected) {
+      await deleteFolders();
+    }
+    await clearCache();
     await new Promise(resolve => {
       fetchData(null, signProjectData);
       setTimeout(resolve, 1000);

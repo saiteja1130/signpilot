@@ -41,13 +41,14 @@ export const getPath = async (uri: string) => {
 export const functionToSaveImages = async (
   tempPath: string = '',
   key: string,
-  state: boolean,
+  setter: boolean,
   status: boolean,
+  path: string,
 ): Promise<string> => {
   try {
     const readBase64 = await getBase64FromFile(tempPath);
     const folderPath = `${RNFS.DocumentDirectoryPath}/${key}`;
-    let fileName: string = `${folderPath}/${Date.now()}.jpg`;
+    let fileName: string = status ? path : `${folderPath}/${Date.now()}.jpg`;
     const folderExists: boolean = await RNFS.exists(folderPath);
     if (!folderExists) {
       await RNFS.mkdir(folderPath);
@@ -124,11 +125,22 @@ export const downloadImagesArray = async (
 
 export const deleteFolders = async () => {
   try {
-    const folderPath = `${RNFS.DocumentDirectoryPath}/ExistingAudit`;
-    const folderExists: boolean = await RNFS.exists(folderPath);
-    if (folderExists) await RNFS.unlink(folderPath);
-    console.log('FOLDER DELETEDDDD');
+    const basePath = RNFS.DocumentDirectoryPath;
+    const items = await RNFS.readDir(basePath); // Get all files and folders
+
+    for (const item of items) {
+      if (item.isDirectory()) {
+        try {
+          await RNFS.unlink(item.path);
+          console.log(`Deleted folder: ${item.name}`);
+        } catch (err) {
+          console.log(`Error deleting folder ${item.name}:`, err);
+        }
+      }
+    }
+
+    console.log('✅ All folders deleted successfully');
   } catch (error) {
-    console.log('DELETING FOLDER ERROR');
+    console.log('Error reading document directory:', error);
   }
 };

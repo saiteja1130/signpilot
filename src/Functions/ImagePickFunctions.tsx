@@ -35,7 +35,13 @@ export const openEditor = async (
     console.log('Edited image temp path:', tempPath);
     let permanentPath = tempPath;
     if (saveTo) {
-      permanentPath = await functionToSaveImages(tempPath, key, setter, status);
+      permanentPath = await functionToSaveImages(
+        tempPath,
+        key,
+        setter,
+        status,
+        '',
+      );
     }
     if (tempPath && tempPath !== permanentPath) {
       const tempFileExists = await RNFS.exists(tempPath);
@@ -77,11 +83,21 @@ export const openEditorforUpdate = async (
   key: string,
   folderName: string,
   status: boolean,
-  ImageIdOld: number,
+  imageId: number,
   baseUrl: string,
   tokenNumber: string,
-  saveTo: boolean, // ✅ moved to the last position
+  saveTo: boolean,
+  moduleId: number = 1,
 ) => {
+  console.log('openEditorforUpdate called with:', {
+    uri,
+    key,
+    folderName,
+    status,
+    imageId,
+    saveTo,
+  });
+
   try {
     const path = await getPath(uri);
 
@@ -90,67 +106,19 @@ export const openEditorforUpdate = async (
       stickers: [],
     });
 
-    if (result && result !== path) {
-      const fileExists = await RNFS.exists(path);
-      if (fileExists) {
-        await RNFS.unlink(path);
-      }
-    }
-
-    const tempPath: string = await compressImage(result, 'Final After Editing');
-    console.log('Edited image temp path:', tempPath);
-
-    let permanentPath = tempPath;
-    if (saveTo) {
-      permanentPath = await functionToSaveImages(tempPath, key, setter, status);
-    }
-
-    if (tempPath && tempPath !== permanentPath) {
-      const tempFileExists = await RNFS.exists(tempPath);
-      console.log('tempfile', tempFileExists);
-      if (tempFileExists) {
-        await RNFS.unlink(tempPath);
-        console.log('Temporary file removed:', tempPath);
-      }
-    }
-
-    const imageId = status ? ImageIdOld : Date.now();
-
-    console.log('ImageId', imageId);
-
-    setter((prev: any) => {
-      const existingArray = prev[key] || [];
-
-      if (status) {
-        const indexToReplace = existingArray.findIndex(
-          (item: any) => item.imageId === imageId,
-        );
-        if (indexToReplace !== -1) {
-          const updatedArray = [...existingArray];
-          updatedArray[indexToReplace] = {imageId, path: permanentPath};
-          return {...prev, [key]: updatedArray};
-        }
-      }
-
-      return {
-        ...prev,
-        [key]: [...existingArray, {imageId, path: permanentPath}],
-      };
-    });
-
-    const readBase64 = await getBase64FromFile(permanentPath);
+    // console.log('ImageId', imageId);
     await updateFile({
       baseUrl,
       tokenNumber,
       imageId: imageId,
-      image: readBase64,
       module: 'existing_sign_audit',
       field: 'existingAuditPhotos',
-      moduleId: 1,
+      moduleId: moduleId,
+      resultPath: result,
+      localleySavedpath: path,
     });
   } catch (e: any) {
     console.log('PhotoEditor error:', e.message);
-    // Alert.alert('Error', e.message);
   }
 };
 

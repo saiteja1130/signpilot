@@ -14,6 +14,8 @@ import {
   getUnsyncedSignGeneralAudits,
   insertOfflineImage,
 } from '../Db/LocalData';
+import {compressImage} from './compressImage';
+import {downloadImagesArray, getBase64FromFile} from './FSfunctions';
 
 // import {PermissionsAndroid, Platform} from 'react-native';
 
@@ -418,12 +420,26 @@ export const useNetworkStatus = () => {
 
 export const updateFile = async data => {
   try {
-    const {tokenNumber, baseUrl, ...rest} = data;
+    const {tokenNumber, baseUrl, resultPath, localleySavedpath, ...rest} = data;
 
     const netState = await NetInfo.fetch();
     const isConnected = netState.isConnected;
+    const tempPath = await compressImage(resultPath, 'Final After Editing');
+    // console.log('Edited image temp path:', tempPath);
+    let permanentPath = tempPath;
+    if (tempPath && tempPath !== permanentPath) {
+      const tempFileExists = await RNFS.exists(tempPath);
+      console.log('tempfile', tempFileExists);
+      if (tempFileExists) {
+        await RNFS.unlink(tempPath);
+        console.log('Temporary file removed:', tempPath);
+      }
+    }
 
-    console.log('NETWORK STATUS:', isConnected);
+    const ImageBase64 = await getBase64FromFile(permanentPath);
+    rest.image = ImageBase64;
+
+    // console.log('NETWORK STATUS:', isConnected);
 
     if (isConnected) {
       const response = await axios.post(`${baseUrl}/updateFile`, rest, {
@@ -432,8 +448,92 @@ export const updateFile = async data => {
         },
       });
       console.log('UPDATE FILE RESPONSE:::', response.data);
-      return {success: true, online: true};
+      if (response.data.status) {
+        await RNFS.unlink(localleySavedpath);
+        const arrayImages = await downloadImagesArray(
+          response.data.data.existingAuditPhotoss,
+          'existingSignAuditPhotos',
+        );
+        console.log('Downloaded images array:', arrayImages);
+        console.log('ONLINE — image uploaded successfully');
+        // setter((prev: any) => {
+        //   const existingArray = prev[key] || [];
+
+        //   if (status) {
+        //     const indexToReplace = existingArray.findIndex(
+        //       (item: any) => item.imageId === imageId,
+        //     );
+        //     if (indexToReplace !== -1) {
+        //       const updatedArray = [...existingArray];
+        //       updatedArray[indexToReplace] = {imageId, path: permanentPath};
+        //       return {...prev, [key]: updatedArray};
+        //     }
+        //   }
+
+        //   return {
+        //     ...prev,
+        //     [key]: [...existingArray, {imageId, path: permanentPath}],
+        //   };
+        // });
+        // });
+      }
+
+      // return {success: true, online: true};
     } else {
+      // if (resultPath && resultPath !== path) {
+      //   const fileExists = await RNFS.exists(path);
+      //   if (fileExists) {
+      //     await RNFS.unlink(path);
+      //   }
+      // }
+
+      // const tempPath: string = await compressImage(
+      //   result,
+      //   'Final After Editing',
+      // );
+      // console.log('Edited image temp path:', tempPath);
+
+      // let permanentPath = tempPath;
+      // if (saveTo) {
+      //   permanentPath = await functionToSaveImages(
+      //     tempPath,
+      //     key,
+      //     setter,
+      //     status,
+      //     path,
+      //   );
+      // }
+
+      // if (tempPath && tempPath !== permanentPath) {
+      //   const tempFileExists = await RNFS.exists(tempPath);
+      //   console.log('tempfile', tempFileExists);
+      //   if (tempFileExists) {
+      //     await RNFS.unlink(tempPath);
+      //     console.log('Temporary file removed:', tempPath);
+      //   }
+      // }
+
+      // setter((prev: any) => {
+      //   const existingArray = prev[key] || [];
+
+      //   if (status) {
+      //     const indexToReplace = existingArray.findIndex(
+      //       (item: any) => item.imageId === imageId,
+      //     );
+      //     if (indexToReplace !== -1) {
+      //       const updatedArray = [...existingArray];
+      //       updatedArray[indexToReplace] = {imageId, path: permanentPath};
+      //       return {...prev, [key]: updatedArray};
+      //     }
+      //   }
+
+      //   return {
+      //     ...prev,
+      //     [key]: [...existingArray, {imageId, path: permanentPath}],
+      //   };
+      // });
+
+      // const readBase64 = await getBase64FromFile(permanentPath);
       createOfflineImagesTable();
       insertOfflineImage({
         imageId: rest.imageId,
@@ -461,7 +561,7 @@ export const updateFile = async data => {
   }
 };
 
-export const syncToOnline = async (loginData,baseUrl) => {
+export const syncToOnline = async (loginData, baseUrl) => {
   console.log('STARTED SYNCINGGGGG');
   try {
     getUnsyncedExistingSignAudits(async audits => {
@@ -639,7 +739,7 @@ export const syncToOnline = async (loginData,baseUrl) => {
   } catch (error) {
     console.log('RESPONSE SYNCHEDD ERRORRRR::', error);
   }
-  
+
   try {
     getAllRemovedImages(async audits => {
       console.log('PENDINGG REMOVED IMAGE AUDITS', audits);

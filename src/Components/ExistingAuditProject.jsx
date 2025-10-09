@@ -443,6 +443,10 @@ const ExistingAuditProject = ({handleFetchData}) => {
                                 0 &&
                               selectedOptions?.existingSignAuditPhotos?.map(
                                 (item, index) => {
+                                  console.log(
+                                    'arrayimages',
+                                    selectedOptions?.existingSignAuditPhotos,
+                                  );
                                   console.log('itemitemitemitem', item);
                                   console.log(
                                     'FINAL URI:',
@@ -464,6 +468,7 @@ const ExistingAuditProject = ({handleFetchData}) => {
                                           baseUrl,
                                           loginData?.tokenNumber,
                                           true,
+                                          selectedOptions?.signId,
                                         );
                                       }}>
                                       <View
