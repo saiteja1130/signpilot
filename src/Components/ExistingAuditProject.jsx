@@ -23,7 +23,9 @@ import RNFS from 'react-native-fs';
 import NetInfo from '@react-native-community/netinfo';
 import {
   createOfflineRemoveTable,
+  getExistingSignAuditImagesByKey,
   insertExistingSignAudit,
+  insertExistingSignAuditImagesOnly,
   insertOfflineRemove,
   updateExistingSignAudit,
 } from '../Db/LocalData.tsx';
@@ -126,8 +128,8 @@ const ExistingAuditProject = ({handleFetchData}) => {
     },
   ];
 
-  const handleRemoveImage = async (imageId1, fieldName1, dummy, path) => {
-    console.log('REMOVINGGGGGGGG');
+  const handleRemoveImage = async (imageId1, fieldName1, actualKey, path) => {
+    // console.log('REMOVINGGGGGGGG');
     try {
       setLoadingImage(true);
       const data = {
@@ -150,30 +152,63 @@ const ExistingAuditProject = ({handleFetchData}) => {
         });
 
         if (response.data.status) {
-          setSelectedOptions(prev => ({
-            ...prev,
-            existingSignAuditPhotos:
-              response.data.data?.existingSignAuditPhotos,
-          }));
+          const imagesArray = response?.data?.data[actualKey] || [];
+          // console.log('IMAGESSSARRAYY', imagesArray);
+          await insertExistingSignAuditImagesOnly(
+            signProjectData?.signTableId,
+            actualKey,
+            imagesArray,
+            1,
+          );
+          const imagesaRRAY = await getExistingSignAuditImagesByKey(
+            signProjectData?.signTableId,
+            actualKey,
+          );
+          // console.log('IMAGESARRAYAFTERINSERT', imagesaRRAY);
+          setSelectedOptions(prev => {
+            return {
+              ...prev,
+              [actualKey]: imagesaRRAY || [],
+            };
+          });
           const fullPath = await getPath(path);
           await RNFS.unlink(fullPath);
-          await handleFetchData(null, signProjectData);
-          setActive('Audit');
+          // await handleFetchData(null, signProjectData);
+          // setActive('Audit');
         }
       } else {
         createOfflineRemoveTable();
+        const imagesArray = selectedOptions?.[actualKey]?.filter(
+          item => item.imageId !== imageId1,
+        );
+        console.log('IMAGESSSARRAYY', imagesArray);
+        // return;
+        await insertExistingSignAuditImagesOnly(
+          signProjectData?.signTableId,
+          actualKey,
+          imagesArray,
+          0,
+        );
+        const imagesaRRAY = await getExistingSignAuditImagesByKey(
+          signProjectData?.signTableId,
+          actualKey,
+        );
+        console.log('IMAGESARRAYAFTERINSERT', imagesaRRAY);
+        setSelectedOptions(prev => {
+          return {
+            ...prev,
+            [actualKey]: imagesaRRAY || [],
+          };
+        });
         insertOfflineRemove(data);
         const fullPath = await getPath(path);
-        console.log('FULLLPATHHH:::', fullPath);
+        // console.log('FULLLPATHHH:::', fullPath);
         await RNFS.unlink(`file://${fullPath}`);
-        console.log('Device offline: remove request stored locally');
+        // console.log('Device offline: remove request stored locally');
       }
     } catch (error) {
       console.log('Error:', error.response?.data || error.message);
-      createOfflineRemoveTable();
-      insertOfflineRemove(data);
-      const fullPath = await getPath(path);
-      await RNFS.unlink(fullPath);
+
       console.log('Failed to remove online: stored offline for sync');
     } finally {
       setTimeout(() => setLoadingImage(false), 1000);
@@ -443,17 +478,17 @@ const ExistingAuditProject = ({handleFetchData}) => {
                                 0 &&
                               selectedOptions?.existingSignAuditPhotos?.map(
                                 (item, index) => {
-                                  console.log(
-                                    'arrayimages',
-                                    selectedOptions?.existingSignAuditPhotos,
-                                  );
-                                  console.log('itemitemitemitem', item);
-                                  console.log(
-                                    'FINAL URI:',
-                                    item.path.startsWith('file://')
-                                      ? item.path
-                                      : `file://${item.path}`,
-                                  );
+                                  // console.log(
+                                  //   'arrayimages',
+                                  //   selectedOptions?.existingSignAuditPhotos,
+                                  // );
+                                  // console.log('itemitemitemitem', item);
+                                  // console.log(
+                                  //   'FINAL URI:',
+                                  //   item.path.startsWith('file://')
+                                  //     ? item.path
+                                  //     : `file://${item.path}`,
+                                  // );
                                   return (
                                     <TouchableOpacity
                                       key={index}
@@ -487,8 +522,8 @@ const ExistingAuditProject = ({handleFetchData}) => {
                                           onPress={() =>
                                             handleRemoveImage(
                                               item.imageId,
-                                              'electricalAuditPhoto',
-                                              'electricalAuditPhotos',
+                                              'existingSignAuditPhoto',
+                                              'existingSignAuditPhotos',
                                               item.path,
                                             )
                                           }

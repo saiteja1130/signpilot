@@ -6,6 +6,7 @@ import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import RNFS from 'react-native-fs';
 import {
   createOfflineImagesTable,
+  deleteOfflineRemoveByImageId,
   getAllOfflineImages,
   getAllRemovedImages,
   getUnsyncedElectricalAudits,
@@ -756,6 +757,17 @@ export const syncToOnline = async (loginData, baseUrl) => {
                 Authorization: `Bearer ${token}`,
               },
             });
+            console.log(
+              'RESPONSE SIGNGENERAL SYNCEDDDD::',
+              response.data.status,
+            );
+
+            if (response.data.status) {
+              await deleteOfflineRemoveByImageId(audit.imageId);
+              console.log(
+                `Deleted synced image record with imageId ${audit.imageId} from offline table`,
+              );
+            }
             console.log('RESPONSE SIGNGENERAL SYNCEDDDD::', response.data);
           } catch (err) {
             console.error('Error syncing audit ID', err.response.data);

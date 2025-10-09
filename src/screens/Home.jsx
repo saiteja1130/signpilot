@@ -36,10 +36,13 @@ import {
   createExistingSignAuditTable,
   createIndoorPhotosAndMeasurementsTable,
   createLocalDB,
+  createOfflineImagesTable,
+  createOfflineRemoveTable,
   createPermittingAssessmentTable,
   createSignDataOptionsTable,
   createSignGeneralAuditTable,
   dropAllTables,
+  dropOfflineRemoveTable,
   fetchAllProjectsData,
   insertElectricalAudit,
   insertExistingSignAudit,
@@ -274,12 +277,15 @@ const Home = () => {
       syncingOnline();
       setTimeout(() => {
         fetchOnFocus();
-      }, 3000);
+      }, 4000);
     }, [loginData, isConnected]),
   );
 
   useEffect(() => {
     // dropAllTables();
+    // dropOfflineRemoveTable();
+    createOfflineRemoveTable();
+    createOfflineImagesTable();
     createLocalDB();
     createSignDataOptionsTable();
     createExistingSignAuditTable();

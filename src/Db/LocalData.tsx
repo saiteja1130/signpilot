@@ -750,22 +750,31 @@ export const insertExistingSignAudit = async (
 export const insertExistingSignAuditImagesOnly = async (
   id: string | number,
   key: string,
-  images: any[],
-  synced: number,
+  images: any[] = [],
+  synced: number, // 1 = online synced, 0 = offline
 ) => {
   if (!id || !key) {
     console.warn('⚠️ Missing ID or key for existing_sign_audit update');
     return;
   }
 
-  console.log(`🟡 Updating Existing Sign Audit ID: ${id}, Key: ${key}`);
+  console.log(
+    `🟡 Updating Existing Sign Audit ID: ${id}, Key: ${key}, Synced: ${synced}`,
+  );
 
   try {
-    // 1️⃣ Download and prepare images
-    const loadedImages = await downloadImagesArray(images || [], key);
-    console.log(`✅ Downloaded ${loadedImages?.length || 0} images for ${key}`);
+    let finalImages = images;
 
-    // 2️⃣ Update local DB
+    if (synced === 1) {
+      finalImages = await downloadImagesArray(images || [], key);
+      console.log(
+        `✅ Downloaded ${finalImages?.length || 0} images for ${key}`,
+      );
+    } else {
+      console.log(
+        `📴 Offline mode — skipping download for ${key}, using local paths`,
+      );
+    }
     db.transaction(
       (tx: any) => {
         tx.executeSql(
@@ -774,21 +783,21 @@ export const insertExistingSignAuditImagesOnly = async (
             SET ${key} = ?, isSynced = ?
             WHERE Id = ?
           `,
-          [JSON.stringify(loadedImages || []), synced, id],
+          [JSON.stringify(finalImages || []), synced, id],
           () => console.log(`✅ Updated ${key} for existing_sign_audit ${id}`),
           (_: any, error: any) =>
             console.error(
-              `❌ Error updating ${key} for existing_sign_audit ${id}:`,
+              `❌ SQL error updating ${key} for existing_sign_audit ${id}:`,
               error,
             ),
         );
       },
-      (txError: any) => console.error('Transaction ERROR:', txError),
+      (txError: any) => console.error('❌ Transaction ERROR:', txError),
       () =>
         console.log(`✅ existing_sign_audit image update complete for ${key}`),
     );
   } catch (error) {
-    console.error(`❌ Failed to insert images for ${key}:`, error);
+    console.error(`❌ Failed to insert/update images for ${key}:`, error);
   }
 };
 
@@ -973,23 +982,33 @@ export const insertElectricalAudit = async (
 export const insertElectricalAuditImagesOnly = async (
   id: string | number,
   key: string,
-  images: any[],
-  synced: number,
+  images: any[] = [],
+  synced: number, // 1 = online synced, 0 = offline
 ) => {
   if (!id || !key) {
     console.warn('⚠️ Missing audit ID or key');
     return;
   }
 
-  console.log(`🟡 Processing Electrical Audit ID: ${id}, Key: ${key}`);
+  console.log(
+    `🟡 Processing Electrical Audit ID: ${id}, Key: ${key}, Synced: ${synced}`,
+  );
 
   try {
-    // 1️⃣ Download the images into local storage (or cache)
-    const loadedImages = await downloadImagesArray(images || [], key);
+    let finalImages = images;
 
-    console.log(`✅ Downloaded ${loadedImages?.length || 0} images for ${key}`);
+    // 🟢 If online, download images
+    if (synced === 1) {
+      finalImages = await downloadImagesArray(images || [], key);
+      console.log(
+        `✅ Downloaded ${finalImages?.length || 0} images for ${key}`,
+      );
+    } else {
+      // 🟠 Offline, skip download
+      console.log(`📴 Offline mode — using local paths for ${key}`);
+    }
 
-    // 2️⃣ Store into local DB
+    // 🧱 Update local SQLite table
     db.transaction(
       (tx: any) => {
         tx.executeSql(
@@ -998,17 +1017,20 @@ export const insertElectricalAuditImagesOnly = async (
             SET ${key} = ?, isSynced = ?
             WHERE Id = ?
           `,
-          [JSON.stringify(loadedImages || []), synced, id],
+          [JSON.stringify(finalImages || []), synced, id],
           () => console.log(`✅ Updated ${key} for audit ${id}`),
           (_: any, error: any) =>
-            console.error(`❌ Error updating ${key} for audit ${id}:`, error),
+            console.error(
+              `❌ SQL error updating ${key} for audit ${id}:`,
+              error,
+            ),
         );
       },
-      (txError: any) => console.error('Transaction ERROR:', txError),
-      () => console.log(`✅ Electrical audit image update done for ${key}`),
+      (txError: any) => console.error('❌ Transaction ERROR:', txError),
+      () => console.log(`✅ Electrical audit image update complete for ${key}`),
     );
   } catch (error) {
-    console.error(`❌ Failed to process images for ${key}:`, error);
+    console.error(`❌ Failed to insert/update images for ${key}:`, error);
   }
 };
 
@@ -2274,6 +2296,22 @@ export const createOfflineRemoveTable = () => {
   });
 };
 
+export const dropOfflineRemoveTable = () => {
+  db.transaction(
+    (tx: any) => {
+      tx.executeSql(
+        `DROP TABLE IF EXISTS offline_remove_images;`,
+        [],
+        () => console.log('✅ offline_remove_images table dropped'),
+        (tx: any, error: any) =>
+          console.error('❌ Error dropping table:', error),
+      );
+    },
+    (txError: any) =>
+      console.error('❌ Transaction error while dropping table:', txError),
+  );
+};
+
 export const insertOfflineRemove = (data: any) => {
   const {imageId, fieldName, surveyModule, moduleId, Id} = data;
   db.transaction((tx: any) => {
@@ -2312,6 +2350,27 @@ export const getAllRemovedImages = (
         callback(data);
       },
       (error: any) => console.log('Error fetching removed images:', error),
+    );
+  });
+};
+
+export const deleteOfflineRemoveByImageId = async (
+  imageId: number | string,
+) => {
+  return new Promise<void>((resolve, reject) => {
+    db.transaction(
+      (tx: any) => {
+        tx.executeSql(
+          `DELETE FROM offline_remove_images WHERE imageId = ?`,
+          [imageId],
+          () => {
+            resolve();
+            console.log(`Deleted offline remove entry for imageId ${imageId}`);
+          },
+          (_: any, error: any) => reject(error),
+        );
+      },
+      (error: any) => reject(error),
     );
   });
 };
