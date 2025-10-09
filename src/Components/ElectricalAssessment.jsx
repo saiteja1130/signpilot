@@ -22,7 +22,23 @@ import axios from 'axios';
 import Toast from 'react-native-toast-message';
 import {handleAddPhoto, useNetworkStatus} from '../Functions/functions.js';
 import Menu from '../../assets/images/close.svg';
-import {updateElectricalAudit} from '../Db/LocalData';
+import {
+  createOfflineRemoveTable,
+  getElectricalAuditImagesByKey,
+  insertElectricalAuditImagesOnly,
+  insertOfflineRemove,
+  updateElectricalAudit,
+} from '../Db/LocalData';
+import {
+  openEditorforUpdate,
+  showPhotoOptions,
+} from '../Functions/ImagePickFunctions.tsx';
+import {
+  deleteFolders,
+  getBase64Array,
+  getPath,
+} from '../Functions/FSfunctions.tsx';
+import RNFS from 'react-native-fs';
 
 const ElectricalAssessment = ({handleFetchData}) => {
   const status = useNetworkStatus();
@@ -36,6 +52,7 @@ const ElectricalAssessment = ({handleFetchData}) => {
     useState(signProjectData?.electrical_audit?.electricalAuditTodoPunchList);
   const [electricalAuditSummaryNotes, setElectricalAuditSummaryNotes] =
     useState(signProjectData?.electrical_audit?.electricalAuditSummaryNotes);
+  console.log(signProjectData?.signTableId);
   const [selectedOptions, setSelectedOptions] = useState({
     adminName: signProjectData?.electrical_audit?.adminName,
     anyAccessibilityIssues:
@@ -103,6 +120,8 @@ const ElectricalAssessment = ({handleFetchData}) => {
   const [typeOfIlluminationInside, setTypeOfIlluminationInside] = useState(
     signProjectData?.electrical_audit?.typeOfIlluminationInside || '',
   );
+
+  console.log('selectedOptions', selectedOptions?.electricTagsPhotos);
 
   const data = [
     {
@@ -175,6 +194,12 @@ const ElectricalAssessment = ({handleFetchData}) => {
 
   const handleSave = async () => {
     setLoadingImage(true);
+    const readBase64fromarrayelectricalAuditPhotos = await getBase64Array(
+      selectedOptions?.electricalAuditPhoto,
+    );
+    const readBase64fromarrayTagPhotos = await getBase64Array(
+      selectedOptions?.electricTagsPhoto,
+    );
     const bodyData = {
       ...selectedOptions,
       typeOfIlluminationInside,
@@ -182,6 +207,8 @@ const ElectricalAssessment = ({handleFetchData}) => {
       electricalAuditSummaryNotes,
       signAliasName: signProjectData?.signAliasName,
       signType: signProjectData?.signType,
+      electricalAuditPhoto: readBase64fromarrayelectricalAuditPhotos,
+      electricTagsPhoto: readBase64fromarrayTagPhotos,
     };
     console.log('BODY DATAAA', bodyData);
     try {
@@ -198,13 +225,14 @@ const ElectricalAssessment = ({handleFetchData}) => {
         );
 
         if (response?.data?.status) {
+          await deleteFolders();
+          handleFetchData(null, signProjectData);
           Toast.show({
             type: 'success',
             text1: response?.data?.message || 'Audit saved successfully.',
             visibilityTime: 3000,
             position: 'top',
           });
-          handleFetchData(null, signProjectData);
         } else {
           throw new Error('Sync failed with unknown server response.');
         }
@@ -232,14 +260,17 @@ const ElectricalAssessment = ({handleFetchData}) => {
     }
   };
 
-  const handleRemoveImage = async (imageId1, fieldName1, actualKey) => {
+  const handleRemoveImage = async (imageId1, fieldName1, actualKey, path) => {
     try {
       setLoadingImage(true);
       const data = {
         imageId: imageId1,
-        Id: signProjectData?.electrical_audit?.id,
+        Id:
+          signProjectData?.electrical_audit?.id ||
+          signProjectData?.electrical_audit?.Id,
         fieldName: fieldName1,
         surveyModule: 'electrical_audit',
+        moduleId: signProjectData?.signId,
       };
       const token = loginData?.tokenNumber;
       const responce = await axios.post(`${baseUrl}/removeFile`, data, {
@@ -247,19 +278,52 @@ const ElectricalAssessment = ({handleFetchData}) => {
           Authorization: `Bearer ${token}`,
         },
       });
+      console.log(responce.data, 'resssssss');
+      // return;
       if (responce.data.status) {
+        const imagesArray = responce?.data?.data[actualKey] || [];
+        console.log('IMAGESSSARRAYY', imagesArray);
+        await insertElectricalAuditImagesOnly(
+          signProjectData?.signTableId,
+          actualKey,
+          imagesArray,
+          1,
+        );
+        console.log('ONLINE -- Image removed successfully');
+        const imagesaRRAY = await getElectricalAuditImagesByKey(
+          signProjectData?.signTableId,
+          actualKey,
+        );
+        console.log('IMAGESARRAYAFTERINSERT', imagesaRRAY);
         setSelectedOptions(prev => {
           return {
             ...prev,
-            [actualKey]: responce?.data?.data[actualKey],
+            [actualKey]: imagesaRRAY || [],
           };
         });
+        // setSelectedOptions(prev => {
+        //   return {
+        //     ...prev,
+        //     [actualKey]: responce?.data?.data[actualKey],
+        //   };
+        // });
+        const fullPath = await getPath(path);
+        await RNFS.unlink(fullPath);
+        // await handleFetchData(null, signProjectData);
+        // setActive('Audit');
         setTimeout(() => {
           setLoadingImage(false);
         }, 1200);
+      } else {
+        createOfflineRemoveTable();
+        insertOfflineRemove(data);
+        const fullPath = await getPath(path);
+        console.log('FULLLPATHHH:::', fullPath);
+        await RNFS.unlink(`file://${fullPath}`);
+        console.log('Device offline: remove request stored locally');
       }
     } catch (error) {
-      console.log('Error response data:', error.response);
+      console.log('Error response data:', error);
     }
   };
 
@@ -414,9 +478,11 @@ const ElectricalAssessment = ({handleFetchData}) => {
                             />
                             <TouchableOpacity
                               onPress={() =>
-                                handleAddPhoto(
+                                showPhotoOptions(
                                   setSelectedOptions,
                                   'electricalAuditPhoto',
+                                  '',
+                                  false,
                                 )
                               }
                               style={styles.imageCon}>
@@ -426,7 +492,10 @@ const ElectricalAssessment = ({handleFetchData}) => {
                               </View>
                               <View style={styles.fileNameContainer}>
                                 <Text style={styles.fileNameText}>
-                                  {signImageName}
+                                  {selectedOptions?.electricalAuditPhoto
+                                    ?.length > 0
+                                    ? `${selectedOptions?.electricalAuditPhoto?.length} file choosen`
+                                    : signImageName}
                                 </Text>
                               </View>
                             </TouchableOpacity>
@@ -445,29 +514,66 @@ const ElectricalAssessment = ({handleFetchData}) => {
                                 selectedOptions?.electricalAuditPhotos?.length >
                                   0 &&
                                 selectedOptions.electricalAuditPhotos.map(
-                                  (data, index) => {
+                                  (item, index) => {
+                                    console.log(
+                                      'arrayimages',
+                                      selectedOptions?.electricalAuditPhotos,
+                                    );
+                                    console.log('itemitemitemitem', item);
+                                    console.log(
+                                      'FINAL URI:',
+                                      item?.path?.startsWith('file://')
+                                        ? item?.path
+                                        : `file://${item?.path}`,
+                                    );
                                     return (
-                                      <View
+                                      <TouchableOpacity
                                         key={index}
-                                        style={styles.imageContainer}>
-                                        <Image
-                                          source={{uri: data.url}}
-                                          style={styles.image}
-                                        />
-                                        <TouchableOpacity
-                                          onPress={() =>
-                                            handleRemoveImage(
-                                              data.imageId,
-                                              'electricalAuditPhoto',
-                                              'electricalAuditPhotos',
-                                            )
-                                          }
-                                          style={styles.removeButton}>
-                                          <Text style={styles.removeButtonText}>
-                                            ×
-                                          </Text>
-                                        </TouchableOpacity>
-                                      </View>
+                                        onPress={() => {
+                                          openEditorforUpdate(
+                                            item.path,
+                                            setSelectedOptions,
+                                            'electricalAuditPhotos',
+                                            'ElectricalAudit',
+                                            true,
+                                            item.imageId,
+                                            baseUrl,
+                                            loginData?.tokenNumber,
+                                            true,
+                                            selectedOptions?.signId,
+                                            'electrical_audit',
+                                          );
+                                        }}>
+                                        <View
+                                          key={index}
+                                          style={styles.imageContainer}>
+                                          <Image
+                                            source={{
+                                              uri: item.path.startsWith(
+                                                'file://',
+                                              )
+                                                ? item.path
+                                                : `file://${item.path}`,
+                                            }}
+                                            style={styles.image}
+                                          />
+                                          <TouchableOpacity
+                                            onPress={() =>
+                                              handleRemoveImage(
+                                                item.imageId,
+                                                'electricalAuditPhoto',
+                                                'electricalAuditPhotos',
+                                                item.path,
+                                              )
+                                            }
+                                            style={styles.removeButton}>
+                                            <Text
+                                              style={styles.removeButtonText}>
+                                              ×
+                                            </Text>
+                                          </TouchableOpacity>
+                                        </View>
+                                      </TouchableOpacity>
                                     );
                                   },
                                 )
@@ -495,9 +601,11 @@ const ElectricalAssessment = ({handleFetchData}) => {
                           <View>
                             <TouchableOpacity
                               onPress={() =>
-                                handleAddPhoto(
+                                showPhotoOptions(
                                   setSelectedOptions,
                                   'electricTagsPhoto',
+                                  '',
+                                  false,
                                 )
                               }
                               style={styles.imageCon}>
@@ -507,7 +615,10 @@ const ElectricalAssessment = ({handleFetchData}) => {
                               </View>
                               <View style={styles.fileNameContainer}>
                                 <Text style={styles.fileNameText}>
-                                  {signImageName}
+                                  {selectedOptions?.electricTagsPhoto?.length >
+                                  0
+                                    ? `${selectedOptions?.electricTagsPhoto?.length} Files Choosen`
+                                    : signImageName}
                                 </Text>
                               </View>
                             </TouchableOpacity>
@@ -526,29 +637,66 @@ const ElectricalAssessment = ({handleFetchData}) => {
                                 selectedOptions?.electricTagsPhotos?.length >
                                   0 &&
                                 selectedOptions.electricTagsPhotos.map(
-                                  (data, index) => {
+                                  (item, index) => {
+                                    console.log(
+                                      'arrayimages',
+                                      selectedOptions?.electricTagsPhotos,
+                                    );
+                                    console.log('itemitemitemitem111111', item);
+                                    console.log(
+                                      'FINAL URI:',
+                                      item.path.startsWith('file://')
+                                        ? item.path
+                                        : `file://${item.path}`,
+                                    );
                                     return (
-                                      <View
+                                      <TouchableOpacity
                                         key={index}
-                                        style={styles.imageContainer}>
-                                        <Image
-                                          source={{uri: data.url}}
-                                          style={styles.image}
-                                        />
-                                        <TouchableOpacity
-                                          onPress={() =>
-                                            handleRemoveImage(
-                                              data.imageId,
-                                              'electricTagsPhoto',
-                                              'electricTagsPhotos',
-                                            )
-                                          }
-                                          style={styles.removeButton}>
-                                          <Text style={styles.removeButtonText}>
-                                            ×
-                                          </Text>
-                                        </TouchableOpacity>
-                                      </View>
+                                        onPress={() => {
+                                          openEditorforUpdate(
+                                            item.path,
+                                            setSelectedOptions,
+                                            'electricTagsPhotos',
+                                            'ElectricalTag',
+                                            true,
+                                            item.imageId,
+                                            baseUrl,
+                                            loginData?.tokenNumber,
+                                            true,
+                                            selectedOptions?.signId,
+                                            'electrical_audit',
+                                          );
+                                        }}>
+                                        <View
+                                          key={index}
+                                          style={styles.imageContainer}>
+                                          <Image
+                                            source={{
+                                              uri: item.path.startsWith(
+                                                'file://',
+                                              )
+                                                ? item.path
+                                                : `file://${item.path}`,
+                                            }}
+                                            style={styles.image}
+                                          />
+                                          <TouchableOpacity
+                                            onPress={() =>
+                                              handleRemoveImage(
+                                                item.imageId,
+                                                'electricalAuditPhoto',
+                                                'electricalAuditPhotos',
+                                                item.path,
+                                              )
+                                            }
+                                            style={styles.removeButton}>
+                                            <Text
+                                              style={styles.removeButtonText}>
+                                              ×
+                                            </Text>
+                                          </TouchableOpacity>
+                                        </View>
+                                      </TouchableOpacity>
                                     );
                                   },
                                 )

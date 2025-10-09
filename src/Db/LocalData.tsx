@@ -747,20 +747,148 @@ export const insertExistingSignAudit = async (
   }
 };
 
-export const insertElectricalAudit = (projects: any[], syched: number) => {
-  db.transaction(
-    (tx: any) => {
-      projects.forEach(project => {
-        project.signDataOptions?.forEach((option: any) => {
-          const audit: ElectricalAudit = option?.electrical_audit;
-          if (option?.electrical_audit === undefined) return;
-          console.log('ELECTRICALLL AUDITTTT', audit);
-          const id = option?.electrical_audit?.id;
-          console.log('IDDDDDD', id);
-          if (audit) {
-            tx.executeSql(
-              `
-                INSERT OR REPLACE INTO electrical_audit (
+export const insertExistingSignAuditImagesOnly = async (
+  id: string | number,
+  key: string,
+  images: any[],
+  synced: number,
+) => {
+  if (!id || !key) {
+    console.warn('⚠️ Missing ID or key for existing_sign_audit update');
+    return;
+  }
+
+  console.log(`🟡 Updating Existing Sign Audit ID: ${id}, Key: ${key}`);
+
+  try {
+    // 1️⃣ Download and prepare images
+    const loadedImages = await downloadImagesArray(images || [], key);
+    console.log(`✅ Downloaded ${loadedImages?.length || 0} images for ${key}`);
+
+    // 2️⃣ Update local DB
+    db.transaction(
+      (tx: any) => {
+        tx.executeSql(
+          `
+            UPDATE existing_sign_audit
+            SET ${key} = ?, isSynced = ?
+            WHERE Id = ?
+          `,
+          [JSON.stringify(loadedImages || []), synced, id],
+          () => console.log(`✅ Updated ${key} for existing_sign_audit ${id}`),
+          (_: any, error: any) =>
+            console.error(
+              `❌ Error updating ${key} for existing_sign_audit ${id}:`,
+              error,
+            ),
+        );
+      },
+      (txError: any) => console.error('Transaction ERROR:', txError),
+      () =>
+        console.log(`✅ existing_sign_audit image update complete for ${key}`),
+    );
+  } catch (error) {
+    console.error(`❌ Failed to insert images for ${key}:`, error);
+  }
+};
+
+export const getExistingSignAuditImagesByKey = async (
+  id: string | number,
+  key: string,
+): Promise<any[]> => {
+  return new Promise((resolve, reject) => {
+    if (!id || !key) {
+      console.warn('⚠️ Missing audit ID or key');
+      resolve([]);
+      return;
+    }
+
+    console.log(
+      `📦 Fetching images for Existing Sign Audit ID: ${id}, Key: ${key}`,
+    );
+
+    db.transaction(
+      (tx: any) => {
+        tx.executeSql(
+          `SELECT ${key} FROM existing_sign_audit WHERE Id = ?`,
+          [id],
+          (_: any, results: any) => {
+            if (results.rows.length > 0) {
+              const row = results.rows.item(0);
+              try {
+                const images = JSON.parse(row[key] || '[]');
+                console.log(`✅ Retrieved ${images.length} images for ${key}`);
+                resolve(images);
+              } catch (err) {
+                console.error(`❌ JSON parse error for ${key}:`, err);
+                resolve([]);
+              }
+            } else {
+              console.warn(`⚠️ No record found for ID ${id}`);
+              resolve([]);
+            }
+          },
+          (_: any, error: any) => {
+            console.error(`❌ SQL error fetching ${key}:`, error);
+            reject(error);
+          },
+        );
+      },
+      (txError: any) => {
+        console.error('Transaction ERROR:', txError);
+        reject(txError);
+      },
+    );
+  });
+};
+
+export const insertElectricalAudit = async (
+  projects: any[],
+  syched: number,
+) => {
+  for (const project of projects) {
+    for (const option of project.signDataOptions || []) {
+      const audit: ElectricalAudit = option?.electrical_audit;
+      if (!audit) continue;
+
+      const id = option.electrical_audit?.id;
+      console.log('Processing ELECTRICAL AUDIT ID:', id);
+
+      const loadedElectricalPhotos = await downloadImagesArray(
+        audit.electricalAuditPhotos || [],
+        'electricalAuditPhotos',
+      );
+
+      const loadedElectricalAdminPhotos = await downloadImagesArray(
+        audit.electricalAuditPhotoFromAdmin || [],
+        'electricalAuditPhotoFromAdmin',
+      );
+
+      const loadedTagsPhotos = await downloadImagesArray(
+        audit.electricTagsPhotos || [],
+        'electricTagsPhotos',
+      );
+
+      const loadedTagsPhoto = await downloadImagesArray(
+        audit.electricTagsPhoto || [],
+        'electricTagsPhoto',
+      );
+
+      const loadedTagsAdminPhotos = await downloadImagesArray(
+        audit.electricTagsPhotoFromAdmin || [],
+        'electricTagsPhotoFromAdmin',
+      );
+
+      console.log('✅ Downloaded Electrical Audit Images for', id, {
+        loadedElectricalPhotos,
+        loadedTagsPhotos,
+      });
+
+      db.transaction(
+        (tx: any) => {
+          tx.executeSql(
+            `
+              INSERT OR REPLACE INTO electrical_audit (
                 Id, projectId, signId, optionId, signAliasName, signType, sign_order,
                 doesTheExistingSignIlluminate,
                 isElectricPresentAtTheSign,
@@ -788,59 +916,148 @@ export const insertElectricalAudit = (projects: any[], syched: number) => {
                 electricTagsPhotos,
                 electricTagsPhoto,
                 surveyModule
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-              `,
-              [
-                id,
-                audit.projectId,
-                audit.signId,
-                audit.optionId,
-                audit.signAliasName,
-                audit.signType,
-                audit.sign_order,
-                audit.doesTheExistingSignIlluminate || null,
-                audit.isElectricPresentAtTheSign || null,
-                audit.isPowerLiveAtSignLocation || null,
-                audit.powerWithinNeededDistance || null,
-                audit.electric120Vor220V || null,
-                audit.anyAccessibilityIssues || null,
-                audit.anyKnownRepairorMaintenanceToElectricalEquipmentRequired ||
-                  null,
-                audit.electricSubcontractorNeeded || null,
-                audit.electricTagsorCertificationsPresent || null,
-                audit.electricalAuditSummaryNotes || '',
-                audit.electricalAuditTodoPunchList || '',
-                audit.electricalAuditspecialInstructions || '',
-                audit.electricalAuditDocumentAccessibilityIssues || '',
-                audit.adminId || null,
-                audit.adminName || '',
-                audit.createdDate || '',
-                audit.customerName || '',
-                syched,
-                audit.typeOfIlluminationInside || null,
-                JSON.stringify(audit.electricalAuditPhotoFromAdmin || []),
-                JSON.stringify(audit.electricalAuditPhotos || []),
-                JSON.stringify(audit.electricalAuditPhoto || []),
-                JSON.stringify(audit.electricTagsPhotoFromAdmin || []),
-                JSON.stringify(audit.electricTagsPhotos || []),
-                JSON.stringify(audit.electricTagsPhoto || []),
-                audit.surveyModule || null,
-              ],
-              () =>
-                console.log(`Inserted electrical_audit for sign ${audit.Id}`),
-              (_: any, error: any) =>
-                console.error(
-                  `Error inserting electrical_audit ${audit.Id}:`,
-                  error,
-                ),
-            );
-          }
-        });
-      });
-    },
-    (txError: any) => console.error('Transaction ERROR:', txError),
-    () => console.log('All electrical_audit data inserted successfully'),
-  );
+              )
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `,
+            [
+              id,
+              audit.projectId,
+              audit.signId,
+              audit.optionId,
+              audit.signAliasName,
+              audit.signType,
+              audit.sign_order,
+              audit.doesTheExistingSignIlluminate || null,
+              audit.isElectricPresentAtTheSign || null,
+              audit.isPowerLiveAtSignLocation || null,
+              audit.powerWithinNeededDistance || null,
+              audit.electric120Vor220V || null,
+              audit.anyAccessibilityIssues || null,
+              audit.anyKnownRepairorMaintenanceToElectricalEquipmentRequired ||
+                null,
+              audit.electricSubcontractorNeeded || null,
+              audit.electricTagsorCertificationsPresent || null,
+              audit.electricalAuditSummaryNotes || '',
+              audit.electricalAuditTodoPunchList || '',
+              audit.electricalAuditspecialInstructions || '',
+              audit.electricalAuditDocumentAccessibilityIssues || '',
+              audit.adminId || null,
+              audit.adminName || '',
+              audit.createdDate || '',
+              audit.customerName || '',
+              syched,
+              audit.typeOfIlluminationInside || null,
+              JSON.stringify(loadedElectricalAdminPhotos || []),
+              JSON.stringify(loadedElectricalPhotos || []),
+              JSON.stringify(audit.electricalAuditPhoto || []),
+              JSON.stringify(loadedTagsAdminPhotos || []),
+              JSON.stringify(loadedTagsPhotos || []),
+              JSON.stringify(loadedTagsPhoto || []),
+              audit.surveyModule || null,
+            ],
+            () => console.log(`✅ Inserted electrical_audit for sign ${id}`),
+            (_: any, error: any) =>
+              console.error(
+                `❌ Error inserting electrical_audit ${id}:`,
+                error,
+              ),
+          );
+        },
+        (txError: any) => console.error('Transaction ERROR:', txError),
+        () => console.log('All electrical_audit data inserted successfully'),
+      );
+    }
+  }
+};
+
+export const insertElectricalAuditImagesOnly = async (
+  id: string | number,
+  key: string,
+  images: any[],
+  synced: number,
+) => {
+  if (!id || !key) {
+    console.warn('⚠️ Missing audit ID or key');
+    return;
+  }
+
+  console.log(`🟡 Processing Electrical Audit ID: ${id}, Key: ${key}`);
+
+  try {
+    // 1️⃣ Download the images into local storage (or cache)
+    const loadedImages = await downloadImagesArray(images || [], key);
+
+    console.log(`✅ Downloaded ${loadedImages?.length || 0} images for ${key}`);
+
+    // 2️⃣ Store into local DB
+    db.transaction(
+      (tx: any) => {
+        tx.executeSql(
+          `
+            UPDATE electrical_audit
+            SET ${key} = ?, isSynced = ?
+            WHERE Id = ?
+          `,
+          [JSON.stringify(loadedImages || []), synced, id],
+          () => console.log(`✅ Updated ${key} for audit ${id}`),
+          (_: any, error: any) =>
+            console.error(`❌ Error updating ${key} for audit ${id}:`, error),
+        );
+      },
+      (txError: any) => console.error('Transaction ERROR:', txError),
+      () => console.log(`✅ Electrical audit image update done for ${key}`),
+    );
+  } catch (error) {
+    console.error(`❌ Failed to process images for ${key}:`, error);
+  }
+};
+
+export const getElectricalAuditImagesByKey = async (
+  id: string | number,
+  key: string,
+): Promise<any[]> => {
+  return new Promise((resolve, reject) => {
+    if (!id || !key) {
+      console.warn('⚠️ Missing audit ID or key');
+      resolve([]);
+      return;
+    }
+
+    console.log(`📦 Fetching images for Audit ID: ${id}, Key: ${key}`);
+
+    db.transaction(
+      (tx: any) => {
+        tx.executeSql(
+          `SELECT ${key} FROM electrical_audit WHERE Id = ?`,
+          [id],
+          (_: any, results: any) => {
+            if (results.rows.length > 0) {
+              const row = results.rows.item(0);
+              try {
+                const images = JSON.parse(row[key] || '[]');
+                console.log(`✅ Retrieved ${images.length} images for ${key}`);
+                resolve(images);
+              } catch (err) {
+                console.error(`❌ Failed to parse images for ${key}:`, err);
+                resolve([]);
+              }
+            } else {
+              console.warn(`⚠️ No record found for ID ${id}`);
+              resolve([]);
+            }
+          },
+          (_: any, error: any) => {
+            console.error(`❌ Error fetching images for ${key}:`, error);
+            reject(error);
+          },
+        );
+      },
+      (txError: any) => {
+        console.error('Transaction ERROR:', txError);
+        reject(txError);
+      },
+    );
+  });
 };
 
 export const insertPermittingAssessment = (projects: any[], syched: number) => {

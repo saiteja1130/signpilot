@@ -137,7 +137,7 @@ const ExistingAuditProject = ({handleFetchData}) => {
           signProjectData?.existing_sign_audit?.Id,
         fieldName: fieldName1,
         surveyModule: 'existing_sign_audit',
-        moduleId: signProjectData?.existing_sign_audit?.id,
+        moduleId: signProjectData?.signId,
       };
 
       const netState = await NetInfo.fetch();
@@ -469,6 +469,7 @@ const ExistingAuditProject = ({handleFetchData}) => {
                                           loginData?.tokenNumber,
                                           true,
                                           selectedOptions?.signId,
+                                          'existing_sign_audit',
                                         );
                                       }}>
                                       <View

@@ -87,7 +87,8 @@ export const openEditorforUpdate = async (
   baseUrl: string,
   tokenNumber: string,
   saveTo: boolean,
-  moduleId: number = 1,
+  moduleId: number | string,
+  module: string,
 ) => {
   console.log('openEditorforUpdate called with:', {
     uri,
@@ -96,6 +97,8 @@ export const openEditorforUpdate = async (
     status,
     imageId,
     saveTo,
+    moduleId,
+    module,
   });
 
   try {
@@ -111,8 +114,8 @@ export const openEditorforUpdate = async (
       baseUrl,
       tokenNumber,
       imageId: imageId,
-      module: 'existing_sign_audit',
-      field: 'existingAuditPhotos',
+      module: module,
+      field: key,
       moduleId: moduleId,
       resultPath: result,
       localleySavedpath: path,

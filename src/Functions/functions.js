@@ -451,8 +451,8 @@ export const updateFile = async data => {
       if (response.data.status) {
         await RNFS.unlink(localleySavedpath);
         const arrayImages = await downloadImagesArray(
-          response.data.data.existingAuditPhotoss,
-          'existingSignAuditPhotos',
+          response.data.data[rest.field],
+          rest.field,
         );
         console.log('Downloaded images array:', arrayImages);
         console.log('ONLINE — image uploaded successfully');
