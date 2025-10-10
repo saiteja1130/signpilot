@@ -32,6 +32,7 @@ import ProgressBar from '../Components/Progressbar';
 import {syncToOnline, useNetworkStatus} from '../Functions/functions';
 import NetInfo from '@react-native-community/netinfo';
 import {
+  clearAllTables,
   createElectricalAuditTable,
   createExistingSignAuditTable,
   createIndoorPhotosAndMeasurementsTable,
@@ -61,7 +62,7 @@ const Home = () => {
   const signProjectData = useSelector(state => state.signProject.value);
   const isConnected = useNetworkStatus();
   const navigation = useNavigation();
-  const [selectedProject, setSelectedProject] = useState('');
+  const [selectedProject, setSelectedProject] = '';
   const [selectedSignValue, setSelectedSignValue] = useState('');
   const [signSelected, setSignSelected] = useState('');
   const loginData = useSelector(state => state.login.value);
@@ -99,7 +100,6 @@ const Home = () => {
           const data = response.data.projectData;
           dispatch(addData(data));
           console.log('USER PROJECTS DATA:', data);
-
           await Promise.all([
             insertProjectsData(data),
             insertExistingSignAudit(data, 1),
@@ -120,7 +120,7 @@ const Home = () => {
           setResponse(response.data.status);
           console.log('FALSE RESPONSE:', response.data);
         }
-      } else if (isConnected === false) {
+      } else {
         console.log('OFFLINE - USING LOCAL DATABASE');
         fetchAllProjectsData(projects => {
           console.log('Projects from SQLite:', projects);
@@ -163,13 +163,24 @@ const Home = () => {
     // console.log(previousSignSelected);
     const titles = data.map(item => item.projectTitle);
     SetProjectTitles(titles);
+    console.log('data', data[0]);
     let currentProject =
       data.find(item => item.projectTitle === selectedProject) || data[0];
-    setSelectedProject(currentProject.projectTitle);
+    console.log('currentProject', currentProject.signDataOptions);
 
+    setSelectedProject(currentProject.projectTitle);
+    console.log('1111111');
     setProjects(currentProject);
+    console.log('222222');
     dispatch(addProject(currentProject));
+    console.log('4444444');
     SetSignTitles(currentProject.signDataOptions);
+    console.log('55555');
+
+    console.log(
+      'currentProject.signDataOptions',
+      currentProject.signDataOptions,
+    );
 
     const matchedSign = currentProject.signDataOptions?.find(
       s => s.signId === previousSignSelected?.signId,
@@ -181,6 +192,7 @@ const Home = () => {
       dispatch(addSignProject(matchedSign));
     } else {
       const firstSign = currentProject.signDataOptions?.[0];
+      console.log('firstSign', firstSign);
       if (firstSign) {
         setSignConfirmed(true);
         setSignSelected(firstSign);
@@ -262,11 +274,11 @@ const Home = () => {
     useCallback(() => {
       const fetchOnFocus = async () => {
         if (Object.keys(loginData).length > 0 && isConnected !== null) {
-          setLoading(true);
           await fetchData();
         }
       };
       const syncingOnline = async () => {
+        setLoading(true);
         const netState = await NetInfo.fetch();
         if (netState.isConnected) {
           console.log('SYNCING TO ONLINE');
@@ -284,6 +296,8 @@ const Home = () => {
   useEffect(() => {
     // dropAllTables();
     // dropOfflineRemoveTable();
+    clearAllTables();
+
     createOfflineRemoveTable();
     createOfflineImagesTable();
     createLocalDB();

@@ -25,7 +25,9 @@ import Menu from '../../assets/images/close.svg';
 import {
   createOfflineRemoveTable,
   getElectricalAuditImagesByKey,
+  getExistingSignAuditImagesByKey,
   insertElectricalAuditImagesOnly,
+  insertExistingSignAuditImagesOnly,
   insertOfflineRemove,
   updateElectricalAudit,
 } from '../Db/LocalData';
@@ -133,7 +135,7 @@ const ElectricalAssessment = ({handleFetchData}) => {
     },
     {
       question: 'Electric Subcontractor Needed?',
-      options: ['Yes', 'No', "Don't Know"],
+      options: ['Yes', 'No'],
       value: 'electricSubcontractorNeeded',
       selectedValue:
         signProjectData?.electrical_audit?.electricSubcontractorNeeded || '',
@@ -247,8 +249,27 @@ const ElectricalAssessment = ({handleFetchData}) => {
         });
       }
     } catch (error) {
-      console.log('❌ API Sync failed. Will still save locally.');
-      console.log('Error:', error?.response?.data || error?.message);
+      if (
+        error?.message?.data.includes('Network Error') ||
+        error?.response === undefined
+      ) {
+        updateElectricalAudit(bodyData, 0);
+        handleFetchData(null, signProjectData);
+        Toast.show({
+          type: 'info',
+          text1: 'No network. Saved offline & will sync later.',
+          visibilityTime: 3000,
+          position: 'top',
+        });
+      } else {
+        console.log('Error:', error?.response?.data || error?.message);
+        Toast.show({
+          type: 'error',
+          text1: 'Sync failed. Try again.',
+          visibilityTime: 3000,
+          position: 'top',
+        });
+      }
     } finally {
       if (status) {
         setLoadingImage(false);
@@ -273,23 +294,53 @@ const ElectricalAssessment = ({handleFetchData}) => {
         moduleId: signProjectData?.signId,
       };
       const token = loginData?.tokenNumber;
-      const responce = await axios.post(`${baseUrl}/removeFile`, data, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      console.log(responce.data, 'resssssss');
-      // return;
-      if (responce.data.status) {
-        const imagesArray = responce?.data?.data[actualKey] || [];
+      console.log('status', status);
+      if (status) {
+        const responce = await axios.post(`${baseUrl}/removeFile`, data, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        console.log(responce.data, 'resssssss');
+        if (responce.data.status) {
+          const imagesArray = responce?.data?.data[actualKey] || [];
+          console.log('IMAGESSSARRAYY', imagesArray);
+          await insertElectricalAuditImagesOnly(
+            signProjectData?.signTableId,
+            actualKey,
+            imagesArray,
+            1,
+          );
+          console.log('ONLINE -- Image removed successfully');
+          const imagesaRRAY = await getElectricalAuditImagesByKey(
+            signProjectData?.signTableId,
+            actualKey,
+          );
+          console.log('IMAGESARRAYAFTERINSERT', imagesaRRAY);
+          setSelectedOptions(prev => {
+            return {
+              ...prev,
+              [actualKey]: imagesaRRAY || [],
+            };
+          });
+          const fullPath = await getPath(path);
+          await RNFS.unlink(fullPath);
+          setTimeout(() => {
+            setLoadingImage(false);
+          }, 1200);
+        }
+      } else {
+        createOfflineRemoveTable();
+        const imagesArray = selectedOptions?.[actualKey]?.filter(
+          item => item.imageId !== imageId1,
+        );
         console.log('IMAGESSSARRAYY', imagesArray);
         await insertElectricalAuditImagesOnly(
           signProjectData?.signTableId,
           actualKey,
           imagesArray,
-          1,
+          0,
         );
-        console.log('ONLINE -- Image removed successfully');
         const imagesaRRAY = await getElectricalAuditImagesByKey(
           signProjectData?.signTableId,
           actualKey,
@@ -301,26 +352,9 @@ const ElectricalAssessment = ({handleFetchData}) => {
             [actualKey]: imagesaRRAY || [],
           };
         });
-        // setSelectedOptions(prev => {
-        //   return {
-        //     ...prev,
-        //     [actualKey]: responce?.data?.data[actualKey],
-        //   };
-        // });
-        const fullPath = await getPath(path);
-        await RNFS.unlink(fullPath);
-        // await handleFetchData(null, signProjectData);
-        // setActive('Audit');
-        setTimeout(() => {
-          setLoadingImage(false);
-        }, 1200);
-      } else {
-        createOfflineRemoveTable();
         insertOfflineRemove(data);
         const fullPath = await getPath(path);
-        console.log('FULLLPATHHH:::', fullPath);
         await RNFS.unlink(`file://${fullPath}`);
-        console.log('Device offline: remove request stored locally');
       }
     } catch (error) {
       console.log('Error response data:', error);
@@ -725,13 +759,13 @@ const ElectricalAssessment = ({handleFetchData}) => {
                       {electricalAuditTodoPunchList?.length}/300
                     </Text>
                   </View>
-                  <TouchableOpacity
+                  {/* <TouchableOpacity
                     onPress={() => {
                       setEditing('electricalAuditTodoPunchList');
                       setModalVisible(true);
                     }}>
                     <Text>See More</Text>
-                  </TouchableOpacity>
+                  </TouchableOpacity> */}
                   <View style={styles.section}>
                     <Text style={styles.label}>Summary Notes</Text>
                   </View>
@@ -748,13 +782,13 @@ const ElectricalAssessment = ({handleFetchData}) => {
                       {electricalAuditSummaryNotes?.length}/300
                     </Text>
                   </View>
-                  <TouchableOpacity
+                  {/* <TouchableOpacity
                     onPress={() => {
                       setEditing('electricalAuditSummaryNotes');
                       setModalVisible(true);
                     }}>
                     <Text>See More</Text>
-                  </TouchableOpacity>
+                  </TouchableOpacity> */}
                 </View>
               </View>
             )}
@@ -782,7 +816,7 @@ const ElectricalAssessment = ({handleFetchData}) => {
           </View>
         )}
       </View>
-      <Modal
+      {/* <Modal
         transparent
         animationType="slide"
         visible={modalVisible}
@@ -820,7 +854,7 @@ const ElectricalAssessment = ({handleFetchData}) => {
             </Text>
           </Pressable>
         </Pressable>
-      </Modal>
+      </Modal> */}
     </View>
   );
 };

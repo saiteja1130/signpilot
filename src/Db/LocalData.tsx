@@ -2197,6 +2197,33 @@ export const dropAllTables = () => {
   });
 };
 
+export const clearAllTables = () => {
+  db.transaction((tx: any) => {
+    const tables = [
+      'projects',
+      'sign_data_options',
+      'existing_sign_audit',
+      'electrical_audit',
+      'permitting_assessment',
+      'indoor_photos_and_measurements',
+      'sign_general_audit',
+      'offline_images',
+      'offline_remove_images',
+    ];
+
+    tables.forEach(table => {
+      tx.executeSql(
+        `DELETE FROM ${table}`,
+        [],
+        () => console.log(`All records cleared from ${table}`),
+        (_: any, error: any) =>
+          console.error(`Error clearing table ${table}:`, error),
+      );
+    });
+  });
+};
+
+
 export const createOfflineImagesTable = () => {
   db.transaction((tx: any) => {
     tx.executeSql(

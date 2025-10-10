@@ -182,7 +182,6 @@ const ExistingAuditProject = ({handleFetchData}) => {
           item => item.imageId !== imageId1,
         );
         console.log('IMAGESSSARRAYY', imagesArray);
-        // return;
         await insertExistingSignAuditImagesOnly(
           signProjectData?.signTableId,
           actualKey,
@@ -202,9 +201,7 @@ const ExistingAuditProject = ({handleFetchData}) => {
         });
         insertOfflineRemove(data);
         const fullPath = await getPath(path);
-        // console.log('FULLLPATHHH:::', fullPath);
         await RNFS.unlink(`file://${fullPath}`);
-        // console.log('Device offline: remove request stored locally');
       }
     } catch (error) {
       console.log('Error:', error.response?.data || error.message);
@@ -281,6 +278,10 @@ const ExistingAuditProject = ({handleFetchData}) => {
       }
     }
   };
+  console.log(
+    'signProjectData?.existing_sign_audit',
+    signProjectData,
+  );
 
   const fetchData = () => {
     // console.log('FETCHINGGGG');
