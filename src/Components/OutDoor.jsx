@@ -24,7 +24,7 @@ import Toast from 'react-native-toast-message';
 import {handleAddPhoto, useNetworkStatus} from '../Functions/functions';
 import {updateSignGeneralAudit} from '../Db/LocalData';
 const OutDoor = ({handleFetchData}) => {
- const status = useNetworkStatus();
+  const status = useNetworkStatus();
   const baseUrl = useSelector(state => state.baseUrl.value);
   const loginData = useSelector(state => state.login.value);
   const signProjectData = useSelector(state => state.signProject.value);
@@ -87,6 +87,11 @@ const OutDoor = ({handleFetchData}) => {
       placeholder: 'Attachment Type?',
       value: signProjectData?.sign_general_audit?.attachmentType || '',
       setToValue: 'attachmentType',
+    },
+    {
+      placeholder: 'Size of Ladder or Lift',
+      value: signProjectData?.sign_general_audit?.sizeOfLadderOrLift || '',
+      setToValue: 'sizeOfLadderOrLift',
     },
   ]);
 
@@ -241,7 +246,6 @@ const OutDoor = ({handleFetchData}) => {
       ...selectedOptions,
       signGeneralAuditSummaryNotes,
       signGeneralAuditTodoPunchList,
-      sizeOfLadderOrLift,
       signAliasName: signProjectData?.signAliasName,
       signType: signProjectData?.signType,
     };
@@ -544,7 +548,7 @@ const OutDoor = ({handleFetchData}) => {
               />
             </View>
             <FlatList
-              data={inputFields.slice(1)}
+              data={inputFields.slice(1, 8)}
               keyExtractor={item => item.placeholder}
               renderItem={({item, index}) => (
                 <TextInput
@@ -604,9 +608,17 @@ const OutDoor = ({handleFetchData}) => {
                   {(selectedOptions[data[4].value] === 'yes' ||
                     selectedOptions[data[4].value] === 'Yes') && (
                     <View>
-                      <TextInput
-                        placeholder="Document Potential Safety Issues"
-                        style={[styles.input, {height: 50}]}
+                      <FlatList
+                        data={inputFields.slice(8, 9)}
+                        keyExtractor={item => item.placeholder}
+                        renderItem={({item, index}) => (
+                          <TextInput
+                            placeholder={item.placeholder}
+                            value={selectedOptions[item.setToValue] || ''}
+                            onChangeText={text => handleInputChange(text, 8)}
+                            style={[styles.input, {height: 50}]}
+                          />
+                        )}
                       />
                       <TouchableOpacity
                         style={styles.imageCon}
@@ -621,7 +633,9 @@ const OutDoor = ({handleFetchData}) => {
                           <Photo />
                         </View>
                         <View style={styles.fileNameContainer}>
-                          <Text style={styles.fileNameText}>Hai</Text>
+                          <Text style={styles.fileNameText}>
+                            No File Choosen
+                          </Text>
                         </View>
                       </TouchableOpacity>
                       <View
