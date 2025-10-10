@@ -257,6 +257,9 @@ const OutDoor = ({handleFetchData}) => {
       selectedOptions?.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto ||
         [],
     );
+    const base64anyPotentialIssuesPhotos = await getBase64Array(
+      selectedOptions?.anyPotentialSafetyIssuesPhoto || [],
+    );
 
     const signGeneralData = {
       ...selectedOptions,
@@ -266,6 +269,7 @@ const OutDoor = ({handleFetchData}) => {
       signType: signProjectData?.signType,
       anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto:
         base64AnyObstructionsPhotos,
+      anyPotentialSafetyIssuesPhoto: base64anyPotentialIssuesPhotos,
     };
     // console.log(signGeneralData);
 
@@ -539,17 +543,6 @@ const OutDoor = ({handleFetchData}) => {
                             ?.length > 0 &&
                           selectedOptions?.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhotos?.map(
                             (item, index) => {
-                              console.log(
-                                'arrayimages',
-                                selectedOptions?.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhotos,
-                              );
-                              console.log('itemitemitemitem', item);
-                              console.log(
-                                'FINAL URI:',
-                                item.path.startsWith('file://')
-                                  ? item.path
-                                  : `file://${item.path}`,
-                              );
                               return (
                                 <TouchableOpacity
                                   key={index}
@@ -725,9 +718,11 @@ const OutDoor = ({handleFetchData}) => {
                       <TouchableOpacity
                         style={styles.imageCon}
                         onPress={() =>
-                          handleAddPhoto(
+                          showPhotoOptions(
                             setSelectedOptions,
                             'anyPotentialSafetyIssuesPhoto',
+                            'SignGeneralAudit',
+                            false,
                           )
                         }>
                         <View style={styles.photoButton}>
@@ -736,7 +731,10 @@ const OutDoor = ({handleFetchData}) => {
                         </View>
                         <View style={styles.fileNameContainer}>
                           <Text style={styles.fileNameText}>
-                            No File Choosen
+                            {selectedOptions?.anyPotentialSafetyIssuesPhoto
+                              ?.length > 0
+                              ? `${selectedOptions?.anyPotentialSafetyIssuesPhoto?.length} File Chosen`
+                              : 'No File Choosen'}
                           </Text>
                         </View>
                       </TouchableOpacity>
@@ -747,32 +745,57 @@ const OutDoor = ({handleFetchData}) => {
                           gap: 15,
                         }}>
                         {loadingImage ? (
-                          <ActivityIndicator size="small" color="#FF9239" />
+                          <ActivityIndicator size="large" color="#FF9239" />
                         ) : (
                           selectedOptions?.anyPotentialSafetyIssuesPhotos
                             ?.length > 0 &&
                           selectedOptions.anyPotentialSafetyIssuesPhotos.map(
-                            (data, index) => {
+                            (item, index) => {
                               return (
-                                <View key={index} style={styles.imageContainer}>
-                                  <Image
-                                    source={{uri: data.url}}
-                                    style={styles.image}
-                                  />
-                                  <TouchableOpacity
-                                    onPress={() =>
-                                      handleRemoveImage(
-                                        data.imageId,
-                                        'anyPotentialSafetyIssuesPhoto',
-                                        'anyPotentialSafetyIssuesPhotos',
-                                      )
-                                    }
-                                    style={styles.removeButton}>
-                                    <Text style={styles.removeButtonText}>
-                                      ×
-                                    </Text>
-                                  </TouchableOpacity>
-                                </View>
+                                <TouchableOpacity
+                                  key={index}
+                                  onPress={() => {
+                                    openEditorforUpdate(
+                                      item.path,
+                                      setSelectedOptions,
+                                      'anyPotentialSafetyIssuesPhoto',
+                                      'SignGeneralAudit',
+                                      true,
+                                      item.imageId,
+                                      baseUrl,
+                                      loginData?.tokenNumber,
+                                      true,
+                                      selectedOptions?.signId,
+                                      'sign_general_audit',
+                                    );
+                                  }}>
+                                  <View
+                                    key={index}
+                                    style={styles.imageContainer}>
+                                    <Image
+                                      source={{
+                                        uri: item.path.startsWith('file://')
+                                          ? item.path
+                                          : `file://${item.path}`,
+                                      }}
+                                      style={styles.image}
+                                    />
+                                    <TouchableOpacity
+                                      onPress={() =>
+                                        handleRemoveImage(
+                                          item.imageId,
+                                          'anyPotentialSafetyIssuesPhoto',
+                                          'anyPotentialSafetyIssuesPhotos',
+                                          item.path,
+                                        )
+                                      }
+                                      style={styles.removeButton}>
+                                      <Text style={styles.removeButtonText}>
+                                        ×
+                                      </Text>
+                                    </TouchableOpacity>
+                                  </View>
+                                </TouchableOpacity>
                               );
                             },
                           )

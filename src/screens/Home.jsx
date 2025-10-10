@@ -76,7 +76,7 @@ const Home = () => {
   const [signTitles, SetSignTitles] = useState([]);
   const dispatch = useDispatch();
   const [refreshing, setRefreshing] = useState(false);
-  const [response, setResponse] = useState(false);
+  const [response, setResponse] = useState(null);
 
   const fetchData = async (state, previousSignSelected) => {
     console.log('API fetching....');
@@ -116,7 +116,7 @@ const Home = () => {
               setAlldata(projects);
               handleProjectSelection(projects, previousSignSelected, state);
             });
-          }, 1200);
+          }, 2200);
         } else {
           setResponse(response.data.status);
           console.log('FALSE RESPONSE:', response.data);
@@ -133,54 +133,36 @@ const Home = () => {
           }
         });
         setResponse(true);
-        setTimeout(() => {
-          setLoading(false);
-        }, 1500);
         return;
       }
     } catch (error) {
-      // console.error(
-      //   'Fetch failed:',
-      //   error?.response?.data?.status === 401,
-      //   error?.response?.data?.success === 'fail',
-      // );
       if (
         error?.response?.data?.status === 401 ||
         error?.response?.data?.success === 'fail'
       ) {
         dropUsersTable();
-        dropAllTables();
         createUsersTable();
         dispatch(addLoginData(null));
         navigation.replace('Login');
       }
       setResponse(false);
     } finally {
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+      }, 2200);
       console.log('API fetched....');
     }
   };
 
   const handleProjectSelection = (data, previousSignSelected, state) => {
-    // console.log(previousSignSelected);
     const titles = data.map(item => item.projectTitle);
     SetProjectTitles(titles);
-    // console.log('data', data[0]);
     let currentProject =
       data.find(item => item.projectTitle === selectedProject) || data[0];
-    // console.log('currentProject', currentProject.signDataOptions);
-
     setSelectedProject(currentProject.projectTitle);
-
     setProjects(currentProject);
     dispatch(addProject(currentProject));
     SetSignTitles(currentProject.signDataOptions);
-
-    console.log(
-      'currentProject.signDataOptions',
-      currentProject.signDataOptions,
-    );
-
     const matchedSign = currentProject.signDataOptions?.find(
       s => s.signId === previousSignSelected?.signId,
     );
@@ -191,7 +173,6 @@ const Home = () => {
       dispatch(addSignProject(matchedSign));
     } else {
       const firstSign = currentProject.signDataOptions?.[0];
-      console.log('firstSign', firstSign);
       if (firstSign) {
         setSignConfirmed(true);
         setSignSelected(firstSign);
@@ -202,9 +183,6 @@ const Home = () => {
   };
 
   const saveSection = async () => {
-    console.log('pressingggg');
-
-    console.log('options', signSelected);
 
     try {
       const token = loginData?.tokenNumber;
@@ -227,23 +205,17 @@ const Home = () => {
         role: loginData?.role,
         customerName: signSelected?.customerName,
       };
-      console.log('payload', data);
-      // return;
-      console.log('222222');
       const response = await axios.post(`${baseUrl}/sendNotification`, data, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log('333333', response.data);
       if (response.data.status) {
         const response = await axios.post(`${baseUrl}/sendmail`, data, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-
-        // console.log('response', response);
         if (response.data.status) {
           Toast.show({
             text1: 'Send Report Success',
@@ -289,7 +261,6 @@ const Home = () => {
         try {
           clearCache();
           setLoading(true);
-          setResponse(false);
           const netState = await NetInfo.fetch();
           if (netState.isConnected) {
             console.log('SYNCING TO ONLINE');

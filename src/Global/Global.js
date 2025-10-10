@@ -246,8 +246,8 @@ export const styles = StyleSheet.create({
     position: 'relative',
   },
   image: {
-    width: 80,
-    height: 80,
+    width: 70,
+    height: 70,
     borderRadius: 8,
   },
   removeButton: {
@@ -264,7 +264,7 @@ export const styles = StyleSheet.create({
   },
   removeButtonText: {
     color: 'white',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
   },
   card: {
