@@ -101,6 +101,7 @@ const Home = () => {
           dispatch(addData(data));
           console.log('USER PROJECTS DATA:', data);
           await Promise.all([
+            clearAllTables(),
             insertProjectsData(data),
             insertExistingSignAudit(data, 1),
             insertElectricalAudit(data, 1),
@@ -293,7 +294,6 @@ const Home = () => {
   useEffect(() => {
     // dropAllTables();
     // dropOfflineRemoveTable();
-    clearAllTables();
 
     createOfflineRemoveTable();
     createOfflineImagesTable();

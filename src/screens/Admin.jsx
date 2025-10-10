@@ -3,7 +3,7 @@ import React from 'react';
 import Logo from '../../assets/images/app logo.svg';
 import Refresh from '../../assets/images/cloud.svg';
 import Menu from '../../assets/images/close.svg';
-import {useNavigation} from '@react-navigation/native';
+import {CommonActions, useNavigation} from '@react-navigation/native';
 import {createUsersTable, dropUsersTable} from '../Db/db';
 import {useDispatch} from 'react-redux';
 import {addLoginData} from '../Redux/Slices/LoginData';
@@ -21,7 +21,19 @@ const Admin = () => {
           dropAllTables();
           createUsersTable();
           dispatch(addLoginData(null));
-          navigation.replace('Login');
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 0,
+              routes: [{name: 'Login'}],
+            }),
+          );
+        } else if (screen === 'Home') {
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 0,
+              routes: [{name: screen}],
+            }),
+          );
         } else {
           navigation.navigate(screen);
         }
@@ -36,7 +48,7 @@ const Admin = () => {
           <Logo width={150} height={36} />
         </View>
         <View style={styles.iconContainer}>
-          <TouchableOpacity onPress={() => handleRefresh()}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
             <Refresh width={36} height={36} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => navigation.goBack()}>

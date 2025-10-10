@@ -15,7 +15,7 @@ import Logo from '../../assets/images/app logo.svg';
 import Refresh from '../../assets/images/cloud.svg';
 import Menu from '../../assets/images/close.svg';
 import {Picker} from '@react-native-picker/picker';
-import {useNavigation} from '@react-navigation/native';
+import {CommonActions, useNavigation} from '@react-navigation/native';
 import axios from 'axios';
 import Feather from 'react-native-vector-icons/Feather';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
@@ -424,7 +424,15 @@ const Manage = () => {
             }>
             <Refresh width={36} height={36} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+          <TouchableOpacity
+            onPress={() => {
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 0,
+                  routes: [{name: 'Home'}],
+                }),
+              );
+            }}>
             <Menu width={36} height={36} />
           </TouchableOpacity>
         </View>

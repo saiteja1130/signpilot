@@ -15,7 +15,7 @@ import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import Logo from '../../assets/images/app logo.svg';
 import Refresh from '../../assets/images/cloud.svg';
 import Menu from '../../assets/images/close.svg';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {CommonActions, useNavigation, useRoute} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {
   fetchCustomers,
@@ -250,7 +250,15 @@ const CustomerProjectScreen = () => {
           <TouchableOpacity onPress={() => getCustomersProject()}>
             <Refresh width={36} height={36} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+          <TouchableOpacity
+            onPress={() => {
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 0,
+                  routes: [{name: 'Home'}],
+                }),
+              );
+            }}>
             <Menu width={36} height={36} />
           </TouchableOpacity>
         </View>
@@ -279,7 +287,7 @@ const CustomerProjectScreen = () => {
           <Text style={styles.userName}>
             {customerData?.company_name || 'Company Name'}
           </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Manage')}>
+          <TouchableOpacity onPress={() => navigation.replace('Manage')}>
             <FontAwesome5
               name="minus-circle"
               size={16}

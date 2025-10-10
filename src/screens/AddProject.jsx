@@ -1,4 +1,4 @@
-import {useRoute} from '@react-navigation/native';
+import {CommonActions, useRoute} from '@react-navigation/native';
 import React, {useState, useEffect} from 'react';
 import {
   View,
@@ -528,10 +528,18 @@ const AddProject = ({navigation}) => {
           <Logo width={150} height={36} />
         </View>
         <View style={styles.iconContainer}>
-          <TouchableOpacity onPress={() => getCustomersProject()}>
+          <TouchableOpacity onPress={() => getCustomersAllProjects()}>
             <Refresh width={36} height={36} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+          <TouchableOpacity
+            onPress={() => {
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 0,
+                  routes: [{name: 'Home'}],
+                }),
+              );
+            }}>
             <Menu width={36} height={36} />
           </TouchableOpacity>
         </View>

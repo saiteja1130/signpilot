@@ -601,115 +601,115 @@ export const syncToOnline = async (loginData, baseUrl) => {
   } catch (error) {
     console.log('ERRORRRRRRR!!!!!!!!!!!!!!:', error);
   }
-  // try {
-  //   getUnsyncedPermittingAssessments(async audits => {
-  //     console.log('Pending Permitt sync:', audits);
-  //     // return
-  //     if (audits.length > 0) {
-  //       const token = loginData?.tokenNumber;
-  //       for (const audit of audits) {
-  //         const data = {
-  //           ...audit,
-  //           teamId: loginData?.userId,
-  //           surveyModule: '',
-  //         };
-  //         try {
-  //           const response = await axios.post(
-  //             `${baseUrl}/updatePermittingAssessmentAudit`,
-  //             data,
-  //             {
-  //               headers: {
-  //                 Authorization: `Bearer ${token}`,
-  //               },
-  //             },
-  //           );
-  //           console.log('RESPONSE PERMITTT SYNCEDDDD::', response.data);
-  //           updatePermittingAssessment(audit, 1);
-  //         } catch (err) {
-  //           console.error(
-  //             'Error syncing audit ID',
-  //             audit.Id,
-  //             err.response.data,
-  //           );
-  //         }
-  //       }
-  //     }
-  //   });
-  // } catch (error) {
-  //   console.log('RESPONSE SYNCHEDD ERRORRRR::', error);
-  // }
-  // try {
-  //   getUnsyncedSignGeneralAudits(async audits => {
-  //     console.log('PENDING SIGNGENERAL AUDITSSS:::', audits);
-  //     if (audits.length > 0) {
-  //       const token = loginData?.tokenNumber;
-  //       for (const audit of audits) {
-  //         const data = {
-  //           ...audit,
-  //           teamId: loginData?.userId,
-  //           surveyModule: '',
-  //         };
-  //         try {
-  //           const response = await axios.post(
-  //             `${baseUrl}/updateSignGeneralAudit`,
-  //             data,
-  //             {
-  //               headers: {
-  //                 Authorization: `Bearer ${token}`,
-  //               },
-  //             },
-  //           );
-  //           console.log('RESPONSE SIGNGENERAL SYNCEDDDD::', response.data);
-  //           updateSignGeneralAudit(audit, 1);
-  //         } catch (err) {
-  //           console.error(
-  //             'Error syncing audit ID',
-  //             audit.Id,
-  //             err.response.data,
-  //           );
-  //         }
-  //       }
-  //     }
-  //   });
-  // } catch (error) {
-  //   console.log('RESPONSE SYNCHEDD ERRORRRR::', error);
-  // }
-  // try {
-  //   getUnsyncedElectricalAudits(async audits => {
-  //     console.log('PENDINGG ELECTRICAL AUDITS', audits);
-  //     if (audits.length > 0) {
-  //       const token = loginData?.tokenNumber;
-  //       for (const audit of audits) {
-  //         const data = {
-  //           ...audit,
-  //           teamId: loginData?.userId,
-  //           surveyModule: '',
-  //         };
-  //         try {
-  //           const response = await axios.post(
-  //             `${baseUrl}/updateElectricalAudit`,
-  //             data,
-  //             {
-  //               headers: {
-  //                 Authorization: `Bearer ${token}`,
-  //               },
-  //             },
-  //           );
-  //           console.log('RESPONSE SIGNGENERAL SYNCEDDDD::', response.data);
-  //           updateElectricalAudit(audit, 1);
-  //         } catch (err) {
-  //           console.error(
-  //             'Error syncing audit ID',
-  //             audit.Id,
-  //             err.response.data,
-  //           );
-  //         }
-  //       }
-  //     }
-  //   });
-  // } catch (error) {
-  //   console.log('RESPONSE SYNCHEDD ERRORRRR::', error);
-  // }
+  try {
+    getUnsyncedPermittingAssessments(async audits => {
+      console.log('Pending Permitt sync:', audits);
+      // return
+      if (audits.length > 0) {
+        const token = loginData?.tokenNumber;
+        for (const audit of audits) {
+          const data = {
+            ...audit,
+            teamId: loginData?.userId,
+            surveyModule: '',
+          };
+          try {
+            const response = await axios.post(
+              `${baseUrl}/updatePermittingAssessmentAudit`,
+              data,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              },
+            );
+            console.log('RESPONSE PERMITTT SYNCEDDDD::', response.data);
+            updatePermittingAssessment(audit, 1);
+          } catch (err) {
+            console.error(
+              'Error syncing audit ID',
+              audit.Id,
+              err.response.data,
+            );
+          }
+        }
+      }
+    });
+  } catch (error) {
+    console.log('RESPONSE SYNCHEDD ERRORRRR::', error);
+  }
+  try {
+    getUnsyncedSignGeneralAudits(async audits => {
+      console.log('PENDING SIGNGENERAL AUDITSSS:::', audits);
+      if (audits.length > 0) {
+        const token = loginData?.tokenNumber;
+        for (const audit of audits) {
+          const data = {
+            ...audit,
+            teamId: loginData?.userId,
+            surveyModule: '',
+          };
+          try {
+            const response = await axios.post(
+              `${baseUrl}/updateSignGeneralAudit`,
+              data,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              },
+            );
+            console.log('RESPONSE SIGNGENERAL SYNCEDDDD::', response.data);
+            updateSignGeneralAudit(audit, 1);
+          } catch (err) {
+            console.error(
+              'Error syncing audit ID',
+              audit.Id,
+              err.response.data,
+            );
+          }
+        }
+      }
+    });
+  } catch (error) {
+    console.log('RESPONSE SYNCHEDD ERRORRRR::', error);
+  }
+  try {
+    getUnsyncedElectricalAudits(async audits => {
+      console.log('PENDINGG ELECTRICAL AUDITS', audits);
+      if (audits.length > 0) {
+        const token = loginData?.tokenNumber;
+        for (const audit of audits) {
+          const data = {
+            ...audit,
+            teamId: loginData?.userId,
+            surveyModule: '',
+          };
+          try {
+            const response = await axios.post(
+              `${baseUrl}/updateElectricalAudit`,
+              data,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              },
+            );
+            console.log('RESPONSE SIGNGENERAL SYNCEDDDD::', response.data);
+            updateElectricalAudit(audit, 1);
+          } catch (err) {
+            console.error(
+              'Error syncing audit ID',
+              audit.Id,
+              err.response.data,
+            );
+          }
+        }
+      }
+    });
+  } catch (error) {
+    console.log('RESPONSE SYNCHEDD ERRORRRR::', error);
+  }
   try {
     getAllOfflineImages(async audits => {
       console.log('PENDINGG ELECTRICAL AUDITS', audits);
