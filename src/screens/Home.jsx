@@ -201,17 +201,23 @@ const Home = () => {
   };
 
   const saveSection = async () => {
-    const token = loginData?.tokenNumber;
+    console.log('pressingggg');
+
+    console.log('options', signSelected);
+
     try {
+      const token = loginData?.tokenNumber;
       const data = {
         Id:
           signSelected?.electrical_audit?.id ||
-          signSelected?.existing_sign_audit?.id,
+          signSelected?.existing_sign_audit?.id ||
+          signSelected?.existing_sign_audit?.Id |
+            signSelected?.electrical_audit?.Id,
         projectId:
           signSelected?.electrical_audit?.projectId ||
           signSelected?.existing_sign_audit?.projectId,
         signId: signSelected?.signId,
-        optionId: signSelected?.optionId,
+        optionId: signSelected?.electrical_audit?.optionId,
         teamId: loginData?.userId,
         adminId: loginData?.userId,
         customerName:
@@ -220,17 +226,23 @@ const Home = () => {
         role: loginData?.role,
         customerName: signSelected?.customerName,
       };
+      console.log('payload', data);
+      // return;
+      console.log('222222');
       const response = await axios.post(`${baseUrl}/sendNotification`, data, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+      console.log('333333', response.data);
       if (response.data.status) {
         const response = await axios.post(`${baseUrl}/sendmail`, data, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
+
+        // console.log('response', response);
         if (response.data.status) {
           Toast.show({
             text1: 'Send Report Success',
@@ -239,12 +251,14 @@ const Home = () => {
           });
           setSignConfirmed(false);
           setLoading(true);
+          await fetchData();
           setTimeout(() => {
             setLoading(false);
           }, 1500);
         }
       }
     } catch (error) {
+      console.log(error);
       console.log(error?.response?.data || error.message);
     }
   };
