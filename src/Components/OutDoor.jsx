@@ -22,7 +22,18 @@ import Up from '../../assets/images/arrow.svg';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
 import {handleAddPhoto, useNetworkStatus} from '../Functions/functions';
-import {updateSignGeneralAudit} from '../Db/LocalData';
+import NetInfo from '@react-native-community/netinfo';
+import RNFS from 'react-native-fs';
+
+import {
+  createOfflineRemoveTable,
+  getSignGeneralAuditImagesByKey,
+  insertOfflineRemove,
+  insertSignGeneralAuditImagesOnly,
+  updateSignGeneralAudit,
+} from '../Db/LocalData';
+import {showPhotoOptions} from '../Functions/ImagePickFunctions';
+import {getBase64Array, getPath} from '../Functions/FSfunctions';
 const OutDoor = ({handleFetchData}) => {
   const status = useNetworkStatus();
   const baseUrl = useSelector(state => state.baseUrl.value);
@@ -242,12 +253,19 @@ const OutDoor = ({handleFetchData}) => {
     console.log('--- Save Button Pressed ---');
     setLoadingImage(true);
 
+    const base64AnyObstructionsPhotos = await getBase64Array(
+      selectedOptions?.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto ||
+        [],
+    );
+
     const signGeneralData = {
       ...selectedOptions,
       signGeneralAuditSummaryNotes,
       signGeneralAuditTodoPunchList,
       signAliasName: signProjectData?.signAliasName,
       signType: signProjectData?.signType,
+      anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto:
+        base64AnyObstructionsPhotos,
     };
     // console.log(signGeneralData);
 
@@ -297,34 +315,76 @@ const OutDoor = ({handleFetchData}) => {
     }
   };
 
-  const handleRemoveImage = async (imageId1, fieldName1, actualKey) => {
+  const handleRemoveImage = async (imageId1, fieldName1, actualKey, path) => {
     try {
       setLoadingImage(true);
+
       const data = {
         imageId: imageId1,
-        Id: signProjectData?.sign_general_audit?.id,
+        Id:
+          signProjectData?.sign_general_audit?.id ||
+          signProjectData?.sign_general_audit?.Id,
         fieldName: fieldName1,
         surveyModule: 'sign_general_audit',
+        moduleId: signProjectData?.signId,
       };
-      const token = loginData?.tokenNumber;
-      const responce = await axios.post(`${baseUrl}/removeFile`, data, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (responce.data.status) {
-        setSelectedOptions(prev => {
-          return {
-            ...prev,
-            [actualKey]: responce?.data?.data[actualKey],
-          };
+
+      const netState = await NetInfo.fetch();
+      const isConnected = netState.isConnected;
+
+      if (isConnected) {
+        const token = loginData?.tokenNumber;
+        const response = await axios.post(`${baseUrl}/removeFile`, data, {
+          headers: {Authorization: `Bearer ${token}`},
         });
-        setTimeout(() => {
-          setLoadingImage(false);
-        }, 1200);
+
+        if (response.data.status) {
+          const imagesArray = response?.data?.data?.[actualKey] || [];
+          await insertSignGeneralAuditImagesOnly(
+            signProjectData?.signTableId,
+            actualKey,
+            imagesArray,
+            1,
+          );
+          const updated = await getSignGeneralAuditImagesByKey(
+            signProjectData?.signTableId,
+            actualKey,
+          );
+          setSelectedOptions(prev => ({
+            ...prev,
+            [actualKey]: updated || [],
+          }));
+          const fullPath = await getPath(path);
+          await RNFS.unlink(fullPath);
+        }
+      } else {
+        createOfflineRemoveTable();
+        const imagesArray = selectedOptions?.[actualKey]?.filter(
+          item => item.imageId !== imageId1,
+        );
+        await insertSignGeneralAuditImagesOnly(
+          signProjectData?.signTableId,
+          actualKey,
+          imagesArray,
+          0,
+        );
+        const updated = await getSignGeneralAuditImagesByKey(
+          signProjectData?.signTableId,
+          actualKey,
+        );
+        setSelectedOptions(prev => ({
+          ...prev,
+          [actualKey]: updated || [],
+        }));
+        insertOfflineRemove(data);
+        const fullPath = await getPath(path);
+        await RNFS.unlink(`file://${fullPath}`);
       }
     } catch (error) {
-      console.log('Error response data:', error.response);
+      console.log('Error:', error.response?.data || error.message);
+      console.log('Failed to remove online: stored offline for sync');
+    } finally {
+      setTimeout(() => setLoadingImage(false), 1000);
     }
   };
 
@@ -433,20 +493,22 @@ const OutDoor = ({handleFetchData}) => {
                   {(selectedOptions[data[0].value] === 'yes' ||
                     selectedOptions[data[0].value] === 'Yes') && (
                     <View>
-                      <TextInput
+                      {/* <TextInput
                         placeholder="General description of placement of sign"
                         style={[styles.input, {height: 50}]}
                         value={signGeneralAuditDocumentAccessibilityIssues}
                         onChangeText={
                           setSignGeneralAuditDocumentAccessibilityIssues
                         }
-                      />
+                      /> */}
                       <TouchableOpacity
                         style={styles.imageCon}
                         onPress={() =>
-                          handleAddPhoto(
+                          showPhotoOptions(
                             setSelectedOptions,
                             'anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto',
+                            'SignGeneralAudit',
+                            false,
                           )
                         }>
                         <View style={styles.photoButton}>
@@ -455,7 +517,11 @@ const OutDoor = ({handleFetchData}) => {
                         </View>
                         <View style={styles.fileNameContainer}>
                           <Text style={styles.fileNameText}>
-                            No file choosen
+                            {selectedOptions
+                              ?.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto
+                              ?.length > 0
+                              ? `${selectedOptions?.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto?.length} File Chosen`
+                              : 'No File Choosen'}
                           </Text>
                         </View>
                       </TouchableOpacity>
@@ -472,27 +538,63 @@ const OutDoor = ({handleFetchData}) => {
                             ?.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhotos
                             ?.length > 0 &&
                           selectedOptions?.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhotos?.map(
-                            (data, index) => {
+                            (item, index) => {
+                              console.log(
+                                'arrayimages',
+                                selectedOptions?.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhotos,
+                              );
+                              console.log('itemitemitemitem', item);
+                              console.log(
+                                'FINAL URI:',
+                                item.path.startsWith('file://')
+                                  ? item.path
+                                  : `file://${item.path}`,
+                              );
                               return (
-                                <View key={index} style={styles.imageContainer}>
-                                  <Image
-                                    source={{uri: data.url}}
-                                    style={styles.image}
-                                  />
-                                  <TouchableOpacity
-                                    onPress={() =>
-                                      handleRemoveImage(
-                                        data.imageId,
-                                        'anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto',
-                                        'anyAccessibilityObstructionsDocumentAccessibilityIssuesPhotos',
-                                      )
-                                    }
-                                    style={styles.removeButton}>
-                                    <Text style={styles.removeButtonText}>
-                                      ×
-                                    </Text>
-                                  </TouchableOpacity>
-                                </View>
+                                <TouchableOpacity
+                                  key={index}
+                                  onPress={() => {
+                                    openEditorforUpdate(
+                                      item.path,
+                                      setSelectedOptions,
+                                      'anyAccessibilityObstructionsDocumentAccessibilityIssuesPhotos',
+                                      'SignGeneralAudit',
+                                      true,
+                                      item.imageId,
+                                      baseUrl,
+                                      loginData?.tokenNumber,
+                                      true,
+                                      selectedOptions?.signId,
+                                      'sign_general_audit',
+                                    );
+                                  }}>
+                                  <View
+                                    key={index}
+                                    style={styles.imageContainer}>
+                                    <Image
+                                      source={{
+                                        uri: item.path.startsWith('file://')
+                                          ? item.path
+                                          : `file://${item.path}`,
+                                      }}
+                                      style={styles.image}
+                                    />
+                                    <TouchableOpacity
+                                      onPress={() =>
+                                        handleRemoveImage(
+                                          item.imageId,
+                                          'anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto',
+                                          'anyAccessibilityObstructionsDocumentAccessibilityIssuesPhotos',
+                                          item.path,
+                                        )
+                                      }
+                                      style={styles.removeButton}>
+                                      <Text style={styles.removeButtonText}>
+                                        ×
+                                      </Text>
+                                    </TouchableOpacity>
+                                  </View>
+                                </TouchableOpacity>
                               );
                             },
                           )

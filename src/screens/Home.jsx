@@ -149,6 +149,7 @@ const Home = () => {
         error?.response?.data?.success === 'fail'
       ) {
         dropUsersTable();
+        dropAllTables();
         createUsersTable();
         dispatch(addLoginData(null));
         navigation.replace('Login');
@@ -288,6 +289,7 @@ const Home = () => {
         try {
           clearCache();
           setLoading(true);
+          setResponse(false);
           const netState = await NetInfo.fetch();
           if (netState.isConnected) {
             console.log('SYNCING TO ONLINE');
@@ -299,8 +301,6 @@ const Home = () => {
           }
         } catch (error) {
           console.error('Error in sync and fetch flow:', error);
-        } finally {
-          setLoading(false);
         }
       };
 
@@ -309,8 +309,6 @@ const Home = () => {
   );
 
   useEffect(() => {
-    // dropAllTables();
-    // dropOfflineRemoveTable();
     createOfflineRemoveTable();
     createOfflineImagesTable();
     createLocalDB();
@@ -469,7 +467,7 @@ const Home = () => {
   if (loading) {
     return (
       <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-        <ProgressBar duration={2000} />
+        <ProgressBar duration={3000} />
       </View>
     );
   }
