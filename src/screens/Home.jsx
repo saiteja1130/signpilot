@@ -62,7 +62,7 @@ const Home = () => {
   const signProjectData = useSelector(state => state.signProject.value);
   const isConnected = useNetworkStatus();
   const navigation = useNavigation();
-  const [selectedProject, setSelectedProject] = '';
+  const [selectedProject, setSelectedProject] = useState('');
   const [selectedSignValue, setSelectedSignValue] = useState('');
   const [signSelected, setSignSelected] = useState('');
   const loginData = useSelector(state => state.login.value);
@@ -163,19 +163,16 @@ const Home = () => {
     // console.log(previousSignSelected);
     const titles = data.map(item => item.projectTitle);
     SetProjectTitles(titles);
-    console.log('data', data[0]);
+    // console.log('data', data[0]);
     let currentProject =
       data.find(item => item.projectTitle === selectedProject) || data[0];
-    console.log('currentProject', currentProject.signDataOptions);
+    // console.log('currentProject', currentProject.signDataOptions);
 
     setSelectedProject(currentProject.projectTitle);
-    console.log('1111111');
+
     setProjects(currentProject);
-    console.log('222222');
     dispatch(addProject(currentProject));
-    console.log('4444444');
     SetSignTitles(currentProject.signDataOptions);
-    console.log('55555');
 
     console.log(
       'currentProject.signDataOptions',
