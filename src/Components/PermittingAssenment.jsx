@@ -124,11 +124,12 @@ const PermittingAssenment = ({handleFetchData}) => {
       ) {
         validDate = new Date(currentDate);
       } else {
-        validDate = new Date();
+        validDate = new Date(); // ✅ always start from today
       }
 
       DateTimePickerAndroid.open({
         value: validDate,
+        minimumDate: new Date(), // ✅ prevents past dates (optional)
         onChange: (event, selectedDate) => {
           if (selectedDate) {
             setDate(selectedDate);
@@ -141,6 +142,7 @@ const PermittingAssenment = ({handleFetchData}) => {
       console.log(error);
     }
   };
+
   const formatDate = date => {
     if (!(date instanceof Date)) return 'From';
     return date.toLocaleDateString();
@@ -383,7 +385,7 @@ const PermittingAssenment = ({handleFetchData}) => {
                         marginBottom: 34,
                       },
                     ]}>
-                    <View style={{flex: 0.5}}>
+                    <View style={{flex: 1}}>
                       <Text
                         style={{
                           fontSize: 12,
