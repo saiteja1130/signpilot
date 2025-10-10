@@ -284,31 +284,33 @@ const Home = () => {
 
   useFocusEffect(
     useCallback(() => {
-      const fetchOnFocus = async () => {
-        if (Object.keys(loginData).length > 0 && isConnected !== null) {
-          await fetchData();
+      const runSyncAndFetch = async () => {
+        try {
+          clearCache();
+          setLoading(true);
+          const netState = await NetInfo.fetch();
+          if (netState.isConnected) {
+            console.log('SYNCING TO ONLINE');
+            await syncToOnline(loginData, baseUrl);
+          }
+          if (Object.keys(loginData).length > 0 && isConnected !== null) {
+            console.log('FETCHING DATA AFTER SYNC');
+            await fetchData();
+          }
+        } catch (error) {
+          console.error('Error in sync and fetch flow:', error);
+        } finally {
+          setLoading(false);
         }
       };
-      const syncingOnline = async () => {
-        setLoading(true);
-        const netState = await NetInfo.fetch();
-        if (netState.isConnected) {
-          console.log('SYNCING TO ONLINE');
-          await syncToOnline(loginData, baseUrl);
-        }
-      };
-      clearCache();
-      syncingOnline();
-      setTimeout(() => {
-        fetchOnFocus();
-      }, 4000);
+
+      runSyncAndFetch();
     }, [loginData, isConnected]),
   );
 
   useEffect(() => {
     // dropAllTables();
     // dropOfflineRemoveTable();
-
     createOfflineRemoveTable();
     createOfflineImagesTable();
     createLocalDB();
