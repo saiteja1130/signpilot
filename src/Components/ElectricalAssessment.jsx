@@ -46,6 +46,7 @@ const ElectricalAssessment = ({handleFetchData}) => {
   const status = useNetworkStatus();
   const [modalVisible, setModalVisible] = useState(false);
   const [editing, setEditing] = useState('');
+  const projectTitle = useSelector(state => state.projecttitle.value);
   const baseUrl = useSelector(state => state.baseUrl.value);
   const signProjectData = useSelector(state => state.signProject.value);
   const loginData = useSelector(state => state.login.value);
@@ -123,7 +124,7 @@ const ElectricalAssessment = ({handleFetchData}) => {
     signProjectData?.electrical_audit?.typeOfIlluminationInside || '',
   );
 
-  console.log('selectedOptions', selectedOptions?.electricTagsPhotos);
+  console.log('selectedOptions', signProjectData);
 
   const data = [
     {
@@ -392,7 +393,7 @@ const ElectricalAssessment = ({handleFetchData}) => {
         </View>
         <View style={styles.textContent}>
           <Text style={styles.projectName}>
-            {signProjectData?.electrical_audit?.projectTitle || 'Project Name'}
+            {projectTitle || 'Project Name'}
           </Text>
           <Text style={styles.auditTitle}>Electrical Assessment</Text>
           <Text style={styles.projectName}>

@@ -6,6 +6,7 @@ import projectReducer from './Slices/ProjectData';
 import signProjectReducer from './Slices/SigProject';
 import photoReducer from './Slices/PhotosActive';
 import BaseUrl from './Slices/BaseUrl';
+import projectTitleReducer from './Slices/ProjectTitleSlice';
 
 export const store = configureStore({
   reducer: {
@@ -16,5 +17,6 @@ export const store = configureStore({
     signProject: signProjectReducer,
     photoActive: photoReducer,
     baseUrl: BaseUrl,
+    projecttitle: projectTitleReducer,
   },
 });

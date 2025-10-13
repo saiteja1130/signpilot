@@ -33,8 +33,10 @@ import {
   updateSignGeneralAudit,
 } from '../Db/LocalData';
 import {showPhotoOptions} from '../Functions/ImagePickFunctions';
-import {getBase64Array, getPath} from '../Functions/FSfunctions';
+import {deleteFolders, getBase64Array, getPath} from '../Functions/FSfunctions';
 const OutDoor = ({handleFetchData}) => {
+  const projectTitle = useSelector(state => state.projecttitle.value);
+
   const status = useNetworkStatus();
   const baseUrl = useSelector(state => state.baseUrl.value);
   const loginData = useSelector(state => state.login.value);
@@ -296,7 +298,7 @@ const OutDoor = ({handleFetchData}) => {
             visibilityTime: 3000,
             position: 'top',
           });
-
+          await deleteFolders();
           handleFetchData(null, signProjectData);
         } else {
           throw new Error('Sync failed with unknown server response.');
@@ -415,8 +417,7 @@ const OutDoor = ({handleFetchData}) => {
 
         <View style={styles.textContent}>
           <Text style={styles.projectName}>
-            {signProjectData?.sign_general_audit?.projectTitle ||
-              'Project Name'}
+            {projectTitle || 'Project Name'}
           </Text>
           <Text style={styles.auditTitle}>
             {signProjectData?.signId === '1'

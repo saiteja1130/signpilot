@@ -56,6 +56,7 @@ import {addData} from '../Redux/Slices/Alldata';
 import {createUsersTable, dropUsersTable} from '../Db/db';
 import {addLoginData} from '../Redux/Slices/LoginData';
 import {clearCache, deleteFolders} from '../Functions/FSfunctions';
+import {addProjectTitle} from '../Redux/Slices/ProjectTitleSlice';
 
 const Home = () => {
   const baseUrl = useSelector(state => state.baseUrl.value);
@@ -159,7 +160,9 @@ const Home = () => {
     SetProjectTitles(titles);
     let currentProject =
       data.find(item => item.projectTitle === selectedProject) || data[0];
+    console.log('currentProject', currentProject);
     setSelectedProject(currentProject.projectTitle);
+    dispatch(addProjectTitle(currentProject.projectTitle));
     setProjects(currentProject);
     dispatch(addProject(currentProject));
     SetSignTitles(currentProject.signDataOptions);
@@ -183,7 +186,6 @@ const Home = () => {
   };
 
   const saveSection = async () => {
-
     try {
       const token = loginData?.tokenNumber;
       const data = {
@@ -237,12 +239,14 @@ const Home = () => {
   };
 
   const filterdata = item => {
+    console.log('itemmmmmmmmmmmmmmmmmmmmmmmmm', item);
     setSelectedProject(item);
     setSignConfirmed(false);
     const filteredProject = allData.find(data => data.projectTitle === item);
     if (filteredProject) {
       setProjects(filteredProject);
       dispatch(addProject(filteredProject));
+      dispatch(addProjectTitle(item));
       SetSignTitles(filteredProject.signDataOptions);
       const firstSign = filteredProject.signDataOptions?.[0];
       if (firstSign) {

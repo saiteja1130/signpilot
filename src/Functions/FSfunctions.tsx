@@ -126,7 +126,7 @@ export const downloadImagesArray = async (
 export const deleteFolders = async () => {
   try {
     const basePath = RNFS.DocumentDirectoryPath;
-    const items = await RNFS.readDir(basePath); // Get all files and folders
+    const items = await RNFS.readDir(basePath); 
 
     for (const item of items) {
       if (item.isDirectory()) {

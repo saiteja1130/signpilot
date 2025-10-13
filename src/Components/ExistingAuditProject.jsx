@@ -41,6 +41,7 @@ import {
 } from '../Functions/FSfunctions.tsx';
 
 const ExistingAuditProject = ({handleFetchData}) => {
+  const projectTitle = useSelector(state => state.projecttitle.value);
   const allData = useSelector(state => state.allData.value);
   const status = useNetworkStatus();
   const baseUrl = useSelector(state => state.baseUrl.value);
@@ -278,10 +279,7 @@ const ExistingAuditProject = ({handleFetchData}) => {
       }
     }
   };
-  console.log(
-    'signProjectData?.existing_sign_audit',
-    signProjectData,
-  );
+  console.log('signProjectData?.existing_sign_audit', signProjectData);
 
   const fetchData = () => {
     // console.log('FETCHINGGGG');
@@ -311,8 +309,7 @@ const ExistingAuditProject = ({handleFetchData}) => {
         </View>
         <View style={styles.textContent}>
           <Text style={styles.projectName}>
-            {signProjectData?.existing_sign_audit?.projectTitle ||
-              'Project Name'}
+            {projectTitle || 'Project Name'}
           </Text>
           <Text style={styles.auditTitle}>Exist Sign Audit</Text>
           <Text style={styles.projectName}>

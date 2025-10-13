@@ -22,6 +22,8 @@ import {updatePermittingAssessment} from '../Db/LocalData';
 import {useNetworkStatus} from '../Functions/functions';
 
 const PermittingAssenment = ({handleFetchData}) => {
+  const projectTitle = useSelector(state => state.projecttitle.value);
+
   const status = useNetworkStatus();
   const baseUrl = useSelector(state => state.baseUrl.value);
   const [active, setActive] = useState('');
@@ -228,8 +230,7 @@ const PermittingAssenment = ({handleFetchData}) => {
         </View>
         <View style={styles.textContent}>
           <Text style={styles.projectName}>
-            {signProjectData?.permitting_assessment?.projectTitle ||
-              'Project Name'}
+            {projectTitle || 'Project Name'}
           </Text>
           <Text style={styles.auditTitle}>Permitting Assessment</Text>
           <Text style={styles.projectName}>

@@ -22,6 +22,8 @@ import Toast from 'react-native-toast-message';
 import {handleAddPhoto} from '../Functions/functions';
 import RadioButton from './RadioButton';
 const Photos = ({handleFetchData}) => {
+  const projectTitle = useSelector(state => state.projecttitle.value);
+
   const [active, setActive] = useState('');
   const baseUrl = useSelector(state => state.baseUrl.value);
   const loginData = useSelector(state => state.login.value);
@@ -658,8 +660,7 @@ const Photos = ({handleFetchData}) => {
         </View>
         <View style={styles.textContent}>
           <Text style={styles.projectName}>
-            {signProjectData?.outdoor_photos_and_measurements?.projectTitle ||
-              'Digital indoor free standing'}
+            {projectTitle || 'Project Name'}
           </Text>
           <Text style={styles.auditTitle}>Photos & Measurements</Text>
           <Text style={styles.projectName}>

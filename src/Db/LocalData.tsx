@@ -629,9 +629,17 @@ export const insertProjectsData = (projects: Project[]) => {
           project.latestSignUpdate,
           project.totalSigns,
         ],
-        () => console.log(`Project ${project.projectId} inserted`),
+        () =>
+          console.log(
+            `Project ${(project.projectId, project.projectTitle)} inserted`,
+          ),
         (_: any, error: any) =>
-          console.error(`Error inserting project ${project.projectId}:`, error),
+          console.error(
+            `Error inserting project ${
+              (project.projectId, project.projectTitle)
+            }:`,
+            error,
+          ),
       );
       project.signDataOptions?.forEach((option: any) => {
         tx.executeSql(
