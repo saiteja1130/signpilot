@@ -600,13 +600,14 @@ const AddProject = ({navigation}) => {
               {customerData?.company_name || 'No customer name'}
             </Text>
             <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Text style={styles.collapseIcon}>–</Text>
+              <Ionicons name="chevron-back" size={22} color="#333" />
             </TouchableOpacity>
           </View>
           <View style={styles.projectsContainer}>
             <View>
               <Text>Projects</Text>
             </View>
+
             {projects.length > 0 ? (
               projects.map((project, index) => (
                 <TouchableOpacity
@@ -644,7 +645,8 @@ const AddProject = ({navigation}) => {
                       });
                       setUpdateModalVisible(true);
                     }}>
-                    <Feather name="zap" size={20} color="#3B82F6" />
+                    <Feather name="edit" size={20} color="#3B82F6" />
+                    {/* changed icon */}
                   </TouchableOpacity>
                 </TouchableOpacity>
               ))
@@ -663,29 +665,27 @@ const AddProject = ({navigation}) => {
             {unassociatedSigns?.length > 0 ? (
               unassociatedSigns.map((data, index) => (
                 <View key={index} style={styles.signItem}>
-                  <Text>{data?.alias_name}</Text>
+                  <Text style={{fontSize: 15}}>{data?.alias_name}</Text>
                   <TouchableOpacity
                     onPress={() => {
-                      setEditSignForm(prev => {
-                        return {
-                          ...prev,
-                          alias_name: data?.alias_name,
-                          signType: data?.signType,
-                          signLocation: data?.signLocation,
-                          projectId: data?.projectId,
-                          signTableId: data?.signTableId,
-                        };
-                      });
+                      setEditSignForm(prev => ({
+                        ...prev,
+                        alias_name: data?.alias_name,
+                        signType: data?.signType,
+                        signLocation: data?.signLocation,
+                        projectId: data?.projectId,
+                        signTableId: data?.signTableId,
+                      }));
 
                       setIsEditSignModalVisible(true);
                     }}>
-                    <Feather name="zap" size={20} color="#3B82F6" />
+                    <Feather name="edit" size={20} color="#3B82F6" />
                   </TouchableOpacity>
                 </View>
               ))
             ) : (
               <View style={styles.noSignFound}>
-                <FontAwesome5 name="box-open" size={16} color="#3B82F6" />
+                <FontAwesome5 name="inbox" size={16} color="#3B82F6" />
                 <Text style={styles.noSignText}>No signs found</Text>
               </View>
             )}
@@ -900,8 +900,8 @@ const AddProject = ({navigation}) => {
               }}>
               <Text style={styles.label}>Indoor or Outdoor</Text>
               <View style={styles.pickerContainer}>
-                <Icon
-                  name="selection"
+                <Icon3
+                  name="place"
                   size={20}
                   color="#007AFF"
                   style={styles.leftIcon}
@@ -933,8 +933,8 @@ const AddProject = ({navigation}) => {
                     Sign Type
                   </Text>
                   <View style={styles.pickerContainer}>
-                    <Icon
-                      name="selection"
+                    <Icon3
+                      name="list"
                       size={20}
                       color="#007AFF"
                       style={styles.leftIcon}
@@ -984,6 +984,9 @@ const AddProject = ({navigation}) => {
                       marginVertical: 5,
                       borderRadius: 8,
                       borderColor: '#007AFF',
+                      fontSize: 15,
+                      padding: 10,
+                      paddingVertical: 13,
                     }}
                     placeholder="Sign name"
                     value={addSignForm?.alias_name}
@@ -1155,7 +1158,6 @@ const AddProject = ({navigation}) => {
                 <Menu width={24} height={24} />
               </TouchableOpacity>
             </View>
-            {/* Action Grid */}
             {selectedSignToEdit === null && (
               <FlatList
                 data={actions}
@@ -1175,14 +1177,13 @@ const AddProject = ({navigation}) => {
             {selectedSignToEdit !== null && (
               <View style={[styles.subHeader, {padding: 15}]}>
                 <View style={styles.subHeaderLeft}>
-                  <Icon3
-                    name="drive-file-rename-outline"
-                    size={22}
-                    color="#007AFF"
-                  />
+                  <Icon3 name="label-outline" size={22} color="#007AFF" />
                   <Text style={styles.subHeaderText}>{selectedSignToEdit}</Text>
                 </View>
-                <Ionicons name="return-up-back" size={20} color="#999" />
+
+                <TouchableOpacity onPress={() => setSelectedSignToEdit(null)}>
+                  <Ionicons name="chevron-back" size={22} color="#999" />
+                </TouchableOpacity>
               </View>
             )}
             {selectedSignToEdit === 'change sign name' && (
@@ -1194,6 +1195,9 @@ const AddProject = ({navigation}) => {
                     marginVertical: 5,
                     borderRadius: 8,
                     borderColor: '#666',
+                    padding: 10,
+                    paddingVertical: 13,
+                    fontSize: 15,
                   }}
                   placeholder="Sign name"
                   value={EditSignForm.alias_name}
@@ -1233,12 +1237,13 @@ const AddProject = ({navigation}) => {
                       Indoor or Outdoor
                     </Text>
                     <View style={styles.pickerContainer}>
-                      <Icon
-                        name="selection"
+                      <Icon3
+                        name="place"
                         size={20}
                         color="#007AFF"
                         style={styles.leftIcon}
                       />
+
                       <Picker
                         selectedValue={EditSignForm?.signLocation}
                         onValueChange={value => {
@@ -1262,13 +1267,14 @@ const AddProject = ({navigation}) => {
                         <AntDesign name="down" size={16} color="#fff" />
                       </View>
                     </View>
+
                     <View>
                       <Text style={[styles.label, {marginBottom: 0}]}>
                         Sign Type
                       </Text>
                       <View style={styles.pickerContainer}>
-                        <Icon
-                          name="selection"
+                        <Icon3
+                          name="list"
                           size={20}
                           color="#007AFF"
                           style={styles.leftIcon}
@@ -1315,6 +1321,9 @@ const AddProject = ({navigation}) => {
                           marginVertical: 5,
                           borderRadius: 8,
                           borderColor: '#007AFF',
+                          fontSize: 15,
+                          padding: 10,
+                          paddingVertical: 13,
                         }}
                         placeholder="Sign name"
                         value={EditSignForm.alias_name}
@@ -1332,6 +1341,9 @@ const AddProject = ({navigation}) => {
                           (EditSignForm?.alias_name?.trim() === '' ||
                             !isSignIdChanged) &&
                             styles.disabledButton,
+                          {
+                            marginTop: 10,
+                          },
                         ]}
                         disabled={
                           EditSignForm?.alias_name?.trim() === '' ||
@@ -1353,8 +1365,8 @@ const AddProject = ({navigation}) => {
                 style={{backgroundColor: '#fff', borderRadius: 8, padding: 10}}>
                 <Text style={styles.label}>Select Customer</Text>
                 <View style={styles.pickerContainer}>
-                  <Icon
-                    name="selection"
+                  <Icon3
+                    name="person"
                     size={20}
                     color="#007AFF"
                     style={styles.leftIcon}
@@ -1409,8 +1421,8 @@ const AddProject = ({navigation}) => {
                 <Text style={styles.label}>Assign</Text>
 
                 <View style={styles.pickerContainer}>
-                  <Icon
-                    name="selection"
+                  <Icon3
+                    name="assignment"
                     size={20}
                     color="#007AFF"
                     style={styles.leftIcon}
@@ -1492,8 +1504,8 @@ const AddProject = ({navigation}) => {
                 style={{backgroundColor: '#fff', borderRadius: 8, padding: 10}}>
                 <Text style={styles.label}>Assign</Text>
                 <View style={styles.pickerContainer}>
-                  <Icon
-                    name="selection"
+                  <Icon3
+                    name="person"
                     size={20}
                     color="#007AFF"
                     style={styles.leftIcon}
@@ -1618,7 +1630,7 @@ const styles = StyleSheet.create({
   },
   customerName: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '500',
     color: '#1E293B',
   },
@@ -1650,7 +1662,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
     color: '#1E293B',
-    marginBottom: 4,
+    // marginBottom: 4,
   },
   projectDetail: {
     fontSize: 13,
@@ -1660,7 +1672,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#E2E8F0',
     padding: 12,
     borderRadius: 8,
-    marginBottom: 16,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    // marginBottom: 16,
   },
   sectionHeaderText: {
     fontSize: 14,
@@ -1672,6 +1686,8 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 8,
     minHeight: 100,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
   },
   emptyText: {
     color: '#64748B',
@@ -1772,7 +1788,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    flex: 1,
+    // flex: 1,
   },
   saveText: {
     color: '#FFFFFF',
@@ -1902,9 +1918,9 @@ const styles = StyleSheet.create({
   },
 
   radioCircle: {
-    height: 24,
-    width: 24,
-    borderRadius: 12,
+    height: 20,
+    width: 20,
+    borderRadius: 10,
     borderWidth: 2,
     borderColor: '#007AFF',
     alignItems: 'center',
@@ -1913,9 +1929,9 @@ const styles = StyleSheet.create({
   },
 
   radioInner: {
-    height: 12,
-    width: 12,
-    borderRadius: 6,
+    height: 10,
+    width: 10,
+    borderRadius: 5,
     backgroundColor: '#007AFF',
   },
 

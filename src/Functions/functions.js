@@ -324,19 +324,16 @@ export const getUnsignedSigns = async (
 };
 
 export const sendUpdateNameMail = async data => {
-  const {token, ...rest} = data;
+  const {token, baseUrl, ...rest} = data;
   try {
-    const response = await axios.post(
-      `https://www.beeberg.com/api/updateNameMail`,
-      rest,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+    const response = await axios.post(`${baseUrl}/updateNameMail`, rest, {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-    );
+    });
   } catch (error) {
     console.error('Error creating project:', error.response?.data);
+    console.error('Error creating project:', error);
   }
 };
 

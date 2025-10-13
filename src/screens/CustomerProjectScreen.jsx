@@ -78,6 +78,10 @@ const CustomerProjectScreen = () => {
   const projects = route.params?.projects;
   const customers = route.params?.customers;
   const teams = route.params?.teams;
+  // console.log(
+  //   'teams',
+  //   teams.filter(team => team.id !== loginData?.userId),
+  // );
 
   const actions = [
     'change sign name',
@@ -247,7 +251,15 @@ const CustomerProjectScreen = () => {
           <Logo width={150} height={36} />
         </View>
         <View style={styles.iconContainer}>
-          <TouchableOpacity onPress={() => getCustomersProject()}>
+          <TouchableOpacity
+            onPress={() => {
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 0,
+                  routes: [{name: 'Home'}],
+                }),
+              );
+            }}>
             <Refresh width={36} height={36} />
           </TouchableOpacity>
           <TouchableOpacity
@@ -287,27 +299,35 @@ const CustomerProjectScreen = () => {
           <Text style={styles.userName}>
             {customerData?.company_name || 'Company Name'}
           </Text>
-          <TouchableOpacity onPress={() => navigation.replace('Manage')}>
-            <FontAwesome5
-              name="minus-circle"
-              size={16}
-              color="green"
-              style={{marginHorizontal: 10}}
-            />
+
+          <TouchableOpacity
+            onPress={() => navigation.replace('Manage')}
+            style={{
+              backgroundColor: '#E6F4EA',
+              borderRadius: 12,
+              padding: 4,
+              marginHorizontal: 10,
+            }}>
+            <FontAwesome5 name="minus-circle" size={16} color="green" />
           </TouchableOpacity>
+
           <View style={{marginRight: 8}}>
             <Feather name="arrow-right" size={16} color="#555" />
           </View>
+
           <Text style={styles.userName}>
             {project?.project_name || 'Project Name'}
           </Text>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <FontAwesome5
-              name="minus-circle"
-              size={16}
-              color="orange"
-              style={{marginLeft: 10}}
-            />
+
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={{
+              backgroundColor: '#FFF4E6',
+              borderRadius: 12,
+              padding: 4,
+              marginLeft: 10,
+            }}>
+            <FontAwesome5 name="minus-circle" size={16} color="orange" />
           </TouchableOpacity>
         </View>
 
@@ -337,7 +357,7 @@ const CustomerProjectScreen = () => {
 
                       setIsEditSignModalVisible(true);
                     }}>
-                    <Feather name="zap" size={20} color="#3B82F6" />
+                    <Feather name="edit" size={20} color="#3B82F6" />
                   </TouchableOpacity>
                 </View>
               ))
@@ -395,18 +415,21 @@ const CustomerProjectScreen = () => {
                 />
               )}
               {selectedSignToEdit !== null && (
-                <View style={[styles.subHeader, {padding: 15}]}>
-                  <View style={styles.subHeaderLeft}>
-                    <Icon3
-                      name="drive-file-rename-outline"
-                      size={22}
-                      color="#007AFF"
-                    />
-                    <Text style={styles.subHeaderText}>
-                      {selectedSignToEdit}
-                    </Text>
+                <View style={styles.modalBody}>
+                  <View style={styles.subHeader}>
+                    <View style={styles.subHeaderLeft}>
+                      <Icon3 name="edit" size={22} color="#007AFF" />
+                      <Text style={styles.subHeaderText}>
+                        {selectedSignToEdit}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setSelectedSignToEdit(null);
+                      }}>
+                      <Ionicons name="chevron-back" size={20} color="#999" />
+                    </TouchableOpacity>
                   </View>
-                  <Ionicons name="return-up-back" size={20} color="#999" />
                 </View>
               )}
               {selectedSignToEdit === 'change sign name' && (
@@ -418,6 +441,9 @@ const CustomerProjectScreen = () => {
                       marginVertical: 5,
                       borderRadius: 8,
                       borderColor: '#666',
+                      padding: 10,
+                      fontSize: 16,
+                      paddingVertical: 13,
                     }}
                     placeholder="Sign name"
                     value={EditSignForm.alias_name} // controlled input
@@ -458,8 +484,8 @@ const CustomerProjectScreen = () => {
                         Indoor or Outdoor
                       </Text>
                       <View style={styles.pickerContainer}>
-                        <Icon
-                          name="selection"
+                        <Icon3
+                          name="place"
                           size={20}
                           color="#007AFF"
                           style={styles.leftIcon}
@@ -493,8 +519,8 @@ const CustomerProjectScreen = () => {
                           Sign Type
                         </Text>
                         <View style={styles.pickerContainer}>
-                          <Icon
-                            name="selection"
+                          <Icon2
+                            name="format-list-bulleted"
                             size={20}
                             color="#007AFF"
                             style={styles.leftIcon}
@@ -541,6 +567,9 @@ const CustomerProjectScreen = () => {
                             marginVertical: 5,
                             borderRadius: 8,
                             borderColor: '#007AFF',
+                            padding: 10,
+                            paddingVertical: 13,
+                            fontSize: 16,
                           }}
                           placeholder="Sign name"
                           value={EditSignForm.alias_name}
@@ -585,7 +614,7 @@ const CustomerProjectScreen = () => {
                   <Text style={styles.label}>Select Customer</Text>
                   <View style={styles.pickerContainer}>
                     <Icon
-                      name="selection"
+                      name="business"
                       size={20}
                       color="#007AFF"
                       style={styles.leftIcon}
@@ -647,7 +676,7 @@ const CustomerProjectScreen = () => {
 
                   <View style={styles.pickerContainer}>
                     <Icon
-                      name="selection"
+                      name="assignment"
                       size={20}
                       color="#007AFF"
                       style={styles.leftIcon}
@@ -730,7 +759,7 @@ const CustomerProjectScreen = () => {
                   <Text style={styles.label}>Assign</Text>
                   <View style={styles.pickerContainer}>
                     <Icon
-                      name="selection"
+                      name="person"
                       size={20}
                       color="#007AFF"
                       style={styles.leftIcon}
@@ -745,13 +774,15 @@ const CustomerProjectScreen = () => {
                       dropdownIconColor="#fff">
                       <Picker.Item label="assign to surveyor" value={null} />
                       {teams?.length > 0 &&
-                        teams?.map(data => (
-                          <Picker.Item
-                            key={data?.id}
-                            label={data?.email || data?.name}
-                            value={data?.id}
-                          />
-                        ))}
+                        teams
+                          .filter(team => team.id !== loginData?.userId)
+                          .map(data => (
+                            <Picker.Item
+                              key={data?.id}
+                              label={data?.email || data?.name}
+                              value={data?.id}
+                            />
+                          ))}
                     </Picker>
 
                     <View style={styles.arrowContainer}>
@@ -759,9 +790,13 @@ const CustomerProjectScreen = () => {
                     </View>
                   </View>
                   <TouchableOpacity
-                    style={styles.button}
+                    style={[
+                      styles.button,
+                      EditSignForm?.teamId === '' && styles.disabledButton,
+                    ]}
+                    disabled={EditSignForm?.teamId === ''}
                     onPress={() => updateSignStats()}>
-                    <Text style={styles.buttonText}>Add sign to customer</Text>
+                    <Text style={styles.buttonText}>Add sign to surveyor</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -790,8 +825,8 @@ const CustomerProjectScreen = () => {
                 }}>
                 <Text style={styles.label}>Indoor or Outdoor</Text>
                 <View style={styles.pickerContainer}>
-                  <Icon
-                    name="selection"
+                  <Icon3
+                    name="place"
                     size={20}
                     color="#007AFF"
                     style={styles.leftIcon}
@@ -823,8 +858,8 @@ const CustomerProjectScreen = () => {
                       Sign Type
                     </Text>
                     <View style={styles.pickerContainer}>
-                      <Icon
-                        name="selection"
+                      <Icon3
+                        name="list"
                         size={20}
                         color="#007AFF"
                         style={styles.leftIcon}
@@ -874,6 +909,9 @@ const CustomerProjectScreen = () => {
                         marginVertical: 5,
                         borderRadius: 8,
                         borderColor: '#007AFF',
+                        padding: 10,
+                        paddingVertical: 13,
+                        fontSixe: 15,
                       }}
                       placeholder="Sign name"
                       value={addSignForm?.alias_name}
@@ -887,8 +925,19 @@ const CustomerProjectScreen = () => {
                   </View>
                 )}
                 <TouchableOpacity
-                  style={styles.saveBtn}
-                  onPress={handleSaveSign}>
+                  style={[
+                    styles.saveBtn,
+                    (addSignForm?.alias_name?.trim() === '' ||
+                      addSignForm?.signType === '' ||
+                      addSignForm?.signLocation === '') &&
+                      styles.disabledButton,
+                  ]}
+                  onPress={handleSaveSign}
+                  disabled={
+                    addSignForm?.alias_name?.trim() === '' ||
+                    addSignForm?.signType === '' ||
+                    addSignForm?.signLocation === ''
+                  }>
                   <Text style={styles.btnText}>Save Sign</Text>
                 </TouchableOpacity>
               </ScrollView>
@@ -1099,15 +1148,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 14,
   },
-  signItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 10,
-    borderColor: '#CBD5E1',
-    borderRadius: 6,
-    marginVertical: 8,
-  },
   noSignFound: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1222,9 +1262,9 @@ const styles = StyleSheet.create({
   },
 
   radioCircle: {
-    height: 24,
-    width: 24,
-    borderRadius: 12,
+    height: 20,
+    width: 20,
+    borderRadius: 10,
     borderWidth: 2,
     borderColor: '#007AFF',
     alignItems: 'center',
@@ -1233,9 +1273,9 @@ const styles = StyleSheet.create({
   },
 
   radioInner: {
-    height: 12,
-    width: 12,
-    borderRadius: 6,
+    height: 10,
+    width: 10,
+    borderRadius: 5,
     backgroundColor: '#007AFF',
   },
 

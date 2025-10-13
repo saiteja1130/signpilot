@@ -25,6 +25,8 @@ import Icon3 from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+
 import {
   fetchCustomers,
   fetchSigns,
@@ -271,6 +273,7 @@ const Manage = () => {
             signTableId: EditSignForm?.signTableId,
             name: EditSignForm?.alias_name,
             alias_name: response.data?.alias_name,
+            baseUrl,
           });
         }
         if (apiEndpointsToSetSigns === 'changeSignType') {
@@ -280,6 +283,7 @@ const Manage = () => {
             alias_name: EditSignForm?.alias_name,
             signId: EditSignForm?.signId,
             optionId: EditSignForm?.optionId,
+            baseUrl,
           });
         }
         // if (apiEndpointsToSetSigns === 'changeCustomer') {
@@ -482,7 +486,7 @@ const Manage = () => {
                     }>
                     <View style={styles.customerLeft}>
                       <FontAwesome5
-                        name="arrow-circle-right"
+                        name="chevron-right"
                         size={20}
                         color="#0891B2"
                         style={{marginRight: 12}}
@@ -494,16 +498,16 @@ const Manage = () => {
 
                     <TouchableOpacity
                       style={{
-                        borderRadius: '50%',
+                        borderRadius: 20,
                         borderWidth: 1,
                         borderColor: '#22C55E',
-                        padding: 2,
+                        padding: 4,
                       }}
                       onPress={() => {
                         setSelectedCustomer(item);
                         setEditCustomerModalVisible(true);
                       }}>
-                      <Feather name="zap" size={16} color="#22C55E" />
+                      <Feather name="edit" size={16} color="#22C55E" />
                     </TouchableOpacity>
                   </TouchableOpacity>
                 )}
@@ -520,7 +524,12 @@ const Manage = () => {
                   {unassociatedSigns?.length > 0 ? (
                     unassociatedSigns.map((data, index) => (
                       <View key={index} style={styles.signItem}>
-                        <Text>{data?.alias_name}</Text>
+                        <Text
+                          style={{
+                            fontSize: 16,
+                          }}>
+                          {data?.alias_name}
+                        </Text>
                         <TouchableOpacity
                           onPress={() => {
                             setEditSignForm(prev => {
@@ -536,13 +545,13 @@ const Manage = () => {
 
                             setIsEditSignModalVisible(true);
                           }}>
-                          <Feather name="zap" size={20} color="#3B82F6" />
+                          <Feather name="edit" size={20} color="#3B82F6" />
                         </TouchableOpacity>
                       </View>
                     ))
                   ) : (
                     <View style={styles.noSignFound}>
-                      <FontAwesome5 name="box-open" size={16} color="#3B82F6" />
+                      <FontAwesome5 name="inbox" size={16} color="#3B82F6" />
                       <Text style={styles.noSignText}>No signs found</Text>
                     </View>
                   )}
@@ -553,7 +562,6 @@ const Manage = () => {
         />
       </View>
 
-      {/* Add Customer Modal */}
       <Modal
         visible={addCustomerModalVisible}
         animationType="slide"
@@ -681,7 +689,6 @@ const Manage = () => {
         </View>
       </Modal>
 
-      {/* Add Sign Modal */}
       <Modal
         visible={addSignModalVisible}
         animationType="slide"
@@ -700,8 +707,8 @@ const Manage = () => {
               <ScrollView contentContainerStyle={styles.modalBody}>
                 <Text style={styles.label}>Indoor or Outdoor</Text>
                 <View style={styles.pickerContainer}>
-                  <Icon
-                    name="selection"
+                  <MaterialCommunityIcons
+                    name="map-marker"
                     size={20}
                     color="#007AFF"
                     style={styles.leftIcon}
@@ -733,8 +740,8 @@ const Manage = () => {
                       Sign Type
                     </Text>
                     <View style={styles.pickerContainer}>
-                      <Icon
-                        name="selection"
+                      <MaterialCommunityIcons
+                        name="format-list-bulleted"
                         size={20}
                         color="#007AFF"
                         style={styles.leftIcon}
@@ -786,7 +793,7 @@ const Manage = () => {
                           alias_name: text,
                         }));
                       }}
-                      style={styles.input}
+                      style={[styles.input, {paddingVertical: 16}]}
                       placeholder="Enter sign name"
                     />
                   </View>
@@ -806,16 +813,16 @@ const Manage = () => {
               <View
                 style={{padding: 10, backgroundColor: '#fff', borderRadius: 8}}>
                 <View style={styles.section}>
-                  <View style={styles.sectionHeader}>
+                  <View style={[styles.sectionHeader, {marginBottom: 6}]}>
                     <Text style={[styles.sectionTitle, {color: '#80BFFF'}]}>
                       New sign added!
                     </Text>
                   </View>
                   <TouchableOpacity style={styles.item}>
                     <Icon3
-                      name="assignment"
-                      size={20}
-                      color="#e67e22"
+                      name="label"
+                      size={22}
+                      color="#80BFFF"
                       style={styles.itemIcon}
                     />
                     <Text style={styles.itemText}>
@@ -829,13 +836,15 @@ const Manage = () => {
                     <View
                       style={{
                         flexDirection: 'row',
+                        alignItems: 'center',
                       }}>
                       <FontAwesome5
-                        name="arrow-circle-right"
+                        name="tasks"
                         size={20}
                         color="#22C55E"
                         style={{marginRight: 8}}
                       />
+
                       <Text style={styles.sectionTitle}>Sign actions</Text>
                     </View>
                     <TouchableOpacity
@@ -860,8 +869,8 @@ const Manage = () => {
                 <View style={[styles.section, {borderWidth: 0}]}>
                   <Text style={styles.label}>Indoor or Outdoor</Text>
                   <View style={[styles.pickerContainer]}>
-                    <Icon
-                      name="selection"
+                    <MaterialCommunityIcons
+                      name="map-marker"
                       size={20}
                       color="#007AFF"
                       style={styles.leftIcon}
@@ -998,7 +1007,6 @@ const Manage = () => {
         animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContainer, {paddingBottom: 20}]}>
-            {/* Header */}
             <View
               style={[
                 styles.header,
@@ -1020,8 +1028,6 @@ const Manage = () => {
                 <Menu width={24} height={24} />
               </TouchableOpacity>
             </View>
-            {/* <Text>{EditSignForm?.alias_name}</Text> */}
-            {/* Action Grid */}
             {selectedSignToEdit === null && (
               <FlatList
                 data={actions}
@@ -1042,16 +1048,17 @@ const Manage = () => {
               <View style={styles.modalBody}>
                 <View style={styles.subHeader}>
                   <View style={styles.subHeaderLeft}>
-                    <Icon3
-                      name="drive-file-rename-outline"
-                      size={22}
-                      color="#007AFF"
-                    />
+                    <Icon3 name="edit" size={22} color="#007AFF" />
                     <Text style={styles.subHeaderText}>
                       {selectedSignToEdit}
                     </Text>
                   </View>
-                  <Ionicons name="return-up-back" size={20} color="#999" />
+                  <TouchableOpacity
+                    onPress={() => {
+                      setSelectedSignToEdit(null);
+                    }}>
+                    <Ionicons name="chevron-back" size={20} color="#999" />
+                  </TouchableOpacity>
                 </View>
               </View>
             )}
@@ -1064,11 +1071,14 @@ const Manage = () => {
                     marginVertical: 5,
                     borderRadius: 8,
                     borderColor: '#666',
+                    padding: 10,
+                    fontSize: 16,
+                    paddingVertical: 13,
                   }}
                   placeholder="Sign name"
-                  value={EditSignForm.alias_name} // controlled input
+                  value={EditSignForm.alias_name}
                   onChangeText={text => {
-                    setIsAliasChanged(true); // user changed it manually
+                    setIsAliasChanged(true);
                     setEditSignForm(prev => ({...prev, alias_name: text}));
                   }}
                 />
@@ -1104,9 +1114,9 @@ const Manage = () => {
                     </Text>
                     <View style={styles.pickerContainer}>
                       <Icon
-                        name="selection"
+                        name="map-pin"
                         size={20}
-                        color="#007AFF"
+                        color="#212121ff"
                         style={styles.leftIcon}
                       />
 
@@ -1138,8 +1148,8 @@ const Manage = () => {
                         Sign Type
                       </Text>
                       <View style={styles.pickerContainer}>
-                        <Icon
-                          name="selection"
+                        <MaterialCommunityIcons
+                          name="format-list-bulleted"
                           size={20}
                           color="#007AFF"
                           style={styles.leftIcon}
@@ -1186,6 +1196,9 @@ const Manage = () => {
                           marginVertical: 5,
                           borderRadius: 8,
                           borderColor: '#007AFF',
+                          padding: 10,
+                          paddingVertical: 13,
+                          fontSize: 16,
                         }}
                         placeholder="Sign name"
                         value={EditSignForm.alias_name}
@@ -1224,8 +1237,8 @@ const Manage = () => {
                 style={{backgroundColor: '#fff', borderRadius: 8, padding: 10}}>
                 <Text style={styles.label}>Select Customer</Text>
                 <View style={styles.pickerContainer}>
-                  <Icon
-                    name="selection"
+                  <Icon3
+                    name="business"
                     size={20}
                     color="#007AFF"
                     style={styles.leftIcon}
@@ -1420,7 +1433,7 @@ const styles = StyleSheet.create({
   },
   saveBtn: {
     backgroundColor: '#22C55E',
-    padding: 12,
+    padding: 14,
     borderRadius: 6,
     alignItems: 'center',
     marginTop: 10,
@@ -1442,6 +1455,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderColor: '#CBD5E1',
     borderRadius: 6,
+    paddingVertical: 13,
   },
   noSignFound: {
     flexDirection: 'row',
