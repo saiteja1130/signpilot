@@ -641,7 +641,7 @@ const Home = () => {
                   <PermittingAssenment handleFetchData={fetchData} />
                   <Outdoor handleFetchData={fetchData} />
                   {/* <Indoor handleFetchData={fetchData} /> */}
-                  {<Photos handleFetchData={fetchData} />}
+                  {/* {<Photos handleFetchData={fetchData} />} */}
 
                   <View>
                     <TouchableOpacity

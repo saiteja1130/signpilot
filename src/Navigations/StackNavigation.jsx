@@ -43,7 +43,7 @@ const StackNavigation = () => {
     };
 
     init();
-    deleteFolders();
+    // deleteFolders();
   }, []);
 
   useEffect(() => {
