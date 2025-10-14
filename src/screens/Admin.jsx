@@ -5,12 +5,13 @@ import Refresh from '../../assets/images/cloud.svg';
 import Menu from '../../assets/images/close.svg';
 import {CommonActions, useNavigation} from '@react-navigation/native';
 import {createUsersTable, dropUsersTable} from '../Db/db';
-import {useDispatch} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {addLoginData} from '../Redux/Slices/LoginData';
 import {dropAllTables} from '../Db/LocalData';
 
 const Admin = () => {
   const navigation = useNavigation();
+  const loginData = useSelector(state => state.login.value);
   const dispatch = useDispatch();
   const MenuItem = ({icon, label, screen}) => (
     <TouchableOpacity
@@ -41,6 +42,8 @@ const Admin = () => {
       <Text style={styles.label}>{label}</Text>
     </TouchableOpacity>
   );
+
+  console.log('loginData', loginData);
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -58,7 +61,9 @@ const Admin = () => {
       </View>
       <View style={styles.menuList}>
         <MenuItem label="Surveys" screen="Home" />
-        <MenuItem label="Manage" screen="Manage" />
+        {loginData.role !== 'Surveyor' && (
+          <MenuItem label="Manage" screen="Manage" />
+        )}
         <MenuItem label="Completed surveys" screen="Completedsurveys" />
         <MenuItem label="Sign out" screen="logout" />
       </View>

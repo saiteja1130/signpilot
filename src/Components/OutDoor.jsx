@@ -32,7 +32,10 @@ import {
   insertSignGeneralAuditImagesOnly,
   updateSignGeneralAudit,
 } from '../Db/LocalData';
-import {showPhotoOptions} from '../Functions/ImagePickFunctions';
+import {
+  openEditorforUpdate,
+  showPhotoOptions,
+} from '../Functions/ImagePickFunctions';
 import {deleteFolders, getBase64Array, getPath} from '../Functions/FSfunctions';
 const OutDoor = ({handleFetchData}) => {
   const projectTitle = useSelector(state => state.projecttitle.value);

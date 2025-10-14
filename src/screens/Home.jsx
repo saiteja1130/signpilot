@@ -643,21 +643,23 @@ const Home = () => {
                   {/* <Indoor handleFetchData={fetchData} /> */}
                   {/* {<Photos handleFetchData={fetchData} />} */}
 
-                  <View>
-                    <TouchableOpacity
-                      onPress={() => saveSection()}
-                      style={{
-                        marginVertical: 32,
-                        backgroundColor: '#FF9239',
-                        padding: 10,
-                        alignSelf: 'flex-end',
-                        borderRadius: 8,
-                      }}>
-                      <Text style={{color: '#fff', fontSize: 16}}>
-                        Save Report
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
+                  {isConnected && (
+                    <View>
+                      <TouchableOpacity
+                        onPress={() => saveSection()}
+                        style={{
+                          marginVertical: 32,
+                          backgroundColor: '#FF9239',
+                          padding: 10,
+                          alignSelf: 'flex-end',
+                          borderRadius: 8,
+                        }}>
+                        <Text style={{color: '#fff', fontSize: 16}}>
+                          Save Report
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
                 </>
               )}
             </View>
