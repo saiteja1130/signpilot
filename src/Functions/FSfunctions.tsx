@@ -80,6 +80,37 @@ export const getBase64Array = async (
   return base64Array;
 };
 
+export const getBase64Array2222 = async (
+  imageArray: {ImageId: number; path: string; fileName?: string}[],
+) => {
+  const base64Array: string[] = [];
+
+  for (const img of imageArray) {
+    try {
+      // 1️⃣ Normalize path (remove file://)
+      const tempPath = img.path.startsWith('file://')
+        ? img.path.replace('file://', '')
+        : img.path;
+
+      // 2️⃣ Copy to persistent folder (optional, avoids ENOENT)
+      const fileName = img.fileName || `${Date.now()}.jpg`;
+      const destPath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+      const fileExists = await RNFS.exists(destPath);
+      if (!fileExists) {
+        await RNFS.copyFile(tempPath, destPath);
+      }
+
+      // 3️⃣ Read as base64
+      const base64Data = await RNFS.readFile(destPath, 'base64');
+      base64Array.push(base64Data);
+    } catch (error) {
+      console.log('Error reading file as base64:', img.path, error);
+    }
+  }
+
+  return base64Array;
+};
+
 export const downloadImagesArray = async (
   images: {imageId: string; url: string}[],
   key: string,
@@ -126,7 +157,7 @@ export const downloadImagesArray = async (
 export const deleteFolders = async () => {
   try {
     const basePath = RNFS.DocumentDirectoryPath;
-    const items = await RNFS.readDir(basePath); 
+    const items = await RNFS.readDir(basePath);
 
     for (const item of items) {
       if (item.isDirectory()) {

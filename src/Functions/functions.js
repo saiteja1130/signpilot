@@ -20,7 +20,13 @@ import {
   updateSignGeneralAudit,
 } from '../Db/LocalData';
 import {compressImage} from './compressImage';
-import {downloadImagesArray, getBase64FromFile} from './FSfunctions';
+import {
+  clearCache,
+  downloadImagesArray,
+  getBase64Array,
+  getBase64Array2222,
+  getBase64FromFile,
+} from './FSfunctions';
 
 // import {PermissionsAndroid, Platform} from 'react-native';
 
@@ -427,7 +433,6 @@ export const updateFile = async data => {
     const netState = await NetInfo.fetch();
     const isConnected = netState.isConnected;
     const tempPath = await compressImage(resultPath, 'Final After Editing');
-    // console.log('Edited image temp path:', tempPath);
     let permanentPath = tempPath;
     if (tempPath && tempPath !== permanentPath) {
       const tempFileExists = await RNFS.exists(tempPath);
@@ -449,7 +454,7 @@ export const updateFile = async data => {
           Authorization: `Bearer ${tokenNumber}`,
         },
       });
-      // console.log('UPDATE FILE RESPONSE:::', response.data);
+      console.log('UPDATE FILE RESPONSE:::', response.data);
       if (response.data.status) {
         await RNFS.unlink(localleySavedpath);
         const arrayImages = await downloadImagesArray(
@@ -789,7 +794,17 @@ const syncExistingSignAudits = (loginData, baseUrl) => {
       if (audits.length > 0) {
         const token = loginData?.tokenNumber;
         for (const audit of audits) {
-          const data = {...audit, teamId: loginData?.userId, surveyModule: ''};
+          const base64Arrays = await getBase64Array2222(
+            audit?.existingSignAuditPhoto || [],
+          );
+          const data = {
+            ...audit,
+            existingSignAuditPhoto: base64Arrays,
+            teamId: loginData?.userId,
+            surveyModule: '',
+          };
+
+          console.log('PAYYLOADDD EXISTING SYNCCC', data);
           try {
             const response = await axios.post(
               `${baseUrl}/updateExistingSignAudit`,
@@ -982,5 +997,6 @@ export const syncToOnline = async (loginData, baseUrl) => {
   await syncElectrical(loginData, baseUrl);
   await syncOfflineImages(loginData, baseUrl);
   await syncRemovedImages(loginData, baseUrl);
+  await clearCache();
   console.log('ALL SYNCING DONE ✅');
 };

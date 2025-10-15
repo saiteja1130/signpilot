@@ -96,6 +96,8 @@ const Home = () => {
           },
         );
 
+        console.log(response.data);
+
         if (response.data.status) {
           setResponse(response.data.status);
           const data = response.data.projectData;
@@ -263,7 +265,6 @@ const Home = () => {
     useCallback(() => {
       const runSyncAndFetch = async () => {
         try {
-          clearCache();
           setLoading(true);
           const netState = await NetInfo.fetch();
           if (netState.isConnected) {
@@ -300,8 +301,8 @@ const Home = () => {
     setLoading(true);
     if (isConnected) {
       await deleteFolders();
+      await clearCache();
     }
-    await clearCache();
     await new Promise(resolve => {
       fetchData(null, signProjectData);
       setTimeout(resolve, 1000);

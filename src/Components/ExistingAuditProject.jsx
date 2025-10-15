@@ -129,10 +129,48 @@ const ExistingAuditProject = ({handleFetchData}) => {
     },
   ];
 
-  const handleRemoveImage = async (imageId1, fieldName1, actualKey, path) => {
+  const handleRemoveImage = async (
+    imageId1,
+    fieldName1,
+    actualKey,
+    path,
+    isLocalImageRemove,
+  ) => {
     // console.log('REMOVINGGGGGGGG');
     try {
       setLoadingImage(true);
+
+      if (isLocalImageRemove) {
+        const updatedArray = selectedOptions?.[fieldName1]?.filter(
+          item => item.ImageId !== imageId1,
+        );
+
+        // console.log('IMAGESSSARRAYY', imagesArray);
+        await insertExistingSignAuditImagesOnly(
+          signProjectData?.signTableId,
+          fieldName1,
+          updatedArray,
+          0,
+        );
+
+        const imagesaRRAY = await getExistingSignAuditImagesByKey(
+          signProjectData?.signTableId,
+          fieldName1,
+        );
+
+        setSelectedOptions(prev => ({
+          ...prev,
+          [fieldName1]: imagesaRRAY || [],
+        }));
+        const fullPath = await getPath(path);
+        await RNFS.unlink(
+          fullPath.startsWith('file://')
+            ? fullPath.replace('file://', '')
+            : fullPath,
+        );
+        return;
+      }
+
       const data = {
         imageId: imageId1,
         Id:
@@ -217,9 +255,15 @@ const ExistingAuditProject = ({handleFetchData}) => {
     // console.log('savinggg....');
     setLoadingImage(true);
 
-    const base64s = await getBase64Array(
-      selectedOptions.existingSignAuditPhoto,
-    );
+    let base64s = [];
+
+    if (status) {
+      base64s = await getBase64Array(
+        selectedOptions?.existingSignAuditPhoto || [],
+      );
+    } else {
+      base64s = selectedOptions?.existingSignAuditPhoto || [];
+    }
 
     const bodyData = {
       ...selectedOptions,
@@ -372,7 +416,6 @@ const ExistingAuditProject = ({handleFetchData}) => {
                         const current =
                           prev?.[data[0].value]?.toLowerCase?.() || '';
                         const incoming = value1.toLowerCase();
-
                         return {
                           ...prev,
                           [data[0].value]: current === incoming ? '' : value1,
@@ -471,58 +514,100 @@ const ExistingAuditProject = ({handleFetchData}) => {
                             {loadingImage ? (
                               <ActivityIndicator size="small" color="#FF9239" />
                             ) : (
-                              selectedOptions?.existingSignAuditPhotos?.length >
-                                0 &&
-                              selectedOptions?.existingSignAuditPhotos?.map(
-                                (item, index) => {
-                                  return (
-                                    <TouchableOpacity
-                                      key={index}
-                                      onPress={() => {
+                              (() => {
+                                const mergedImages = [
+                                  ...(selectedOptions?.existingSignAuditPhoto?.map(
+                                    item => ({...item, isLocal: true}),
+                                  ) || []),
+                                  ...(selectedOptions?.existingSignAuditPhotos?.map(
+                                    item => ({...item, isLocal: false}),
+                                  ) || []),
+                                ];
+
+                                console.log('MERGED ARRAYS', mergedImages);
+
+                                if (mergedImages.length === 0) return null;
+
+                                return mergedImages.map((item, index) => (
+                                  <TouchableOpacity
+                                    key={index}
+                                    onPress={() => {
+                                      if (item.isLocal) {
                                         openEditorforUpdate(
                                           item.path,
                                           setSelectedOptions,
-                                          'existingSignAuditPhotos',
+                                          'existingSignAuditPhoto',
+                                          'ExistingAudit',
+                                          true,
+                                          item.ImageId,
+                                          baseUrl,
+                                          loginData?.tokenNumber,
+                                          true,
+                                          signProjectData?.existing_sign_audit
+                                            ?.id ||
+                                            signProjectData?.existing_sign_audit
+                                              ?.Id,
+                                          'existing_sign_audit',
+                                          true,
+                                        );
+                                      } else {
+                                        openEditorforUpdate(
+                                          item.path,
+                                          setSelectedOptions,
+                                          'existingSignAuditPhoto',
                                           'ExistingAudit',
                                           true,
                                           item.imageId,
                                           baseUrl,
                                           loginData?.tokenNumber,
                                           true,
-                                          selectedOptions?.signId,
+                                          signProjectData?.existing_sign_audit
+                                            ?.id ||
+                                            signProjectData?.existing_sign_audit
+                                              ?.Id,
                                           'existing_sign_audit',
+                                          false,
                                         );
-                                      }}>
-                                      <View
-                                        key={index}
-                                        style={styles.imageContainer}>
-                                        <Image
-                                          source={{
-                                            uri: item.path.startsWith('file://')
-                                              ? item.path
-                                              : `file://${item.path}`,
-                                          }}
-                                          style={styles.image}
-                                        />
-                                        <TouchableOpacity
-                                          onPress={() =>
+                                      }
+                                    }}>
+                                    <View style={styles.imageContainer}>
+                                      <Image
+                                        source={{
+                                          uri: item.path.startsWith('file://')
+                                            ? item.path
+                                            : `file://${item.path}`,
+                                        }}
+                                        style={styles.image}
+                                      />
+                                      <TouchableOpacity
+                                        onPress={() => {
+                                          if (!item.isLocal) {
                                             handleRemoveImage(
                                               item.imageId,
                                               'existingSignAuditPhoto',
                                               'existingSignAuditPhotos',
                                               item.path,
-                                            )
+                                              false,
+                                            );
+                                          } else {
+                                            handleRemoveImage(
+                                              item.ImageId,
+                                              'existingSignAuditPhoto',
+                                              'existingSignAuditPhotos',
+                                              item.path,
+                                              true,
+                                            );
                                           }
-                                          style={styles.removeButton}>
-                                          <Text style={styles.removeButtonText}>
-                                            ×
-                                          </Text>
-                                        </TouchableOpacity>
-                                      </View>
-                                    </TouchableOpacity>
-                                  );
-                                },
-                              )
+                                        }}
+                                        style={styles.removeButton}>
+                                        <Text style={styles.removeButtonText}>
+                                          ×
+                                        </Text>
+                                      </TouchableOpacity>
+                                    </View>
+                                  </TouchableOpacity>
+                                ));
+                              })()
                             )}
                           </View>
                         </View>

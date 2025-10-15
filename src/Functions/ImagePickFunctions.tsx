@@ -89,6 +89,7 @@ export const openEditorforUpdate = async (
   saveTo: boolean,
   moduleId: number | string,
   module: string,
+  localFileUpdate: boolean,
 ) => {
   console.log('openEditorforUpdate called with:', {
     uri,
@@ -99,6 +100,7 @@ export const openEditorforUpdate = async (
     saveTo,
     moduleId,
     module,
+    localFileUpdate,
   });
 
   try {
@@ -109,17 +111,47 @@ export const openEditorforUpdate = async (
       stickers: [],
     });
 
+    if (localFileUpdate) {
+      console.log('Local file update, skipping upload.');
+      if (result && result !== path) {
+        const fileExists = await RNFS.exists(path);
+        if (fileExists) {
+          await RNFS.unlink(path);
+        }
+      }
+      setter((prev: any) => {
+        const existingArray = prev[key] || [];
+
+        if (status) {
+          const indexToReplace = existingArray.findIndex(
+            (item: any) => item.ImageId === imageId,
+          );
+          if (indexToReplace !== -1) {
+            const updatedArray = [...existingArray];
+            updatedArray[indexToReplace] = {ImageId: imageId, path: result};
+            return {...prev, [key]: updatedArray};
+          }
+        }
+
+        return {
+          ...prev,
+          [key]: [...existingArray, {ImageId: imageId, path: result}],
+        };
+      });
+    } else {
+      await updateFile({
+        baseUrl,
+        tokenNumber,
+        imageId: imageId,
+        module: module,
+        field: key,
+        moduleId: moduleId,
+        resultPath: result,
+        localleySavedpath: path,
+      });
+    }
+
     // console.log('ImageId', imageId);
-    await updateFile({
-      baseUrl,
-      tokenNumber,
-      imageId: imageId,
-      module: module,
-      field: key,
-      moduleId: moduleId,
-      resultPath: result,
-      localleySavedpath: path,
-    });
   } catch (e: any) {
     console.log('PhotoEditor error:', e.message);
   }
