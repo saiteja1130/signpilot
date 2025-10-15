@@ -8,7 +8,7 @@ import {
 } from './functions';
 import {functionToSaveImages, getBase64FromFile, getPath} from './FSfunctions';
 import PhotoEditor from '@baronha/react-native-photo-editor';
-import RNFS from 'react-native-fs';
+import RNFS, { stat } from 'react-native-fs';
 
 export const openEditor = async (
   uri: string,
@@ -148,6 +148,8 @@ export const openEditorforUpdate = async (
         moduleId: moduleId,
         resultPath: result,
         localleySavedpath: path,
+        setter: setter,
+        status: status,
       });
     }
 

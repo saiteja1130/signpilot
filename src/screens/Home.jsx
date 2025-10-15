@@ -642,9 +642,9 @@ const Home = () => {
               {signConfirmed && (
                 <>
                   <ExistingAuditProject handleFetchData={fetchData} />
-                  <ElectricalAssessment handleFetchData={fetchData} />
+                  {/* <ElectricalAssessment handleFetchData={fetchData} />
                   <PermittingAssenment handleFetchData={fetchData} />
-                  <Outdoor handleFetchData={fetchData} />
+                  <Outdoor handleFetchData={fetchData} /> */}
                   {/* <Indoor handleFetchData={fetchData} /> */}
                   {/* {<Photos handleFetchData={fetchData} />} */}
 

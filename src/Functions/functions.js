@@ -428,7 +428,15 @@ export const useNetworkStatus = () => {
 
 export const updateFile = async data => {
   try {
-    const {tokenNumber, baseUrl, resultPath, localleySavedpath, ...rest} = data;
+    const {
+      tokenNumber,
+      setter,
+      baseUrl,
+      resultPath,
+      localleySavedpath,
+      status,
+      ...rest
+    } = data;
 
     const netState = await NetInfo.fetch();
     const isConnected = netState.isConnected;
@@ -456,89 +464,64 @@ export const updateFile = async data => {
       });
       console.log('UPDATE FILE RESPONSE:::', response.data);
       if (response.data.status) {
+        const key = rest.field + 's';
+        console.log('rest.field', rest.field);
+        console.log('key', key);
+        console.log('response.data.data[rest.field]', response.data.data);
         await RNFS.unlink(localleySavedpath);
         const arrayImages = await downloadImagesArray(
-          response.data.data[rest.field],
+          response.data.data[key],
           rest.field,
         );
-        console.log('Downloaded images array:', arrayImages);
+        console.log('Downloaded images array:', arrayImages[0]);
         console.log('ONLINE — image uploaded successfully');
-        // setter((prev: any) => {
-        //   const existingArray = prev[key] || [];
+        setter(prev => {
+          const existingArray = prev[key] || [];
 
-        //   if (status) {
-        //     const indexToReplace = existingArray.findIndex(
-        //       (item: any) => item.imageId === imageId,
-        //     );
-        //     if (indexToReplace !== -1) {
-        //       const updatedArray = [...existingArray];
-        //       updatedArray[indexToReplace] = {imageId, path: permanentPath};
-        //       return {...prev, [key]: updatedArray};
-        //     }
-        //   }
+          if (status) {
+            const indexToReplace = existingArray.findIndex(
+              item => item.imageId === arrayImages[0].imageId,
+            );
+            if (indexToReplace !== -1) {
+              const updatedArray = [...existingArray];
+              updatedArray[indexToReplace] = {
+                imageId: arrayImages[0].imageId,
+                path: arrayImages[0].path,
+              };
+              return {...prev, [key]: updatedArray};
+            }
+          }
 
-        //   return {
-        //     ...prev,
-        //     [key]: [...existingArray, {imageId, path: permanentPath}],
-        //   };
-        // });
-        // });
+          return {
+            ...prev,
+            [key]: [...existingArray, {imageId, path: permanentPath}],
+          };
+        });
       }
 
       // return {success: true, online: true};
     } else {
-      // if (resultPath && resultPath !== path) {
-      //   const fileExists = await RNFS.exists(path);
-      //   if (fileExists) {
-      //     await RNFS.unlink(path);
-      //   }
-      // }
+      const key = rest.field + 's';
+      const imageId = rest.imageId;
+      setter(prev => {
+        const existingArray = prev[key] || [];
 
-      // const tempPath: string = await compressImage(
-      //   result,
-      //   'Final After Editing',
-      // );
-      // console.log('Edited image temp path:', tempPath);
+        if (status) {
+          const indexToReplace = existingArray.findIndex(
+            item => item.imageId === imageId,
+          );
+          if (indexToReplace !== -1) {
+            const updatedArray = [...existingArray];
+            updatedArray[indexToReplace] = {imageId, path: permanentPath};
+            return {...prev, [key]: updatedArray};
+          }
+        }
 
-      // let permanentPath = tempPath;
-      // if (saveTo) {
-      //   permanentPath = await functionToSaveImages(
-      //     tempPath,
-      //     key,
-      //     setter,
-      //     status,
-      //     path,
-      //   );
-      // }
-
-      // if (tempPath && tempPath !== permanentPath) {
-      //   const tempFileExists = await RNFS.exists(tempPath);
-      //   console.log('tempfile', tempFileExists);
-      //   if (tempFileExists) {
-      //     await RNFS.unlink(tempPath);
-      //     console.log('Temporary file removed:', tempPath);
-      //   }
-      // }
-
-      // setter((prev: any) => {
-      //   const existingArray = prev[key] || [];
-
-      //   if (status) {
-      //     const indexToReplace = existingArray.findIndex(
-      //       (item: any) => item.imageId === imageId,
-      //     );
-      //     if (indexToReplace !== -1) {
-      //       const updatedArray = [...existingArray];
-      //       updatedArray[indexToReplace] = {imageId, path: permanentPath};
-      //       return {...prev, [key]: updatedArray};
-      //     }
-      //   }
-
-      //   return {
-      //     ...prev,
-      //     [key]: [...existingArray, {imageId, path: permanentPath}],
-      //   };
-      // });
+        return {
+          ...prev,
+          [key]: [...existingArray, {imageId, path: permanentPath}],
+        };
+      });
 
       // const readBase64 = await getBase64FromFile(permanentPath);
       createOfflineImagesTable();
