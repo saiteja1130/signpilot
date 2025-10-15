@@ -14,7 +14,7 @@ import UpDownIcon from '../../assets/images/arrowup.svg';
 import {styles} from '../Global/Global';
 import SaveImg from '../../assets/images/save.svg';
 import RadioButton from './RadioButton';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import Photo from '../../assets/images/photo.svg';
 import axios from 'axios';
 import {handleAddPhoto, useNetworkStatus} from '../Functions/functions.js';
@@ -39,15 +39,18 @@ import {
   getBase64Array,
   getPath,
 } from '../Functions/FSfunctions.tsx';
+import {setActiveState} from '../Redux/Slices/Active.js';
 
 const ExistingAuditProject = ({handleFetchData}) => {
+  const dispatch = useDispatch();
+  const globActive = useSelector(state => state.active.value);
   const projectTitle = useSelector(state => state.projecttitle.value);
   const allData = useSelector(state => state.allData.value);
   const status = useNetworkStatus();
   const baseUrl = useSelector(state => state.baseUrl.value);
   const loginData = useSelector(state => state.login.value);
   const signProjectData = useSelector(state => state.signProject.value);
-  const [loadingImage, setLoadingImage] = useState(true);
+  const [loadingImage, setLoadingImage] = useState(false);
   const [active, setActive] = useState('');
   const [existingSignAuditSummaryNotes, setExistingSignAuditSummaryNotes] =
     useState(
@@ -339,12 +342,7 @@ const ExistingAuditProject = ({handleFetchData}) => {
     <View>
       <TouchableOpacity
         onPress={() => {
-          if (active === '') {
-            setActive('Audit');
-            fetchData();
-          } else {
-            setActive('');
-          }
+          dispatch(setActiveState('Existing'));
         }}
         style={styles.container}>
         <View style={styles.iconWrapper}>
@@ -361,7 +359,7 @@ const ExistingAuditProject = ({handleFetchData}) => {
           </Text>
         </View>
         <View style={styles.dropdownIconWrapper}>
-          {active === 'Audit' ? (
+          {globActive?.includes('Existing') ? (
             <UpDownIcon width={39} height={39} />
           ) : (
             <DropDownIcon width={39} height={39} />
@@ -369,7 +367,7 @@ const ExistingAuditProject = ({handleFetchData}) => {
         </View>
       </TouchableOpacity>
       <View style={{marginTop: -8}}>
-        {active === 'Audit' && (
+        {globActive?.includes('Existing') && (
           <View style={[styles.card, {borderColor: '#4E525F'}]}>
             <View style={[styles.headerSection, {backgroundColor: '#F7F9FC'}]}>
               <View
@@ -670,7 +668,9 @@ const ExistingAuditProject = ({handleFetchData}) => {
                 styles.dropdownIconWrapper,
                 {alignSelf: 'flex-end', marginTop: 34},
               ]}
-              onPress={() => setActive('')}>
+              onPress={() => {
+                dispatch(setActiveState('Existing'));
+              }}>
               <UpDownIcon width={39} height={39} />
             </TouchableOpacity>
           </View>

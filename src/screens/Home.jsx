@@ -27,7 +27,7 @@ import {addSignProject} from '../Redux/Slices/SigProject';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {setPhotoState} from '../Redux/Slices/PhotosActive';
 import Toast from 'react-native-toast-message';
-import {setActiveState} from '../Redux/Slices/Active';
+import {resetActive, setActiveState} from '../Redux/Slices/Active';
 import ProgressBar from '../Components/Progressbar';
 import {syncToOnline, useNetworkStatus} from '../Functions/functions';
 import NetInfo from '@react-native-community/netinfo';
@@ -188,6 +188,7 @@ const Home = () => {
   };
 
   const saveSection = async () => {
+    console.log('Savinggg');
     try {
       const token = loginData?.tokenNumber;
       const data = {
@@ -246,6 +247,7 @@ const Home = () => {
     setSignConfirmed(false);
     const filteredProject = allData.find(data => data.projectTitle === item);
     if (filteredProject) {
+      dispatch(resetActive([]));
       setProjects(filteredProject);
       dispatch(addProject(filteredProject));
       dispatch(addProjectTitle(item));
@@ -642,9 +644,9 @@ const Home = () => {
               {signConfirmed && (
                 <>
                   <ExistingAuditProject handleFetchData={fetchData} />
-                  {/* <ElectricalAssessment handleFetchData={fetchData} />
+                  <ElectricalAssessment handleFetchData={fetchData} />
                   <PermittingAssenment handleFetchData={fetchData} />
-                  <Outdoor handleFetchData={fetchData} /> */}
+                  <Outdoor handleFetchData={fetchData} />
                   {/* <Indoor handleFetchData={fetchData} /> */}
                   {/* {<Photos handleFetchData={fetchData} />} */}
 

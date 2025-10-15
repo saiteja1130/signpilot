@@ -41,16 +41,19 @@ import {
   getPath,
 } from '../Functions/FSfunctions.tsx';
 import RNFS from 'react-native-fs';
+import {setActiveState} from '../Redux/Slices/Active.js';
 
 const ElectricalAssessment = ({handleFetchData}) => {
   const status = useNetworkStatus();
+  const dispatch = useDispatch();
+  const globActive = useSelector(state => state.active.value);
   const [modalVisible, setModalVisible] = useState(false);
   const [editing, setEditing] = useState('');
   const projectTitle = useSelector(state => state.projecttitle.value);
   const baseUrl = useSelector(state => state.baseUrl.value);
   const signProjectData = useSelector(state => state.signProject.value);
   const loginData = useSelector(state => state.login.value);
-  const [loadingImage, setLoadingImage] = useState(true);
+  const [loadingImage, setLoadingImage] = useState(false);
   const [electricalAuditTodoPunchList, setElectricalAuditTodoPunchList] =
     useState(signProjectData?.electrical_audit?.electricalAuditTodoPunchList);
   const [electricalAuditSummaryNotes, setElectricalAuditSummaryNotes] =
@@ -377,11 +380,7 @@ const ElectricalAssessment = ({handleFetchData}) => {
     <View>
       <TouchableOpacity
         onPress={() => {
-          if (active === '') {
-            setActive('Electrical');
-          } else {
-            setActive('');
-          }
+          dispatch(setActiveState('Electrical'));
         }}
         style={[styles.container, {borderColor: '#FF9239'}]}>
         <View style={[styles.iconWrapper, {backgroundColor: '#FF9239'}]}>
@@ -398,7 +397,7 @@ const ElectricalAssessment = ({handleFetchData}) => {
           </Text>
         </View>
         <View style={styles.dropdownIconWrapper}>
-          {active === 'Electrical' ? (
+          {globActive?.includes('Electrical') ? (
             <UpDownIcon width={39} height={39} />
           ) : (
             <DropDownIcon width={39} height={39} />
@@ -406,7 +405,7 @@ const ElectricalAssessment = ({handleFetchData}) => {
         </View>
       </TouchableOpacity>
       <View style={{marginTop: -8}}>
-        {active === 'Electrical' && (
+        {globActive?.includes('Electrical') && (
           <View style={styles.card}>
             <View style={styles.headerSection}>
               <View
@@ -785,7 +784,9 @@ const ElectricalAssessment = ({handleFetchData}) => {
                 styles.dropdownIconWrapper,
                 {alignSelf: 'flex-end', marginTop: 34},
               ]}
-              onPress={() => setActive('')}>
+              onPress={() => {
+                dispatch(setActiveState('Electrical'));
+              }}>
               <UpDownIcon width={39} height={39} />
             </TouchableOpacity>
           </View>
