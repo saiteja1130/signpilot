@@ -55,7 +55,6 @@ const ElectricalAssessment = ({handleFetchData}) => {
     useState(signProjectData?.electrical_audit?.electricalAuditTodoPunchList);
   const [electricalAuditSummaryNotes, setElectricalAuditSummaryNotes] =
     useState(signProjectData?.electrical_audit?.electricalAuditSummaryNotes);
-  console.log(signProjectData?.signTableId);
   const [selectedOptions, setSelectedOptions] = useState({
     adminName: signProjectData?.electrical_audit?.adminName,
     anyAccessibilityIssues:
@@ -123,8 +122,6 @@ const ElectricalAssessment = ({handleFetchData}) => {
   const [typeOfIlluminationInside, setTypeOfIlluminationInside] = useState(
     signProjectData?.electrical_audit?.typeOfIlluminationInside || '',
   );
-
-  console.log('selectedOptions', signProjectData);
 
   const data = [
     {
@@ -213,7 +210,7 @@ const ElectricalAssessment = ({handleFetchData}) => {
       electricalAuditPhoto: readBase64fromarrayelectricalAuditPhotos,
       electricTagsPhoto: readBase64fromarrayTagPhotos,
     };
-    console.log('BODY DATAAA', bodyData);
+    // console.log('BODY DATAAA', bodyData);
     try {
       if (status) {
         const token = loginData?.tokenNumber;
@@ -295,29 +292,28 @@ const ElectricalAssessment = ({handleFetchData}) => {
         moduleId: signProjectData?.signId,
       };
       const token = loginData?.tokenNumber;
-      console.log('status', status);
       if (status) {
         const responce = await axios.post(`${baseUrl}/removeFile`, data, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        console.log(responce.data, 'resssssss');
+        // console.log(responce.data, 'resssssss');
         if (responce.data.status) {
           const imagesArray = responce?.data?.data[actualKey] || [];
-          console.log('IMAGESSSARRAYY', imagesArray);
+          // console.log('IMAGESSSARRAYY', imagesArray);
           await insertElectricalAuditImagesOnly(
             signProjectData?.signTableId,
             actualKey,
             imagesArray,
             1,
           );
-          console.log('ONLINE -- Image removed successfully');
+          // console.log('ONLINE -- Image removed successfully');
           const imagesaRRAY = await getElectricalAuditImagesByKey(
             signProjectData?.signTableId,
             actualKey,
           );
-          console.log('IMAGESARRAYAFTERINSERT', imagesaRRAY);
+          // console.log('IMAGESARRAYAFTERINSERT', imagesaRRAY);
           setSelectedOptions(prev => {
             return {
               ...prev,
@@ -335,7 +331,7 @@ const ElectricalAssessment = ({handleFetchData}) => {
         const imagesArray = selectedOptions?.[actualKey]?.filter(
           item => item.imageId !== imageId1,
         );
-        console.log('IMAGESSSARRAYY', imagesArray);
+        // console.log('IMAGESSSARRAYY', imagesArray);
         await insertElectricalAuditImagesOnly(
           signProjectData?.signTableId,
           actualKey,
@@ -346,7 +342,7 @@ const ElectricalAssessment = ({handleFetchData}) => {
           signProjectData?.signTableId,
           actualKey,
         );
-        console.log('IMAGESARRAYAFTERINSERT', imagesaRRAY);
+        console.log('/IMAGESARRAYAFTERINSERT', imagesaRRAY);
         setSelectedOptions(prev => {
           return {
             ...prev,
@@ -550,17 +546,6 @@ const ElectricalAssessment = ({handleFetchData}) => {
                                   0 &&
                                 selectedOptions.electricalAuditPhotos.map(
                                   (item, index) => {
-                                    console.log(
-                                      'arrayimages',
-                                      selectedOptions?.electricalAuditPhotos,
-                                    );
-                                    console.log('itemitemitemitem', item);
-                                    console.log(
-                                      'FINAL URI:',
-                                      item?.path?.startsWith('file://')
-                                        ? item?.path
-                                        : `file://${item?.path}`,
-                                    );
                                     return (
                                       <TouchableOpacity
                                         key={index}
@@ -673,17 +658,6 @@ const ElectricalAssessment = ({handleFetchData}) => {
                                   0 &&
                                 selectedOptions.electricTagsPhotos.map(
                                   (item, index) => {
-                                    console.log(
-                                      'arrayimages',
-                                      selectedOptions?.electricTagsPhotos,
-                                    );
-                                    console.log('itemitemitemitem111111', item);
-                                    console.log(
-                                      'FINAL URI:',
-                                      item.path.startsWith('file://')
-                                        ? item.path
-                                        : `file://${item.path}`,
-                                    );
                                     return (
                                       <TouchableOpacity
                                         key={index}

@@ -177,7 +177,7 @@ const PermittingAssenment = ({handleFetchData}) => {
           },
         );
 
-        console.log('PERMITTING ASSESMENT::', response.data);
+        // console.log('PERMITTING ASSESMENT::', response.data);
         if (response?.data?.status) {
           apiSuccess = true;
           Toast.show({

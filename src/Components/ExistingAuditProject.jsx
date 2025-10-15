@@ -182,7 +182,7 @@ const ExistingAuditProject = ({handleFetchData}) => {
         const imagesArray = selectedOptions?.[actualKey]?.filter(
           item => item.imageId !== imageId1,
         );
-        console.log('IMAGESSSARRAYY', imagesArray);
+        // console.log('IMAGESSSARRAYY', imagesArray);
         await insertExistingSignAuditImagesOnly(
           signProjectData?.signTableId,
           actualKey,
@@ -193,7 +193,7 @@ const ExistingAuditProject = ({handleFetchData}) => {
           signProjectData?.signTableId,
           actualKey,
         );
-        console.log('IMAGESARRAYAFTERINSERT', imagesaRRAY);
+        // console.log('IMAGESARRAYAFTERINSERT', imagesaRRAY);
         setSelectedOptions(prev => {
           return {
             ...prev,
@@ -214,7 +214,7 @@ const ExistingAuditProject = ({handleFetchData}) => {
   };
 
   const handleSave = async () => {
-    console.log('savinggg....');
+    // console.log('savinggg....');
     setLoadingImage(true);
 
     const base64s = await getBase64Array(
@@ -230,7 +230,7 @@ const ExistingAuditProject = ({handleFetchData}) => {
       signAliasName: signProjectData?.signAliasName,
       signType: signProjectData?.signType,
     };
-    console.log('EXISTING BODY DATA::::', bodyData);
+    // console.log('EXISTING BODY DATA::::', bodyData);
     try {
       if (status) {
         const token = loginData?.tokenNumber;
@@ -243,7 +243,7 @@ const ExistingAuditProject = ({handleFetchData}) => {
             },
           },
         );
-        console.log('EXISITING SIGN API RESPONSE:::', response.data);
+        // console.log('EXISITING SIGN API RESPONSE:::', response.data);
         if (response?.data?.status) {
           await deleteFolders();
           handleFetchData(null, signProjectData);
@@ -279,7 +279,6 @@ const ExistingAuditProject = ({handleFetchData}) => {
       }
     }
   };
-  console.log('signProjectData?.existing_sign_audit', signProjectData);
 
   const fetchData = () => {
     // console.log('FETCHINGGGG');
@@ -476,17 +475,6 @@ const ExistingAuditProject = ({handleFetchData}) => {
                                 0 &&
                               selectedOptions?.existingSignAuditPhotos?.map(
                                 (item, index) => {
-                                  // console.log(
-                                  //   'arrayimages',
-                                  //   selectedOptions?.existingSignAuditPhotos,
-                                  // );
-                                  // console.log('itemitemitemitem', item);
-                                  // console.log(
-                                  //   'FINAL URI:',
-                                  //   item.path.startsWith('file://')
-                                  //     ? item.path
-                                  //     : `file://${item.path}`,
-                                  // );
                                   return (
                                     <TouchableOpacity
                                       key={index}

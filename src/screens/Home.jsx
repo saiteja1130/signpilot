@@ -297,6 +297,7 @@ const Home = () => {
 
   const handleRefresh = async () => {
     setRefreshing(true);
+    setLoading(true);
     if (isConnected) {
       await deleteFolders();
     }
@@ -306,6 +307,9 @@ const Home = () => {
       setTimeout(resolve, 1000);
     });
     setRefreshing(false);
+    setTimeout(() => {
+      setLoading(false);
+    }, 1200);
   };
 
   const styles = StyleSheet.create({

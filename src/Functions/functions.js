@@ -217,7 +217,7 @@ export const fetchCustomers = async (
         },
       },
     );
-    console.log(response.data);
+    // console.log(response.data);
     if (response.data.status) {
       const customerData = response.data.customers;
       setCustomers(customerData);
@@ -235,7 +235,7 @@ export const fetchSigns = async (signId, token, setSignData, baseUrl) => {
       },
     });
     setSignData(response.data.signOptions);
-    console.log('FETCH SIGNS ERRORR::::', response.data);
+    // console.log('FETCH SIGNS ERRORR::::', response.data);
   } catch (error) {
     console.log('Fetch Sign Error:::::::::', error.response?.data);
     console.log('Fetch Sign Error22222:::::::::', error);
@@ -315,7 +315,7 @@ export const getUnsignedSigns = async (
         },
       },
     );
-    console.log('getUnsignedSigns:::', response.data);
+    // console.log('getUnsignedSigns:::', response.data);
     if (response.data?.status) {
       setFullyAssociatedSigns(response.data?.signs || []);
     }
@@ -359,7 +359,7 @@ export const sendProjectChange = async data => {
         Authorization: `Bearer ${token}`,
       },
     });
-    console.log(response.data);
+    // console.log(response.data);
   } catch (error) {
     console.error('Error creating project:', error.response?.data);
   }
@@ -449,7 +449,7 @@ export const updateFile = async data => {
           Authorization: `Bearer ${tokenNumber}`,
         },
       });
-      console.log('UPDATE FILE RESPONSE:::', response.data);
+      // console.log('UPDATE FILE RESPONSE:::', response.data);
       if (response.data.status) {
         await RNFS.unlink(localleySavedpath);
         const arrayImages = await downloadImagesArray(
