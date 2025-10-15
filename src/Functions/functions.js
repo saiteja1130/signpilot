@@ -15,6 +15,7 @@ import {
   getUnsyncedSignGeneralAudits,
   insertOfflineImage,
   updateElectricalAudit,
+  updateExistingSignAudit,
   updatePermittingAssessment,
   updateSignGeneralAudit,
 } from '../Db/LocalData';
