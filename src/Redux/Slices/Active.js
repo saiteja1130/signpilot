@@ -3,23 +3,19 @@ import {createSlice} from '@reduxjs/toolkit';
 const activeSlice = createSlice({
   name: 'active',
   initialState: {
-    value: [],
+    value: null,
   },
   reducers: {
     setActiveState: (state, action) => {
-      const item = action.payload;
-      const index = state.value.indexOf(item);
-      if (index >= 0) {
-        state.value.splice(index, 1);
+      if (state.value === action.payload) {
+        state.value = null;
       } else {
-        state.value.push(item);
+        state.value = action.payload;
       }
-    },
-    resetActive: (state, action) => {
-      state.value = action.payload;
     },
   },
 });
 
-export const {setActiveState, resetActive} = activeSlice.actions;
+export const {setActiveState} = activeSlice.actions;
+
 export default activeSlice.reducer;

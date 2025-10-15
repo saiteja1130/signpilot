@@ -15,7 +15,7 @@ import DropDownIcon from '../../assets/images/downarrow.svg';
 import UpDownIcon from '../../assets/images/arrowup.svg';
 import RadioButton from './RadioButton';
 import SaveImg from '../../assets/images/save.svg';
-import {useDispatch, useSelector} from 'react-redux';
+import {useSelector} from 'react-redux';
 import Collapsible from 'react-native-collapsible';
 import Down from '../../assets/images/down.svg';
 import Up from '../../assets/images/arrow.svg';
@@ -37,11 +37,8 @@ import {
   showPhotoOptions,
 } from '../Functions/ImagePickFunctions';
 import {deleteFolders, getBase64Array, getPath} from '../Functions/FSfunctions';
-import {setActiveState} from '../Redux/Slices/Active';
 const OutDoor = ({handleFetchData}) => {
   const projectTitle = useSelector(state => state.projecttitle.value);
-  const dispatch = useDispatch();
-  const globActive = useSelector(state => state.active.value);
 
   const status = useNetworkStatus();
   const baseUrl = useSelector(state => state.baseUrl.value);
@@ -148,7 +145,7 @@ const OutDoor = ({handleFetchData}) => {
       value: 'ladderOrLiftRequired',
     },
   ];
-  const [loadingImage, setLoadingImage] = useState(false);
+  const [loadingImage, setLoadingImage] = useState(true);
   const [sizeOfLadderOrLift, setSizeOfLadderOrLift] = useState(
     signProjectData?.sign_general_audit?.sizeOfLadderOrLift || '',
   );
@@ -410,7 +407,11 @@ const OutDoor = ({handleFetchData}) => {
     <View>
       <TouchableOpacity
         onPress={() => {
-          dispatch(setActiveState('SignAudit'));
+          if (active === '') {
+            setActive('Outdoor');
+          } else {
+            setActive('');
+          }
         }}
         style={[styles.container, {borderColor: '#2B92F0'}]}>
         <View style={[styles.iconWrapper, {backgroundColor: '#2B92F0'}]}>
@@ -433,7 +434,7 @@ const OutDoor = ({handleFetchData}) => {
         </View>
 
         <View style={styles.dropdownIconWrapper}>
-          {globActive?.includes('SignAudit') ? (
+          {active === 'Outdoor' ? (
             <UpDownIcon width={39} height={39} />
           ) : (
             <DropDownIcon width={39} height={39} />
@@ -441,7 +442,7 @@ const OutDoor = ({handleFetchData}) => {
         </View>
       </TouchableOpacity>
       <View style={{marginTop: -8}}>
-        {globActive?.includes('SignAudit') && (
+        {active === 'Outdoor' && (
           <View style={[styles.card, {borderColor: '#2B92F0'}]}>
             {inputFields[0] && (
               <TextInput
@@ -870,9 +871,7 @@ const OutDoor = ({handleFetchData}) => {
                 styles.dropdownIconWrapper,
                 {alignSelf: 'flex-end', marginTop: 34},
               ]}
-              onPress={() => {
-                dispatch(setActiveState('SignAudit'));
-              }}>
+              onPress={() => setActive('')}>
               <UpDownIcon width={39} height={39} />
             </TouchableOpacity>
           </View>

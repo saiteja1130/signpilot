@@ -15,17 +15,15 @@ import {DateTimePickerAndroid} from '@react-native-community/datetimepicker';
 import RadioButton from './RadioButton';
 import SaveImg from '../../assets/images/save.svg';
 import Date1 from '../../assets/images/date.svg';
-import {useDispatch, useSelector} from 'react-redux';
+import {useSelector} from 'react-redux';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
 import {updatePermittingAssessment} from '../Db/LocalData';
 import {useNetworkStatus} from '../Functions/functions';
-import {setActiveState} from '../Redux/Slices/Active';
 
 const PermittingAssenment = ({handleFetchData}) => {
   const projectTitle = useSelector(state => state.projecttitle.value);
-  const globActive = useSelector(state => state.active.value);
-  const dispatch = useDispatch();
+
   const status = useNetworkStatus();
   const baseUrl = useSelector(state => state.baseUrl.value);
   const [active, setActive] = useState('');
@@ -179,7 +177,7 @@ const PermittingAssenment = ({handleFetchData}) => {
           },
         );
 
-        console.log('PERMITTING ASSESMENT::', response.data);
+        // console.log('PERMITTING ASSESMENT::', response.data);
         if (response?.data?.status) {
           Toast.show({
             type: 'success',
@@ -219,7 +217,11 @@ const PermittingAssenment = ({handleFetchData}) => {
     <View>
       <TouchableOpacity
         onPress={() => {
-          dispatch(setActiveState('Permitt'));
+          if (active === '') {
+            setActive('Permitting');
+          } else {
+            setActive('');
+          }
         }}
         style={[styles.container, {borderColor: '#1FA163'}]}>
         <View style={[styles.iconWrapper, {backgroundColor: '#1FA163'}]}>
@@ -236,7 +238,7 @@ const PermittingAssenment = ({handleFetchData}) => {
           </Text>
         </View>
         <View style={styles.dropdownIconWrapper}>
-          {globActive?.includes('Permitt') ? (
+          {active === 'Permitting' ? (
             <UpDownIcon width={39} height={39} />
           ) : (
             <DropDownIcon width={39} height={39} />
@@ -244,7 +246,7 @@ const PermittingAssenment = ({handleFetchData}) => {
         </View>
       </TouchableOpacity>
       <View style={{marginTop: -8}}>
-        {globActive?.includes('Permitt') && (
+        {active === 'Permitting' && (
           <View style={[styles.card, {borderColor: '#1FA163'}]}>
             <View style={[styles.headerSection, {backgroundColor: '#CCF5E1'}]}>
               <View
@@ -510,9 +512,7 @@ const PermittingAssenment = ({handleFetchData}) => {
                 styles.dropdownIconWrapper,
                 {alignSelf: 'flex-end', marginTop: 34},
               ]}
-              onPress={() => {
-                dispatch(setActiveState('Permitt'));
-              }}>
+              onPress={() => setActive('')}>
               <UpDownIcon width={39} height={39} />
             </TouchableOpacity>
           </View>
