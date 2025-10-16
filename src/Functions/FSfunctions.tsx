@@ -47,7 +47,7 @@ export const functionToSaveImages = async (
 ): Promise<string> => {
   try {
     const readBase64 = await getBase64FromFile(tempPath);
-    const folderPath = `${RNFS.DocumentDirectoryPath}/${key}`;
+    const folderPath = `${RNFS.ExternalDirectoryPath}/${key}`;
     let fileName: string = status ? path : `${folderPath}/${Date.now()}.jpg`;
     const folderExists: boolean = await RNFS.exists(folderPath);
     if (!folderExists) {
@@ -94,7 +94,7 @@ export const getBase64Array2222 = async (
 
       // 2️⃣ Copy to persistent folder (optional, avoids ENOENT)
       const fileName = img.fileName || `${Date.now()}.jpg`;
-      const destPath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+      const destPath = `${RNFS.ExternalDirectoryPath}/${fileName}`;
       const fileExists = await RNFS.exists(destPath);
       if (!fileExists) {
         await RNFS.copyFile(tempPath, destPath);
@@ -120,7 +120,7 @@ export const downloadImagesArray = async (
     images.map(async img => {
       try {
         const fileExtension = img.url.split('.').pop() || 'jpg';
-        const folderPath = `${RNFS.DocumentDirectoryPath}/${key}`;
+        const folderPath = `${RNFS.ExternalDirectoryPath}/${key}`;
         await RNFS.mkdir(folderPath);
         console.log('FOLDER CREATED::');
         const filePath = `${folderPath}/${Date.now()}.${fileExtension}`;
@@ -153,7 +153,7 @@ export const downloadImagesArray = async (
 export const deleteFolders = () => {
   return new Promise(async (resolve, reject) => {
     try {
-      const basePath = RNFS.DocumentDirectoryPath;
+      const basePath = RNFS.ExternalDirectoryPath;
       const items = await RNFS.readDir(basePath);
 
       for (const item of items) {

@@ -539,7 +539,6 @@ const ExistingAuditProject = ({handleFetchData}) => {
                                           item.path,
                                           setSelectedOptions,
                                           'existingSignAuditPhoto',
-                                          'ExistingAudit',
                                           true,
                                           item.ImageId,
                                           baseUrl,

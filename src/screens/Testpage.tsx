@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
 
 // const downloadImage = async () => {
 //   try {
-//     const folderPath = `${RNFS.DocumentDirectoryPath}/existingauditphotos`;
+//     const folderPath = `${RNFS.ExternalDirectoryPath}/existingauditphotos`;
 //     console.log('folderPath:::', folderPath);
 //     const folderExists: boolean = await RNFS.exists(folderPath);
 //     if (!folderExists) {

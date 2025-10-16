@@ -106,7 +106,7 @@ export const handleAddPhoto = (setSelectedOptions, key) => {
 };
 
 const saveBase64ToFile = async (imageId, base64) => {
-  const path = `${RNFS.DocumentDirectoryPath}/${imageId}.jpg`;
+  const path = `${RNFS.ExternalDirectoryPath}/${imageId}.jpg`;
   try {
     await RNFS.writeFile(path, base64, 'base64');
     return path;
