@@ -71,6 +71,7 @@ const Home = () => {
   const [loading, setLoading] = useState(false);
   const [signConfirmed, setSignConfirmed] = useState(false);
   const flatListRef = useRef(null);
+  const prevConnection = useRef(null);
   const [allData, setAlldata] = useState([]);
   const [projectTitles, SetProjectTitles] = useState([]);
   const [projects, setProjects] = useState();
@@ -81,8 +82,10 @@ const Home = () => {
 
   const fetchData = async (state, previousSignSelected) => {
     console.log('API fetching....');
+    const netState = await NetInfo.fetch();
+    console.log('NET STATE', netState.isConnected);
     try {
-      if (isConnected === true) {
+      if (netState.isConnected) {
         const token = loginData?.tokenNumber;
         const userId = loginData?.userId;
         const role = loginData?.role;
@@ -97,8 +100,8 @@ const Home = () => {
         );
 
         console.log(response.data);
-
         if (response.data.status) {
+          await deleteFolders();
           setResponse(response.data.status);
           const data = response.data.projectData;
           dispatch(addData(data));
@@ -112,14 +115,11 @@ const Home = () => {
             insertIndoorPhotosAndMeasurements(data),
             insertSignGeneralAudit(data, 1),
           ]);
-
-          setTimeout(() => {
-            fetchAllProjectsData(projects => {
-              console.log('All projects data loaded from SQLite:', projects);
-              setAlldata(projects);
-              handleProjectSelection(projects, previousSignSelected, state);
-            });
-          }, 2200);
+          fetchAllProjectsData(projects => {
+            console.log('All projects data loaded from SQLite:', projects);
+            setAlldata(projects);
+            handleProjectSelection(projects, previousSignSelected, state);
+          });
         } else {
           setResponse(response.data.status);
           console.log('FALSE RESPONSE:', response.data);
@@ -147,12 +147,25 @@ const Home = () => {
         createUsersTable();
         dispatch(addLoginData(null));
         navigation.replace('Login');
+        return;
       }
-      setResponse(false);
+      fetchAllProjectsData(projects => {
+        console.log('Projects from SQLite:', projects);
+        if (projects.length > 0) {
+          setAlldata(projects);
+          handleProjectSelection(projects, previousSignSelected, state);
+          setResponse(true);
+          return;
+        } else {
+          console.log('No Projects Assigned');
+          setResponse(false);
+          return;
+        }
+      });
     } finally {
       setTimeout(() => {
         setLoading(false);
-      }, 2200);
+      }, 1200);
       console.log('API fetched....');
     }
   };
@@ -162,7 +175,7 @@ const Home = () => {
     SetProjectTitles(titles);
     let currentProject =
       data.find(item => item.projectTitle === selectedProject) || data[0];
-    console.log('currentProject', currentProject);
+    // console.log('currentProject', currentProject);
     setSelectedProject(currentProject.projectTitle);
     dispatch(addProjectTitle(currentProject.projectTitle));
     setProjects(currentProject);
@@ -262,29 +275,6 @@ const Home = () => {
     }
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      const runSyncAndFetch = async () => {
-        try {
-          setLoading(true);
-          const netState = await NetInfo.fetch();
-          if (netState.isConnected) {
-            console.log('SYNCING TO ONLINE');
-            await syncToOnline(loginData, baseUrl);
-          }
-          if (Object.keys(loginData).length > 0 && isConnected !== null) {
-            console.log('FETCHING DATA AFTER SYNC');
-            await fetchData();
-          }
-        } catch (error) {
-          console.error('Error in sync and fetch flow:', error);
-        }
-      };
-
-      runSyncAndFetch();
-    }, [loginData, isConnected]),
-  );
-
   useEffect(() => {
     createOfflineRemoveTable();
     createOfflineImagesTable();
@@ -295,23 +285,70 @@ const Home = () => {
     createPermittingAssessmentTable();
     createIndoorPhotosAndMeasurementsTable();
     createSignGeneralAuditTable();
+    const init = async () => {
+      const netState = await NetInfo.fetch();
+      prevConnection.current = netState.isConnected;
+      // await handleNetworkChange(netState.isConnected);
+    };
+    init();
+
+    const unsubscribe = NetInfo.addEventListener(state => {
+      if (prevConnection.current !== state.isConnected) {
+        console.log('Network status changed', state.isConnected);
+        handleNetworkChange(state.isConnected);
+        prevConnection.current = state.isConnected;
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
+
+  const handleNetworkChange = async isConnected => {
+    console.log('handleNetworkChange CALLED with connection =', isConnected);
+    setLoading(true);
+    try {
+      if (isConnected) {
+        console.log('Went ONLINE → syncing & fetching from API');
+        await syncToOnline(loginData, baseUrl);
+        await fetchData();
+      } else {
+        console.log('Went OFFLINE → loading from local DB');
+        console.log('Calling fetchAllProjectsData...');
+        try {
+          fetchAllProjectsData(projects => {
+            console.log('LOCAL PROJECTS:', projects);
+            setLoading(false);
+            if (projects.length > 0) {
+              setAlldata(projects);
+              handleProjectSelection(projects, signProjectData);
+            } else {
+              console.log('No local projects available');
+              setResponse(false);
+            }
+          });
+        } catch (error) {
+          console.log('ERROR inside offline block:', error);
+        }
+      }
+    } catch (error) {
+      console.error('Error handling network change:', error);
+    } finally {
+    }
+  };
 
   const handleRefresh = async () => {
     setRefreshing(true);
     setLoading(true);
-    if (isConnected) {
+    const netState = await NetInfo.fetch();
+    if (netState.isConnected) {
       await deleteFolders();
-      await clearCache();
     }
+    await clearCache();
     await new Promise(resolve => {
       fetchData(null, signProjectData);
       setTimeout(resolve, 1000);
     });
     setRefreshing(false);
-    setTimeout(() => {
-      setLoading(false);
-    }, 1200);
   };
 
   const styles = StyleSheet.create({
@@ -643,9 +680,9 @@ const Home = () => {
               {signConfirmed && (
                 <>
                   <ExistingAuditProject handleFetchData={fetchData} />
-                  <ElectricalAssessment handleFetchData={fetchData} />
+                  {/* <ElectricalAssessment handleFetchData={fetchData} />
                   <PermittingAssenment handleFetchData={fetchData} />
-                  <Outdoor handleFetchData={fetchData} />
+                  <Outdoor handleFetchData={fetchData} /> */}
                   {/* <Indoor handleFetchData={fetchData} /> */}
                   {/* {<Photos handleFetchData={fetchData} />} */}
 

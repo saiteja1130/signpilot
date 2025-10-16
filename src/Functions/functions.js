@@ -26,6 +26,7 @@ import {
   getBase64Array,
   getBase64Array2222,
   getBase64FromFile,
+  getPath,
 } from './FSfunctions';
 
 // import {PermissionsAndroid, Platform} from 'react-native';
@@ -435,6 +436,7 @@ export const updateFile = async data => {
       resultPath,
       localleySavedpath,
       status,
+      selectedOptions,
       ...rest
     } = data;
 
@@ -464,48 +466,49 @@ export const updateFile = async data => {
       });
       console.log('UPDATE FILE RESPONSE:::', response.data);
       if (response.data.status) {
-        const key = rest.field + 's';
-        console.log('rest.field', rest.field);
-        console.log('key', key);
-        console.log('response.data.data[rest.field]', response.data.data);
-        await RNFS.unlink(localleySavedpath);
-        const arrayImages = await downloadImagesArray(
-          response.data.data[key],
+        const key = rest.field;
+        console.log('KEYYY', key);
+        const previousImages = selectedOptions?.[key] || [];
+        for (const item of previousImages) {
+          console.log('Removing imagessss');
+          try {
+            if (item?.path) {
+              const storedPath = await getPath(item.path);
+              const cleanedPath = storedPath.startsWith('file://')
+                ? storedPath.replace('file://', '')
+                : storedPath;
+              await RNFS.unlink(cleanedPath);
+              console.log('REMVED PATH', cleanedPath);
+            }
+          } catch (err) {
+            console.log('Failed to remove old file:', err);
+          }
+        }
+        console.log('Removed images');
+        const correctedKey = rest.field + 's';
+        const downloadedImages = await downloadImagesArray(
+          response.data.data[correctedKey],
           rest.field,
         );
-        console.log('Downloaded images array:', arrayImages[0]);
-        console.log('ONLINE — image uploaded successfully');
-        setter(prev => {
-          const existingArray = prev[key] || [];
 
-          if (status) {
-            const indexToReplace = existingArray.findIndex(
-              item => item.imageId === arrayImages[0].imageId,
-            );
-            if (indexToReplace !== -1) {
-              const updatedArray = [...existingArray];
-              updatedArray[indexToReplace] = {
-                imageId: arrayImages[0].imageId,
-                path: arrayImages[0].path,
-              };
-              return {...prev, [key]: updatedArray};
-            }
-          }
+        console.log('Downloaded ALL updated images:', downloadedImages);
 
-          return {
-            ...prev,
-            [key]: [...existingArray, {imageId, path: permanentPath}],
-          };
-        });
+        setter(prev => ({
+          ...prev,
+          [key]: downloadedImages.map(img => ({
+            imageId: img.imageId,
+            path: img.path,
+          })),
+        }));
+
+        console.log('ONLINE — all images replaced successfully');
       }
-
-      // return {success: true, online: true};
+      return;
     } else {
       const key = rest.field + 's';
       const imageId = rest.imageId;
       setter(prev => {
         const existingArray = prev[key] || [];
-
         if (status) {
           const indexToReplace = existingArray.findIndex(
             item => item.imageId === imageId,
@@ -516,7 +519,6 @@ export const updateFile = async data => {
             return {...prev, [key]: updatedArray};
           }
         }
-
         return {
           ...prev,
           [key]: [...existingArray, {imageId, path: permanentPath}],
@@ -795,7 +797,7 @@ const syncExistingSignAudits = (loginData, baseUrl) => {
               {headers: {Authorization: `Bearer ${token}`}},
             );
             console.log('RESPONSE EXISTINGG SYNCEDDDD::', response.data);
-            updateExistingSignAudit(audit, 1);
+            await updateExistingSignAudit(audit, 1);
           } catch (err) {
             console.error(
               'Error syncing audit ID',

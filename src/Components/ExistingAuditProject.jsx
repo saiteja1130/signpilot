@@ -191,6 +191,21 @@ const ExistingAuditProject = ({handleFetchData}) => {
         });
 
         if (response.data.status) {
+          const previousImages = selectedOptions?.[actualKey] || [];
+          for (const item of previousImages) {
+            try {
+              if (item?.path) {
+                const storedPath = await getPath(item.path);
+                const cleanedPath = storedPath.startsWith('file://')
+                  ? storedPath.replace('file://', '')
+                  : storedPath;
+                await RNFS.unlink(cleanedPath);
+                console.log('image removeddd', item.path);
+              }
+            } catch (err) {
+              console.log('FILE REMOVEDDD', err);
+            }
+          }
           const imagesArray = response?.data?.data[actualKey] || [];
           // console.log('IMAGESSSARRAYY', imagesArray);
           await insertExistingSignAuditImagesOnly(
@@ -210,10 +225,6 @@ const ExistingAuditProject = ({handleFetchData}) => {
               [actualKey]: imagesaRRAY || [],
             };
           });
-          const fullPath = await getPath(path);
-          await RNFS.unlink(fullPath);
-          // await handleFetchData(null, signProjectData);
-          // setActive('Audit');
         }
       } else {
         createOfflineRemoveTable();
@@ -240,6 +251,7 @@ const ExistingAuditProject = ({handleFetchData}) => {
         });
         insertOfflineRemove(data);
         const fullPath = await getPath(path);
+        console.log('full path', fullPath);
         await RNFS.unlink(`file://${fullPath}`);
       }
     } catch (error) {
@@ -324,12 +336,6 @@ const ExistingAuditProject = ({handleFetchData}) => {
     }
   };
 
-  const fetchData = () => {
-    // console.log('FETCHINGGGG');
-    // insertExistingSignAudit(allData);
-    // console.log('ALL DATA', allData);
-  };
-
   useEffect(() => {
     setTimeout(() => {
       setLoadingImage(false);
@@ -341,7 +347,6 @@ const ExistingAuditProject = ({handleFetchData}) => {
         onPress={() => {
           if (active === '') {
             setActive('Audit');
-            fetchData();
           } else {
             setActive('');
           }
@@ -523,11 +528,8 @@ const ExistingAuditProject = ({handleFetchData}) => {
                                     item => ({...item, isLocal: false}),
                                   ) || []),
                                 ];
-
                                 console.log('MERGED ARRAYS', mergedImages);
-
                                 if (mergedImages.length === 0) return null;
-
                                 return mergedImages.map((item, index) => (
                                   <TouchableOpacity
                                     key={index}
@@ -549,12 +551,13 @@ const ExistingAuditProject = ({handleFetchData}) => {
                                               ?.Id,
                                           'existing_sign_audit',
                                           true,
+                                          selectedOptions,
                                         );
                                       } else {
                                         openEditorforUpdate(
                                           item.path,
                                           setSelectedOptions,
-                                          'existingSignAuditPhoto',
+                                          'existingSignAuditPhotos',
                                           'ExistingAudit',
                                           true,
                                           item.imageId,
@@ -567,15 +570,16 @@ const ExistingAuditProject = ({handleFetchData}) => {
                                               ?.Id,
                                           'existing_sign_audit',
                                           false,
+                                          selectedOptions,
                                         );
                                       }
                                     }}>
                                     <View style={styles.imageContainer}>
                                       <Image
                                         source={{
-                                          uri: item.path.startsWith('file://')
-                                            ? item.path
-                                            : `file://${item.path}`,
+                                          uri: item?.path?.startsWith('file://')
+                                            ? item?.path
+                                            : `file://${item?.path}`,
                                         }}
                                         style={styles.image}
                                       />
