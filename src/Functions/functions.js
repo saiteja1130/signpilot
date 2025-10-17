@@ -595,7 +595,51 @@ const syncExistingSignAudits = (loginData, baseUrl) => {
   });
 };
 
-// 2️⃣ Permitting Assessments
+// 2️⃣ Permitting Assessments Electrical Audits
+const syncElectrical = (loginData, baseUrl) => {
+  return new Promise(resolve => {
+    getUnsyncedElectricalAudits(async audits => {
+      console.log('PENDINGG ELECTRICAL AUDITS', audits);
+      if (audits.length > 0) {
+        const token = loginData?.tokenNumber;
+        for (const audit of audits) {
+          const base64ELectricalAuditPhoto = await getBase64Array(
+            audit?.electricalAuditPhoto || [],
+          );
+          const base64ElectricalTagsPhoto = await getBase64Array(
+            audit?.electricTagsPhoto,
+          );
+          const data = {
+            ...audit,
+            electricalAuditPhoto: base64ELectricalAuditPhoto,
+            electricTagsPhoto: base64ElectricalTagsPhoto,
+            teamId: loginData?.userId,
+            surveyModule: '',
+          };
+          try {
+            const response = await axios.post(
+              `${baseUrl}/updateElectricalAudit`,
+              data,
+              {headers: {Authorization: `Bearer ${token}`}},
+            );
+            console.log('RESPONSE ELECTRICAL SYNCEDDDD::', response.data);
+            updateElectricalAudit(audit, 1);
+          } catch (err) {
+            console.error(
+              'Error syncing audit ID',
+              audit.Id,
+              err.response?.data,
+            );
+            console.error('Error syncing audit ID', audit.Id, err);
+          }
+        }
+      }
+      resolve();
+    });
+  });
+};
+
+// 3️⃣ Permitting Assessments
 const syncPermitting = (loginData, baseUrl) => {
   return new Promise(resolve => {
     getUnsyncedPermittingAssessments(async audits => {
@@ -603,7 +647,12 @@ const syncPermitting = (loginData, baseUrl) => {
       if (audits.length > 0) {
         const token = loginData?.tokenNumber;
         for (const audit of audits) {
-          const data = {...audit, teamId: loginData?.userId, surveyModule: ''};
+          const data = {
+            ...audit,
+
+            teamId: loginData?.userId,
+            surveyModule: '',
+          };
           try {
             const response = await axios.post(
               `${baseUrl}/updatePermittingAssessmentAudit`,
@@ -627,7 +676,7 @@ const syncPermitting = (loginData, baseUrl) => {
   });
 };
 
-// 3️⃣ Sign General Audits
+// 4️⃣ Sign General Audits
 const syncSignGeneral = (loginData, baseUrl) => {
   return new Promise(resolve => {
     getUnsyncedSignGeneralAudits(async audits => {
@@ -644,38 +693,6 @@ const syncSignGeneral = (loginData, baseUrl) => {
             );
             console.log('RESPONSE SIGNGENERAL SYNCEDDDD::', response.data);
             updateSignGeneralAudit(audit, 1);
-          } catch (err) {
-            console.error(
-              'Error syncing audit ID',
-              audit.Id,
-              err.response?.data,
-            );
-            console.error('Error syncing audit ID', audit.Id, err);
-          }
-        }
-      }
-      resolve();
-    });
-  });
-};
-
-// 4️⃣ Electrical Audits
-const syncElectrical = (loginData, baseUrl) => {
-  return new Promise(resolve => {
-    getUnsyncedElectricalAudits(async audits => {
-      console.log('PENDINGG ELECTRICAL AUDITS', audits);
-      if (audits.length > 0) {
-        const token = loginData?.tokenNumber;
-        for (const audit of audits) {
-          const data = {...audit, teamId: loginData?.userId, surveyModule: ''};
-          try {
-            const response = await axios.post(
-              `${baseUrl}/updateElectricalAudit`,
-              data,
-              {headers: {Authorization: `Bearer ${token}`}},
-            );
-            console.log('RESPONSE ELECTRICAL SYNCEDDDD::', response.data);
-            updateElectricalAudit(audit, 1);
           } catch (err) {
             console.error(
               'Error syncing audit ID',
@@ -760,9 +777,9 @@ const syncRemovedImages = (loginData, baseUrl) => {
 export const syncToOnline = async (loginData, baseUrl) => {
   console.log('STARTED SYNCINGGGGG');
   await syncExistingSignAudits(loginData, baseUrl);
+  await syncElectrical(loginData, baseUrl);
   await syncPermitting(loginData, baseUrl);
   await syncSignGeneral(loginData, baseUrl);
-  await syncElectrical(loginData, baseUrl);
   await syncOfflineImages(loginData, baseUrl);
   await syncRemovedImages(loginData, baseUrl);
   await clearCache();

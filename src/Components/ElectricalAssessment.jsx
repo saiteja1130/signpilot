@@ -6,10 +6,8 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  Modal,
-  Pressable,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import Exist from '../../assets/images/2.svg';
 import DropDownIcon from '../../assets/images/downarrow.svg';
 import Photo from '../../assets/images/photo.svg';
@@ -17,17 +15,15 @@ import {styles} from '../Global/Global';
 import SaveImg from '../../assets/images/save.svg';
 import UpDownIcon from '../../assets/images/arrowup.svg';
 import RadioButton from './RadioButton';
-import {useDispatch, useSelector} from 'react-redux';
+import {useSelector} from 'react-redux';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
-import {handleAddPhoto, useNetworkStatus} from '../Functions/functions.js';
-import Menu from '../../assets/images/close.svg';
+import NetInfo from '@react-native-community/netinfo';
+
 import {
   createOfflineRemoveTable,
   getElectricalAuditImagesByKey,
-  getExistingSignAuditImagesByKey,
   insertElectricalAuditImagesOnly,
-  insertExistingSignAuditImagesOnly,
   insertOfflineRemove,
   updateElectricalAudit,
 } from '../Db/LocalData';
@@ -43,14 +39,11 @@ import {
 import RNFS from 'react-native-fs';
 
 const ElectricalAssessment = ({handleFetchData}) => {
-  const status = useNetworkStatus();
-  const [modalVisible, setModalVisible] = useState(false);
-  const [editing, setEditing] = useState('');
   const projectTitle = useSelector(state => state.projecttitle.value);
   const baseUrl = useSelector(state => state.baseUrl.value);
   const signProjectData = useSelector(state => state.signProject.value);
   const loginData = useSelector(state => state.login.value);
-  const [loadingImage, setLoadingImage] = useState(true);
+  const [loadingImage, setLoadingImage] = useState(false);
   const [electricalAuditTodoPunchList, setElectricalAuditTodoPunchList] =
     useState(signProjectData?.electrical_audit?.electricalAuditTodoPunchList);
   const [electricalAuditSummaryNotes, setElectricalAuditSummaryNotes] =
@@ -193,13 +186,23 @@ const ElectricalAssessment = ({handleFetchData}) => {
   ];
 
   const handleSave = async () => {
+    const netState = await NetInfo.fetch();
+    const isConnected = netState.isConnected;
     setLoadingImage(true);
-    const readBase64fromarrayelectricalAuditPhotos = await getBase64Array(
-      selectedOptions?.electricalAuditPhoto,
-    );
-    const readBase64fromarrayTagPhotos = await getBase64Array(
-      selectedOptions?.electricTagsPhoto,
-    );
+    let base64ELectricalAuditPhoto = [];
+    let base64ElectricalTagsPhoto = [];
+    if (isConnected) {
+      base64ELectricalAuditPhoto = await getBase64Array(
+        selectedOptions?.electricalAuditPhoto || [],
+      );
+      base64ElectricalTagsPhoto = await getBase64Array(
+        selectedOptions?.electricTagsPhoto,
+      );
+    } else {
+      base64ELectricalAuditPhoto = selectedOptions?.electricalAuditPhoto || [];
+      base64ElectricalTagsPhoto = selectedOptions?.electricTagsPhoto || [];
+    }
+
     const bodyData = {
       ...selectedOptions,
       typeOfIlluminationInside,
@@ -207,12 +210,13 @@ const ElectricalAssessment = ({handleFetchData}) => {
       electricalAuditSummaryNotes,
       signAliasName: signProjectData?.signAliasName,
       signType: signProjectData?.signType,
-      electricalAuditPhoto: readBase64fromarrayelectricalAuditPhotos,
-      electricTagsPhoto: readBase64fromarrayTagPhotos,
+      electricalAuditPhoto: base64ELectricalAuditPhoto,
+      electricTagsPhoto: base64ElectricalTagsPhoto,
     };
     // console.log('BODY DATAAA', bodyData);
+
     try {
-      if (status) {
+      if (isConnected) {
         const token = loginData?.tokenNumber;
         const response = await axios.post(
           `${baseUrl}/updateElectricalAudit`,
@@ -226,6 +230,20 @@ const ElectricalAssessment = ({handleFetchData}) => {
 
         if (response?.data?.status) {
           await deleteFolders();
+          const existingCachePhotos =
+            selectedOptions?.electricalAuditPhoto || [];
+          for (const file of existingCachePhotos) {
+            try {
+              const fileExists = await RNFS.exists(file.path);
+              if (fileExists) {
+                await RNFS.unlink(file.path);
+                console.log('FILE REMOVED');
+              }
+              console.log(file.path, 'exists?', fileExists);
+            } catch (err) {
+              console.log('Error checking file:', file.path, err);
+            }
+          }
           handleFetchData(null, signProjectData);
           Toast.show({
             type: 'success',
@@ -269,7 +287,7 @@ const ElectricalAssessment = ({handleFetchData}) => {
         });
       }
     } finally {
-      if (status) {
+      if (isConnected) {
         setLoadingImage(false);
       } else {
         setTimeout(() => {
@@ -279,9 +297,44 @@ const ElectricalAssessment = ({handleFetchData}) => {
     }
   };
 
-  const handleRemoveImage = async (imageId1, fieldName1, actualKey, path) => {
+  const handleRemoveImage = async (
+    imageId1,
+    fieldName1,
+    actualKey,
+    path,
+    isLocalImageRemove,
+  ) => {
+    setLoadingImage(true);
+    const netState = await NetInfo.fetch();
+    const isConnected = netState.isConnected;
+    if (isLocalImageRemove) {
+      const updatedArray = selectedOptions?.[fieldName1]?.filter(
+        item => item.ImageId !== imageId1,
+      );
+      // console.log('IMAGESSSARRAYY', imagesArray);
+      await insertElectricalAuditImagesOnly(
+        signProjectData?.signTableId,
+        fieldName1,
+        updatedArray,
+        0,
+      );
+      const imagesaRRAY = await getElectricalAuditImagesByKey(
+        signProjectData?.signTableId,
+        fieldName1,
+      );
+      setSelectedOptions(prev => ({
+        ...prev,
+        [fieldName1]: imagesaRRAY || [],
+      }));
+      const fullPath = await getPath(path);
+      await RNFS.unlink(
+        fullPath.startsWith('file://')
+          ? fullPath.replace('file://', '')
+          : fullPath,
+      );
+      return;
+    }
     try {
-      setLoadingImage(true);
       const data = {
         imageId: imageId1,
         Id:
@@ -292,7 +345,7 @@ const ElectricalAssessment = ({handleFetchData}) => {
         moduleId: signProjectData?.signId,
       };
       const token = loginData?.tokenNumber;
-      if (status) {
+      if (isConnected) {
         const responce = await axios.post(`${baseUrl}/removeFile`, data, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -300,6 +353,21 @@ const ElectricalAssessment = ({handleFetchData}) => {
         });
         // console.log(responce.data, 'resssssss');
         if (responce.data.status) {
+          const previousImages = selectedOptions?.[actualKey] || [];
+          for (const item of previousImages) {
+            try {
+              if (item?.path) {
+                const storedPath = await getPath(item.path);
+                const cleanedPath = storedPath.startsWith('file://')
+                  ? storedPath.replace('file://', '')
+                  : storedPath;
+                await RNFS.unlink(cleanedPath);
+                console.log('image removeddd', item.path);
+              }
+            } catch (err) {
+              console.log('FILE REMOVEDDD', err);
+            }
+          }
           const imagesArray = responce?.data?.data[actualKey] || [];
           // console.log('IMAGESSSARRAYY', imagesArray);
           await insertElectricalAuditImagesOnly(
@@ -320,11 +388,6 @@ const ElectricalAssessment = ({handleFetchData}) => {
               [actualKey]: imagesaRRAY || [],
             };
           });
-          const fullPath = await getPath(path);
-          await RNFS.unlink(fullPath);
-          setTimeout(() => {
-            setLoadingImage(false);
-          }, 1200);
         }
       } else {
         createOfflineRemoveTable();
@@ -355,17 +418,12 @@ const ElectricalAssessment = ({handleFetchData}) => {
       }
     } catch (error) {
       console.log('Error response data:', error);
+    } finally {
+      setTimeout(() => setLoadingImage(false), 1000);
     }
   };
 
-  useEffect(() => {
-    setTimeout(() => {
-      setLoadingImage(false);
-    }, 800);
-  }, [loadingImage]);
-
   const optionIds = ['2', '3', '5', '7', '13', '14', '21'];
-  // console.log('first', signProjectData?.electrical_audit?.optionId);
   if (
     optionIds.includes(signProjectData?.electrical_audit?.optionId) ||
     signProjectData?.electrical_audit?.optionId === undefined
@@ -512,7 +570,7 @@ const ElectricalAssessment = ({handleFetchData}) => {
                                 showPhotoOptions(
                                   setSelectedOptions,
                                   'electricalAuditPhoto',
-                                  '',
+                                  'Electrical',
                                   false,
                                 )
                               }
@@ -535,6 +593,7 @@ const ElectricalAssessment = ({handleFetchData}) => {
                                 flexDirection: 'row',
                                 marginVertical: 15,
                                 gap: 15,
+                                flexWrap: 'wrap',
                               }}>
                               {loadingImage ? (
                                 <ActivityIndicator
@@ -542,14 +601,48 @@ const ElectricalAssessment = ({handleFetchData}) => {
                                   color="#FF9239"
                                 />
                               ) : (
-                                selectedOptions?.electricalAuditPhotos?.length >
-                                  0 &&
-                                selectedOptions.electricalAuditPhotos.map(
-                                  (item, index) => {
-                                    return (
-                                      <TouchableOpacity
-                                        key={index}
-                                        onPress={() => {
+                                (() => {
+                                  const mergedImages = [
+                                    ...(selectedOptions?.electricalAuditPhoto?.map(
+                                      item => ({
+                                        ...item,
+                                        isLocal: true,
+                                      }),
+                                    ) || []),
+                                    ...(selectedOptions?.electricalAuditPhotos?.map(
+                                      item => ({
+                                        ...item,
+                                        isLocal: false,
+                                      }),
+                                    ) || []),
+                                  ];
+
+                                  if (mergedImages.length === 0) return null;
+
+                                  return mergedImages.map((item, index) => (
+                                    <TouchableOpacity
+                                      key={index}
+                                      onPress={() => {
+                                        if (item.isLocal) {
+                                          openEditorforUpdate(
+                                            item.path,
+                                            setSelectedOptions,
+                                            'electricalAuditPhoto',
+                                            'ElectricalAudit',
+                                            true,
+                                            item.ImageId,
+                                            baseUrl,
+                                            loginData?.tokenNumber,
+                                            true,
+                                            signProjectData?.electrical_audit
+                                              ?.id ||
+                                              signProjectData?.electrical_audit
+                                                ?.Id,
+                                            'electrical_audit',
+                                            true,
+                                            selectedOptions,
+                                          );
+                                        } else {
                                           openEditorforUpdate(
                                             item.path,
                                             setSelectedOptions,
@@ -560,43 +653,56 @@ const ElectricalAssessment = ({handleFetchData}) => {
                                             baseUrl,
                                             loginData?.tokenNumber,
                                             true,
-                                            selectedOptions?.signId,
+                                            signProjectData?.electrical_audit
+                                              ?.id ||
+                                              signProjectData?.electrical_audit
+                                                ?.Id,
                                             'electrical_audit',
+                                            false,
+                                            selectedOptions,
                                           );
-                                        }}>
-                                        <View
-                                          key={index}
-                                          style={styles.imageContainer}>
-                                          <Image
-                                            source={{
-                                              uri: item.path.startsWith(
-                                                'file://',
-                                              )
-                                                ? item.path
-                                                : `file://${item.path}`,
-                                            }}
-                                            style={styles.image}
-                                          />
-                                          <TouchableOpacity
-                                            onPress={() =>
+                                        }
+                                      }}>
+                                      <View style={styles.imageContainer}>
+                                        <Image
+                                          source={{
+                                            uri: item?.path?.startsWith(
+                                              'file://',
+                                            )
+                                              ? item?.path
+                                              : `file://${item?.path}`,
+                                          }}
+                                          style={styles.image}
+                                        />
+                                        <TouchableOpacity
+                                          onPress={() => {
+                                            if (!item.isLocal) {
                                               handleRemoveImage(
                                                 item.imageId,
                                                 'electricalAuditPhoto',
                                                 'electricalAuditPhotos',
                                                 item.path,
-                                              )
+                                                false,
+                                              );
+                                            } else {
+                                              handleRemoveImage(
+                                                item.ImageId,
+                                                'electricalAuditPhoto',
+                                                'electricalAuditPhotos',
+                                                item.path,
+                                                true,
+                                              );
                                             }
-                                            style={styles.removeButton}>
-                                            <Text
-                                              style={styles.removeButtonText}>
-                                              ×
-                                            </Text>
-                                          </TouchableOpacity>
-                                        </View>
-                                      </TouchableOpacity>
-                                    );
-                                  },
-                                )
+                                          }}
+                                          style={styles.removeButton}>
+                                          <Text style={styles.removeButtonText}>
+                                            ×
+                                          </Text>
+                                        </TouchableOpacity>
+                                      </View>
+                                    </TouchableOpacity>
+                                  ));
+                                })()
                               )}
                             </View>
                           </View>
@@ -647,6 +753,7 @@ const ElectricalAssessment = ({handleFetchData}) => {
                                 flexDirection: 'row',
                                 marginVertical: 15,
                                 gap: 15,
+                                flexWrap: 'wrap',
                               }}>
                               {loadingImage ? (
                                 <ActivityIndicator
@@ -654,14 +761,48 @@ const ElectricalAssessment = ({handleFetchData}) => {
                                   color="#FF9239"
                                 />
                               ) : (
-                                selectedOptions?.electricTagsPhotos?.length >
-                                  0 &&
-                                selectedOptions.electricTagsPhotos.map(
-                                  (item, index) => {
-                                    return (
-                                      <TouchableOpacity
-                                        key={index}
-                                        onPress={() => {
+                                (() => {
+                                  const mergedImages = [
+                                    ...(selectedOptions?.electricTagsPhoto?.map(
+                                      item => ({
+                                        ...item,
+                                        isLocal: true,
+                                      }),
+                                    ) || []),
+                                    ...(selectedOptions?.electricTagsPhotos?.map(
+                                      item => ({
+                                        ...item,
+                                        isLocal: false,
+                                      }),
+                                    ) || []),
+                                  ];
+
+                                  if (mergedImages.length === 0) return null;
+
+                                  return mergedImages.map((item, index) => (
+                                    <TouchableOpacity
+                                      key={index}
+                                      onPress={() => {
+                                        if (item.isLocal) {
+                                          openEditorforUpdate(
+                                            item.path,
+                                            setSelectedOptions,
+                                            'electricTagsPhoto',
+                                            'ElectricalTag',
+                                            true,
+                                            item.ImageId,
+                                            baseUrl,
+                                            loginData?.tokenNumber,
+                                            true,
+                                            signProjectData?.electrical_audit
+                                              ?.id ||
+                                              signProjectData?.electrical_audit
+                                                ?.Id,
+                                            'electrical_audit',
+                                            true,
+                                            selectedOptions,
+                                          );
+                                        } else {
                                           openEditorforUpdate(
                                             item.path,
                                             setSelectedOptions,
@@ -672,43 +813,56 @@ const ElectricalAssessment = ({handleFetchData}) => {
                                             baseUrl,
                                             loginData?.tokenNumber,
                                             true,
-                                            selectedOptions?.signId,
+                                            signProjectData?.electrical_audit
+                                              ?.id ||
+                                              signProjectData?.electrical_audit
+                                                ?.Id,
                                             'electrical_audit',
+                                            false,
+                                            selectedOptions,
                                           );
-                                        }}>
-                                        <View
-                                          key={index}
-                                          style={styles.imageContainer}>
-                                          <Image
-                                            source={{
-                                              uri: item.path.startsWith(
-                                                'file://',
-                                              )
-                                                ? item.path
-                                                : `file://${item.path}`,
-                                            }}
-                                            style={styles.image}
-                                          />
-                                          <TouchableOpacity
-                                            onPress={() =>
+                                        }
+                                      }}>
+                                      <View style={styles.imageContainer}>
+                                        <Image
+                                          source={{
+                                            uri: item?.path?.startsWith(
+                                              'file://',
+                                            )
+                                              ? item?.path
+                                              : `file://${item?.path}`,
+                                          }}
+                                          style={styles.image}
+                                        />
+                                        <TouchableOpacity
+                                          onPress={() => {
+                                            if (!item.isLocal) {
                                               handleRemoveImage(
                                                 item.imageId,
-                                                'electricalAuditPhoto',
-                                                'electricalAuditPhotos',
+                                                'electricTagsPhoto',
+                                                'electricTagsPhotos',
                                                 item.path,
-                                              )
+                                                false,
+                                              );
+                                            } else {
+                                              handleRemoveImage(
+                                                item.ImageId,
+                                                'electricTagsPhoto',
+                                                'electricTagsPhotos',
+                                                item.path,
+                                                true,
+                                              );
                                             }
-                                            style={styles.removeButton}>
-                                            <Text
-                                              style={styles.removeButtonText}>
-                                              ×
-                                            </Text>
-                                          </TouchableOpacity>
-                                        </View>
-                                      </TouchableOpacity>
-                                    );
-                                  },
-                                )
+                                          }}
+                                          style={styles.removeButton}>
+                                          <Text style={styles.removeButtonText}>
+                                            ×
+                                          </Text>
+                                        </TouchableOpacity>
+                                      </View>
+                                    </TouchableOpacity>
+                                  ));
+                                })()
                               )}
                             </View>
                           </View>
@@ -734,13 +888,6 @@ const ElectricalAssessment = ({handleFetchData}) => {
                       {electricalAuditTodoPunchList?.length}/300
                     </Text>
                   </View>
-                  {/* <TouchableOpacity
-                    onPress={() => {
-                      setEditing('electricalAuditTodoPunchList');
-                      setModalVisible(true);
-                    }}>
-                    <Text>See More</Text>
-                  </TouchableOpacity> */}
                   <View style={styles.section}>
                     <Text style={styles.label}>Summary Notes</Text>
                   </View>
@@ -757,13 +904,6 @@ const ElectricalAssessment = ({handleFetchData}) => {
                       {electricalAuditSummaryNotes?.length}/300
                     </Text>
                   </View>
-                  {/* <TouchableOpacity
-                    onPress={() => {
-                      setEditing('electricalAuditSummaryNotes');
-                      setModalVisible(true);
-                    }}>
-                    <Text>See More</Text>
-                  </TouchableOpacity> */}
                 </View>
               </View>
             )}
@@ -791,45 +931,6 @@ const ElectricalAssessment = ({handleFetchData}) => {
           </View>
         )}
       </View>
-      {/* <Modal
-        transparent
-        animationType="slide"
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}>
-        <Pressable
-          style={styles.backdrop}
-          onPress={() => setModalVisible(false)}>
-          <Pressable style={styles.modalContent}>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)}>
-              <Menu width={26} height={26} />
-            </TouchableOpacity>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Type your message..."
-              value={
-                editing === 'electricalAuditSummaryNotes'
-                  ? electricalAuditSummaryNotes
-                  : electricalAuditTodoPunchList
-              }
-              onChangeText={
-                editing === 'electricalAuditSummaryNotes'
-                  ? setElectricalAuditSummaryNotes
-                  : setElectricalAuditTodoPunchList
-              }
-              multiline
-              maxLength={300}
-            />
-            <Text style={{textAlign: 'right', marginTop: 5}}>
-              {editing === 'electricalAuditSummaryNotes'
-                ? electricalAuditSummaryNotes?.length
-                : electricalAuditTodoPunchList?.length}
-              /300
-            </Text>
-          </Pressable>
-        </Pressable>
-      </Modal> */}
     </View>
   );
 };

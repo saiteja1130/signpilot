@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import Exist from '../../assets/images/1.svg';
 import DropDownIcon from '../../assets/images/downarrow.svg';
 import UpDownIcon from '../../assets/images/arrowup.svg';
@@ -17,20 +17,17 @@ import RadioButton from './RadioButton';
 import {useSelector} from 'react-redux';
 import Photo from '../../assets/images/photo.svg';
 import axios from 'axios';
-import {handleAddPhoto, useNetworkStatus} from '../Functions/functions.js';
 import Toast from 'react-native-toast-message';
 import RNFS from 'react-native-fs';
 import NetInfo from '@react-native-community/netinfo';
 import {
   createOfflineRemoveTable,
   getExistingSignAuditImagesByKey,
-  insertExistingSignAudit,
   insertExistingSignAuditImagesOnly,
   insertOfflineRemove,
   updateExistingSignAudit,
 } from '../Db/LocalData.tsx';
 import {
-  openEditor,
   openEditorforUpdate,
   showPhotoOptions,
 } from '../Functions/ImagePickFunctions.tsx';
@@ -42,12 +39,10 @@ import {
 
 const ExistingAuditProject = ({handleFetchData}) => {
   const projectTitle = useSelector(state => state.projecttitle.value);
-  const allData = useSelector(state => state.allData.value);
-  const status = useNetworkStatus();
   const baseUrl = useSelector(state => state.baseUrl.value);
   const loginData = useSelector(state => state.login.value);
   const signProjectData = useSelector(state => state.signProject.value);
-  const [loadingImage, setLoadingImage] = useState(true);
+  const [loadingImage, setLoadingImage] = useState(false);
   const [active, setActive] = useState('');
   const [existingSignAuditSummaryNotes, setExistingSignAuditSummaryNotes] =
     useState(
@@ -99,10 +94,6 @@ const ExistingAuditProject = ({handleFetchData}) => {
     existingSignAuditSummaryNotes: existingSignAuditSummaryNotes,
   });
 
-  
-
-  // console.log('selectedOptions', selectedOptions);
-
   const data = [
     {
       question: 'Is this a replacement sign?',
@@ -138,15 +129,12 @@ const ExistingAuditProject = ({handleFetchData}) => {
     path,
     isLocalImageRemove,
   ) => {
-    // console.log('REMOVINGGGGGGGG');
     try {
       setLoadingImage(true);
-
       if (isLocalImageRemove) {
         const updatedArray = selectedOptions?.[fieldName1]?.filter(
           item => item.ImageId !== imageId1,
         );
-
         // console.log('IMAGESSSARRAYY', imagesArray);
         await insertExistingSignAuditImagesOnly(
           signProjectData?.signTableId,
@@ -154,12 +142,10 @@ const ExistingAuditProject = ({handleFetchData}) => {
           updatedArray,
           0,
         );
-
         const imagesaRRAY = await getExistingSignAuditImagesByKey(
           signProjectData?.signTableId,
           fieldName1,
         );
-
         setSelectedOptions(prev => ({
           ...prev,
           [fieldName1]: imagesaRRAY || [],
@@ -172,7 +158,6 @@ const ExistingAuditProject = ({handleFetchData}) => {
         );
         return;
       }
-
       const data = {
         imageId: imageId1,
         Id:
@@ -182,10 +167,8 @@ const ExistingAuditProject = ({handleFetchData}) => {
         surveyModule: 'existing_sign_audit',
         moduleId: signProjectData?.signId,
       };
-
       const netState = await NetInfo.fetch();
       const isConnected = netState.isConnected;
-
       if (isConnected) {
         const token = loginData?.tokenNumber;
         const response = await axios.post(`${baseUrl}/removeFile`, data, {
@@ -266,19 +249,17 @@ const ExistingAuditProject = ({handleFetchData}) => {
   };
 
   const handleSave = async () => {
-    // console.log('savinggg....');
     setLoadingImage(true);
-
     let base64s = [];
-
-    if (status) {
+    const netState = await NetInfo.fetch();
+    const isConnected = netState.isConnected;
+    if (isConnected) {
       base64s = await getBase64Array(
         selectedOptions?.existingSignAuditPhoto || [],
       );
     } else {
       base64s = selectedOptions?.existingSignAuditPhoto || [];
     }
-
     const bodyData = {
       ...selectedOptions,
       existingSignAuditPhoto: base64s,
@@ -290,7 +271,7 @@ const ExistingAuditProject = ({handleFetchData}) => {
     };
     // console.log('EXISTING BODY DATA::::', bodyData);
     try {
-      if (status) {
+      if (isConnected) {
         const token = loginData?.tokenNumber;
         const response = await axios.post(
           `${baseUrl}/updateExistingSignAudit`,
@@ -318,7 +299,6 @@ const ExistingAuditProject = ({handleFetchData}) => {
               console.log('Error checking file:', file.path, err);
             }
           }
-
           handleFetchData(null, signProjectData);
           Toast.show({
             type: 'success',
@@ -343,7 +323,7 @@ const ExistingAuditProject = ({handleFetchData}) => {
       console.log(' API Sync failed. Will still save locally.');
       console.log('Error:', error?.response?.data || error?.message);
     } finally {
-      if (status) {
+      if (isConnected) {
         setLoadingImage(false);
       } else {
         setTimeout(() => {
@@ -353,11 +333,6 @@ const ExistingAuditProject = ({handleFetchData}) => {
     }
   };
 
-  useEffect(() => {
-    setTimeout(() => {
-      setLoadingImage(false);
-    }, 800);
-  }, [loadingImage]);
   return (
     <View>
       <TouchableOpacity

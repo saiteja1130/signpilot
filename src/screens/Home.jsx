@@ -1,5 +1,4 @@
 import {
-  Alert,
   FlatList,
   ImageBackground,
   StyleSheet,
@@ -7,7 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import Logo from '../../assets/images/app logo.svg';
 import Refresh from '../../assets/images/cloud.svg';
 import Menu from '../../assets/images/menu.svg';
@@ -24,7 +23,7 @@ import axios from 'axios';
 import {Picker} from '@react-native-picker/picker';
 import {addProject} from '../Redux/Slices/ProjectData';
 import {addSignProject} from '../Redux/Slices/SigProject';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import {setPhotoState} from '../Redux/Slices/PhotosActive';
 import Toast from 'react-native-toast-message';
 import {setActiveState} from '../Redux/Slices/Active';
@@ -42,8 +41,6 @@ import {
   createPermittingAssessmentTable,
   createSignDataOptionsTable,
   createSignGeneralAuditTable,
-  dropAllTables,
-  dropOfflineRemoveTable,
   fetchAllProjectsData,
   insertElectricalAudit,
   insertExistingSignAudit,
@@ -201,7 +198,7 @@ const Home = () => {
   };
 
   const saveSection = async () => {
-    console.log('Savinggg');
+    // console.log('Savinggg');
     try {
       const token = loginData?.tokenNumber;
       const data = {
@@ -255,7 +252,7 @@ const Home = () => {
   };
 
   const filterdata = item => {
-    console.log('itemmmmmmmmmmmmmmmmmmmmmmmmm', item);
+    // console.log('itemmmmmmmmmmmmmmmmmmmmmmmmm', item);
     setSelectedProject(item);
     setSignConfirmed(false);
     const filteredProject = allData.find(data => data.projectTitle === item);
@@ -288,7 +285,6 @@ const Home = () => {
     const init = async () => {
       const netState = await NetInfo.fetch();
       prevConnection.current = netState.isConnected;
-      // await handleNetworkChange(netState.isConnected);
     };
     init();
 
@@ -304,7 +300,7 @@ const Home = () => {
   }, []);
 
   const handleNetworkChange = async isConnected => {
-    console.log('handleNetworkChange CALLED with connection =', isConnected);
+    // console.log('handleNetworkChange CALLED with connection =', isConnected);
     setLoading(true);
     try {
       if (isConnected) {
@@ -313,7 +309,6 @@ const Home = () => {
         await fetchData();
       } else {
         console.log('Went OFFLINE → loading from local DB');
-        console.log('Calling fetchAllProjectsData...');
         try {
           fetchAllProjectsData(projects => {
             console.log('LOCAL PROJECTS:', projects);
@@ -333,7 +328,6 @@ const Home = () => {
       }
     } catch (error) {
       console.error('Error handling network change:', error);
-    } finally {
     }
   };
 
@@ -681,8 +675,8 @@ const Home = () => {
               {signConfirmed && (
                 <>
                   <ExistingAuditProject handleFetchData={fetchData} />
-                  {/* <ElectricalAssessment handleFetchData={fetchData} />
-                  <PermittingAssenment handleFetchData={fetchData} />
+                  <ElectricalAssessment handleFetchData={fetchData} />
+                  {/* <PermittingAssenment handleFetchData={fetchData} />
                   <Outdoor handleFetchData={fetchData} /> */}
                   {/* <Indoor handleFetchData={fetchData} /> */}
                   {/* {<Photos handleFetchData={fetchData} />} */}
