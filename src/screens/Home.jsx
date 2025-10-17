@@ -116,7 +116,7 @@ const Home = () => {
             insertSignGeneralAudit(data, 1),
           ]);
           fetchAllProjectsData(projects => {
-            console.log('All projects data loaded from SQLite:', projects);
+            // console.log('All projects data loaded from SQLite:', projects);
             setAlldata(projects);
             handleProjectSelection(projects, previousSignSelected, state);
           });
@@ -127,7 +127,7 @@ const Home = () => {
       } else {
         console.log('OFFLINE - USING LOCAL DATABASE');
         fetchAllProjectsData(projects => {
-          console.log('Projects from SQLite:', projects);
+          // console.log('Projects from SQLite:', projects);
           if (projects.length > 0) {
             setAlldata(projects);
             handleProjectSelection(projects, previousSignSelected, state);
@@ -150,7 +150,7 @@ const Home = () => {
         return;
       }
       fetchAllProjectsData(projects => {
-        console.log('Projects from SQLite:', projects);
+        // console.log('Projects from SQLite:', projects);
         if (projects.length > 0) {
           setAlldata(projects);
           handleProjectSelection(projects, previousSignSelected, state);

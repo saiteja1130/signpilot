@@ -579,7 +579,7 @@ const syncExistingSignAudits = (loginData, baseUrl) => {
               {headers: {Authorization: `Bearer ${token}`}},
             );
             console.log('RESPONSE EXISTINGG SYNCEDDDD::', response.data);
-            await updateExistingSignAudit(audit, 1);
+            updateExistingSignAudit(audit, 1);
           } catch (err) {
             console.error(
               'Error syncing audit ID',

@@ -99,6 +99,8 @@ const ExistingAuditProject = ({handleFetchData}) => {
     existingSignAuditSummaryNotes: existingSignAuditSummaryNotes,
   });
 
+  
+
   // console.log('selectedOptions', selectedOptions);
 
   const data = [
@@ -302,6 +304,21 @@ const ExistingAuditProject = ({handleFetchData}) => {
         // console.log('EXISITING SIGN API RESPONSE:::', response.data);
         if (response?.data?.status) {
           await deleteFolders();
+          const existingCachePhotos =
+            selectedOptions?.existingSignAuditPhoto || [];
+          for (const file of existingCachePhotos) {
+            try {
+              const fileExists = await RNFS.exists(file.path);
+              if (fileExists) {
+                await RNFS.unlink(file.path);
+                console.log('FILE REMOVED');
+              }
+              console.log(file.path, 'exists?', fileExists);
+            } catch (err) {
+              console.log('Error checking file:', file.path, err);
+            }
+          }
+
           handleFetchData(null, signProjectData);
           Toast.show({
             type: 'success',
@@ -539,6 +556,7 @@ const ExistingAuditProject = ({handleFetchData}) => {
                                           item.path,
                                           setSelectedOptions,
                                           'existingSignAuditPhoto',
+                                          'ExistingAudit',
                                           true,
                                           item.ImageId,
                                           baseUrl,

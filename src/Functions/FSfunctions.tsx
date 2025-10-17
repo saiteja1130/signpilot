@@ -111,43 +111,101 @@ export const getBase64Array2222 = async (
   return base64Array;
 };
 
+// export const downloadImagesArray = async (
+//   images: {imageId: string; url: string}[],
+//   key: string,
+// ) => {
+//   console.log('DOWNLOADING IMAGESS:', key);
+//   console.log('IMAGESS ARRAYYY:', images);
+//   return Promise.all(
+//     images.map(async img => {
+//       try {
+//         const fileExtension = img.url.split('.').pop() || 'jpg';
+//         const folderPath = `${RNFS.ExternalDirectoryPath}/${key}`;
+//         await RNFS.mkdir(folderPath);
+//         console.log('FOLDER CREATED::');
+//         const uniqueName = `${img.imageId}_${Math.random()
+//           .toString(36)
+//           .slice(2)}.${fileExtension}`;
+//         const filePath = `${folderPath}/${uniqueName}`;
+
+//         const result = await RNFS.downloadFile({
+//           fromUrl: img.url,
+//           toFile: filePath,
+//         }).promise;
+//         console.log('IMAGE RESULTTT:::', result);
+//         if (
+//           result.statusCode === 200 ||
+//           result.statusCode === 201 ||
+//           !result.statusCode
+//         ) {
+//           return {
+//             imageId: img.imageId,
+//             path: filePath,
+//           };
+//         } else {
+//           console.log('Failed to download image:', img.url, result.statusCode);
+//           return {imageId: img.imageId, path: null};
+//         }
+//       } catch (error) {
+//         console.log('Error downloading image:', img.url, error);
+//         return {imageId: img.imageId, path: null};
+//       }
+//     }),
+//   );
+// };
+
 export const downloadImagesArray = async (
   images: {imageId: string; url: string}[],
   key: string,
 ) => {
   console.log('DOWNLOADING IMAGESS:', key);
-  return Promise.all(
-    images.map(async img => {
-      try {
-        const fileExtension = img.url.split('.').pop() || 'jpg';
-        const folderPath = `${RNFS.ExternalDirectoryPath}/${key}`;
-        await RNFS.mkdir(folderPath);
-        console.log('FOLDER CREATED::');
-        const filePath = `${folderPath}/${Date.now()}.${fileExtension}`;
-        const result = await RNFS.downloadFile({
-          fromUrl: img.url,
-          toFile: filePath,
-        }).promise;
-        console.log('IMAGE RESULTTT:::', result);
-        if (
-          result.statusCode === 200 ||
-          result.statusCode === 201 ||
-          !result.statusCode
-        ) {
-          return {
-            imageId: img.imageId,
-            path: filePath,
-          };
-        } else {
-          console.log('Failed to download image:', img.url, result.statusCode);
-          return {imageId: img.imageId, path: null};
-        }
-      } catch (error) {
-        console.log('Error downloading image:', img.url, error);
-        return {imageId: img.imageId, path: null};
+  console.log('IMAGESS ARRAYYY:', images);
+
+  const downloaded = [];
+  const folderPath = `${RNFS.ExternalDirectoryPath}/${key}`;
+
+  try {
+    await RNFS.mkdir(folderPath);
+  } catch (e) {
+    console.log('Error creating folder:', e);
+  }
+
+  for (const img of images) {
+    try {
+      const fileExtension = img.url.split('.').pop() || 'jpg';
+      const uniqueName = `${img.imageId}_${Date.now()}_${Math.floor(
+        Math.random() * 10000,
+      )}.${fileExtension}`;
+      const filePath = `${folderPath}/${uniqueName}`;
+
+      const result = await RNFS.downloadFile({
+        fromUrl: img.url,
+        toFile: filePath,
+      }).promise;
+
+      console.log('IMAGE RESULTTT:::', result);
+
+      if (
+        result.statusCode === 200 ||
+        result.statusCode === 201 ||
+        !result.statusCode
+      ) {
+        downloaded.push({
+          imageId: img.imageId,
+          path: filePath,
+        });
+      } else {
+        console.log('Failed to download image:', img.url, result.statusCode);
+        downloaded.push({imageId: img.imageId, path: null});
       }
-    }),
-  );
+    } catch (error) {
+      console.log('Error downloading image:', img.url, error);
+      downloaded.push({imageId: img.imageId, path: null});
+    }
+  }
+
+  return downloaded;
 };
 
 export const deleteFolders = () => {

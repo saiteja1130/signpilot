@@ -1096,7 +1096,7 @@ export const insertPermittingAssessment = (projects: any[], syched: number) => {
       projects.forEach(project => {
         project.signDataOptions?.forEach((option: any) => {
           const audit: PermittingAssessment = option.permitting_assessment;
-          console.log('AUDITTTTPERMITTTTTT:::::::::::::::', audit);
+          // console.log('AUDITTTTPERMITTTTTT:::::::::::::::', audit);
           const id = option.permitting_assessment.id;
           if (audit) {
             tx.executeSql(
