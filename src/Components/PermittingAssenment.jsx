@@ -19,6 +19,7 @@ import {useSelector} from 'react-redux';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
 import {updatePermittingAssessment} from '../Db/LocalData';
+import NetInfo from '@react-native-community/netinfo';
 
 const PermittingAssenment = ({handleFetchData}) => {
   const projectTitle = useSelector(state => state.projecttitle.value);

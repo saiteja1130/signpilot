@@ -684,7 +684,22 @@ const syncSignGeneral = (loginData, baseUrl) => {
       if (audits.length > 0) {
         const token = loginData?.tokenNumber;
         for (const audit of audits) {
-          const data = {...audit, teamId: loginData?.userId, surveyModule: ''};
+          const base64AccessibilityObstructionsDocumentAccessibilityIssuesPhoto =
+            await getBase64Array(
+              audit?.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto ||
+                [],
+            );
+          const base64PotentialSafetyIssuesPhoto = await getBase64Array(
+            audit?.anyPotentialSafetyIssuesPhoto,
+          );
+          const data = {
+            ...audit,
+            anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto:
+              base64AccessibilityObstructionsDocumentAccessibilityIssuesPhoto,
+            anyPotentialSafetyIssuesPhoto: base64PotentialSafetyIssuesPhoto,
+            teamId: loginData?.userId,
+            surveyModule: '',
+          };
           try {
             const response = await axios.post(
               `${baseUrl}/updateSignGeneralAudit`,

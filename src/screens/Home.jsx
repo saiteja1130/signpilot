@@ -16,7 +16,7 @@ import Mark from '../../assets/images/ui.svg';
 import ExistingAuditProject from '../Components/ExistingAuditProject';
 import ElectricalAssessment from '../Components/ElectricalAssessment';
 import PermittingAssenment from '../Components/PermittingAssenment';
-import Outdoor from '../Components/OutDoor';
+import Outdoor from '../Components/OutDoorAndIndoor';
 import Photos from '../Components/Photos';
 import {useDispatch, useSelector} from 'react-redux';
 import axios from 'axios';
@@ -674,10 +674,10 @@ const Home = () => {
               )}
               {signConfirmed && (
                 <>
-                  <ExistingAuditProject handleFetchData={fetchData} />
+                  {/* <ExistingAuditProject handleFetchData={fetchData} />
                   <ElectricalAssessment handleFetchData={fetchData} />
-                  <PermittingAssenment handleFetchData={fetchData} />
-                  {/*<Outdoor handleFetchData={fetchData} /> */}
+                  <PermittingAssenment handleFetchData={fetchData} /> */}
+                  <Outdoor handleFetchData={fetchData} />
                   {/* <Indoor handleFetchData={fetchData} /> */}
                   {/* {<Photos handleFetchData={fetchData} />} */}
 

@@ -39,7 +39,6 @@ import {
 import {deleteFolders, getBase64Array, getPath} from '../Functions/FSfunctions';
 const OutDoor = ({handleFetchData}) => {
   const projectTitle = useSelector(state => state.projecttitle.value);
-
   const status = useNetworkStatus();
   const baseUrl = useSelector(state => state.baseUrl.value);
   const loginData = useSelector(state => state.login.value);
@@ -59,6 +58,12 @@ const OutDoor = ({handleFetchData}) => {
     signProjectData?.sign_general_audit
       ?.signGeneralAuditDocumentAccessibilityIssues,
   );
+
+  console.log(
+    'signProjectData?.sign_general_audit',
+    signProjectData.sign_general_audit,
+  );
+
   const [inputFields, setInputFields] = useState([
     {
       placeholder: 'General Description of placement of sign',
@@ -145,10 +150,12 @@ const OutDoor = ({handleFetchData}) => {
       value: 'ladderOrLiftRequired',
     },
   ];
-  const [loadingImage, setLoadingImage] = useState(true);
+  const [loadingImage, setLoadingImage] = useState(false);
+
   const [sizeOfLadderOrLift, setSizeOfLadderOrLift] = useState(
     signProjectData?.sign_general_audit?.sizeOfLadderOrLift || '',
   );
+
   const [selectedOptions, setSelectedOptions] = useState({
     Id:
       signProjectData?.sign_general_audit?.id ||
@@ -240,6 +247,7 @@ const OutDoor = ({handleFetchData}) => {
     anyPotentialSafetyIssuesPhotos:
       signProjectData?.sign_general_audit?.anyPotentialSafetyIssuesPhotos,
   });
+
   const handleState = value => {
     if (value === state) {
       setState(null);
@@ -247,6 +255,7 @@ const OutDoor = ({handleFetchData}) => {
       setState(value);
     }
   };
+
   const handleInputChange = (text, index) => {
     const key = inputFields[index].setToValue;
     setSelectedOptions(prev => ({
@@ -254,17 +263,29 @@ const OutDoor = ({handleFetchData}) => {
       [key]: text,
     }));
   };
-  const handleSave = async () => {
-    console.log('--- Save Button Pressed ---');
-    setLoadingImage(true);
 
-    const base64AnyObstructionsPhotos = await getBase64Array(
-      selectedOptions?.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto ||
-        [],
-    );
-    const base64anyPotentialIssuesPhotos = await getBase64Array(
-      selectedOptions?.anyPotentialSafetyIssuesPhoto || [],
-    );
+  const handleSave = async () => {
+    // console.log('--- Save Button Pressed ---');
+    setLoadingImage(true);
+    let base64AnyObstructionsPhotos = [];
+    let base64anyPotentialIssuesPhotos = [];
+    const netState = await NetInfo.fetch();
+    const isConnected = netState.isConnected;
+    if (isConnected) {
+      base64AnyObstructionsPhotos = await getBase64Array(
+        selectedOptions?.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto ||
+          [],
+      );
+      base64anyPotentialIssuesPhotos = await getBase64Array(
+        selectedOptions?.anyPotentialSafetyIssuesPhoto || [],
+      );
+    } else {
+      base64AnyObstructionsPhotos =
+        selectedOptions?.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto ||
+        [];
+      base64anyPotentialIssuesPhotos =
+        selectedOptions?.anyPotentialSafetyIssuesPhoto || [];
+    }
 
     const signGeneralData = {
       ...selectedOptions,
@@ -276,14 +297,10 @@ const OutDoor = ({handleFetchData}) => {
         base64AnyObstructionsPhotos,
       anyPotentialSafetyIssuesPhoto: base64anyPotentialIssuesPhotos,
     };
-    // console.log(signGeneralData);
-
-    // return;
 
     try {
-      if (status) {
+      if (isConnected) {
         const token = loginData?.tokenNumber;
-
         const response = await axios.post(
           `${baseUrl}/updateSignGeneralAudit`,
           signGeneralData,
@@ -293,15 +310,33 @@ const OutDoor = ({handleFetchData}) => {
             },
           },
         );
-
         if (response?.data?.status) {
+          await deleteFolders();
+          const imagesCache = [
+            ...(selectedOptions?.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto ||
+              []),
+            ...(selectedOptions?.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto ||
+              []),
+          ];
+          for (const file of imagesCache) {
+            try {
+              const fileExists = await RNFS.exists(file.path);
+              if (fileExists) {
+                await RNFS.unlink(file.path);
+                console.log('FILE REMOVED');
+              }
+              console.log(file.path, 'exists?', fileExists);
+            } catch (err) {
+              console.log('Error checking file:', file.path, err);
+            }
+          }
           Toast.show({
             type: 'success',
             text1: response?.data?.message || 'Audit saved successfully.',
             visibilityTime: 3000,
             position: 'top',
           });
-          await deleteFolders();
+
           handleFetchData(null, signProjectData);
         } else {
           throw new Error('Sync failed with unknown server response.');
@@ -320,14 +355,52 @@ const OutDoor = ({handleFetchData}) => {
       console.log('❌ API Sync failed. Will still save locally.');
       console.log('Error:', error?.response?.data || error?.message);
     } finally {
-      setLoadingImage(false);
+      if (isConnected) {
+        setLoadingImage(false);
+      } else {
+        setTimeout(() => {
+          setLoadingImage(false);
+        }, 1200);
+      }
     }
   };
 
-  const handleRemoveImage = async (imageId1, fieldName1, actualKey, path) => {
+  const handleRemoveImage = async (
+    imageId1,
+    fieldName1,
+    actualKey,
+    path,
+    isLocalImageRemove,
+  ) => {
     try {
       setLoadingImage(true);
-
+      if (isLocalImageRemove) {
+        const updatedArray = selectedOptions?.[fieldName1]?.filter(
+          item => item.ImageId !== imageId1,
+        );
+        // console.log('IMAGESSSARRAYY', imagesArray);
+        await insertSignGeneralAuditImagesOnly(
+          signProjectData?.signTableId,
+          fieldName1,
+          updatedArray,
+          0,
+        );
+        const imagesaRRAY = await getSignGeneralAuditImagesByKey(
+          signProjectData?.signTableId,
+          fieldName1,
+        );
+        setSelectedOptions(prev => ({
+          ...prev,
+          [fieldName1]: imagesaRRAY || [],
+        }));
+        const fullPath = await getPath(path);
+        await RNFS.unlink(
+          fullPath.startsWith('file://')
+            ? fullPath.replace('file://', '')
+            : fullPath,
+        );
+        return;
+      }
       const data = {
         imageId: imageId1,
         Id:
@@ -337,17 +410,29 @@ const OutDoor = ({handleFetchData}) => {
         surveyModule: 'sign_general_audit',
         moduleId: signProjectData?.signId,
       };
-
       const netState = await NetInfo.fetch();
       const isConnected = netState.isConnected;
-
       if (isConnected) {
         const token = loginData?.tokenNumber;
         const response = await axios.post(`${baseUrl}/removeFile`, data, {
           headers: {Authorization: `Bearer ${token}`},
         });
-
         if (response.data.status) {
+          const previousImages = selectedOptions?.[actualKey] || [];
+          for (const item of previousImages) {
+            try {
+              if (item?.path) {
+                const storedPath = await getPath(item.path);
+                const cleanedPath = storedPath.startsWith('file://')
+                  ? storedPath.replace('file://', '')
+                  : storedPath;
+                await RNFS.unlink(cleanedPath);
+                console.log('image removeddd', item.path);
+              }
+            } catch (err) {
+              console.log('FILE REMOVEDDD', err);
+            }
+          }
           const imagesArray = response?.data?.data?.[actualKey] || [];
           await insertSignGeneralAuditImagesOnly(
             signProjectData?.signTableId,
@@ -363,8 +448,6 @@ const OutDoor = ({handleFetchData}) => {
             ...prev,
             [actualKey]: updated || [],
           }));
-          const fullPath = await getPath(path);
-          await RNFS.unlink(fullPath);
         }
       } else {
         createOfflineRemoveTable();
@@ -396,12 +479,6 @@ const OutDoor = ({handleFetchData}) => {
       setTimeout(() => setLoadingImage(false), 1000);
     }
   };
-
-  useEffect(() => {
-    setTimeout(() => {
-      setLoadingImage(false);
-    }, 800);
-  }, [loadingImage]);
 
   return (
     <View>
@@ -538,63 +615,82 @@ const OutDoor = ({handleFetchData}) => {
                           flexDirection: 'row',
                           marginVertical: 15,
                           gap: 15,
+                          flexWrap: 'wrap',
                         }}>
                         {loadingImage ? (
                           <ActivityIndicator size="small" color="#FF9239" />
                         ) : (
-                          selectedOptions
-                            ?.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhotos
-                            ?.length > 0 &&
-                          selectedOptions?.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhotos?.map(
-                            (item, index) => {
-                              return (
-                                <TouchableOpacity
-                                  key={index}
-                                  onPress={() => {
-                                    openEditorforUpdate(
-                                      item.path,
-                                      setSelectedOptions,
-                                      'anyAccessibilityObstructionsDocumentAccessibilityIssuesPhotos',
-                                      'SignGeneralAudit',
-                                      true,
-                                      item.imageId,
-                                      baseUrl,
-                                      loginData?.tokenNumber,
-                                      true,
-                                      selectedOptions?.signId,
-                                      'sign_general_audit',
-                                    );
-                                  }}>
-                                  <View
-                                    key={index}
-                                    style={styles.imageContainer}>
-                                    <Image
-                                      source={{
-                                        uri: item.path.startsWith('file://')
-                                          ? item.path
-                                          : `file://${item.path}`,
-                                      }}
-                                      style={styles.image}
-                                    />
-                                    <TouchableOpacity
-                                      onPress={() =>
-                                        handleRemoveImage(
-                                          item.imageId,
-                                          'anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto',
-                                          'anyAccessibilityObstructionsDocumentAccessibilityIssuesPhotos',
-                                          item.path,
-                                        )
-                                      }
-                                      style={styles.removeButton}>
-                                      <Text style={styles.removeButtonText}>
-                                        ×
-                                      </Text>
-                                    </TouchableOpacity>
-                                  </View>
-                                </TouchableOpacity>
-                              );
-                            },
-                          )
+                          (() => {
+                            const mergedImages = [
+                              ...(selectedOptions?.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto?.map(
+                                item => ({
+                                  ...item,
+                                  isLocal: true,
+                                }),
+                              ) || []),
+                              ...(selectedOptions?.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhotos?.map(
+                                item => ({
+                                  ...item,
+                                  isLocal: false,
+                                }),
+                              ) || []),
+                            ];
+
+                            if (mergedImages.length === 0) return null;
+
+                            return mergedImages.map((item, index) => (
+                              <TouchableOpacity
+                                key={index}
+                                onPress={() => {
+                                  openEditorforUpdate(
+                                    item.path,
+                                    setSelectedOptions,
+                                    item.isLocal
+                                      ? 'anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto'
+                                      : 'anyAccessibilityObstructionsDocumentAccessibilityIssuesPhotos',
+                                    'SignGeneralAudit',
+                                    true,
+                                    item.isLocal ? item.ImageId : item.imageId,
+                                    baseUrl,
+                                    loginData?.tokenNumber,
+                                    true,
+                                    signProjectData?.sign_general_audit?.id ||
+                                      signProjectData?.sign_general_audit?.Id,
+                                    'sign_general_audit',
+                                    item.isLocal,
+                                    selectedOptions,
+                                  );
+                                }}>
+                                <View style={styles.imageContainer}>
+                                  <Image
+                                    source={{
+                                      uri: item.path.startsWith('file://')
+                                        ? item.path
+                                        : `file://${item.path}`,
+                                    }}
+                                    style={styles.image}
+                                  />
+                                  <TouchableOpacity
+                                    onPress={() => {
+                                      handleRemoveImage(
+                                        item.isLocal
+                                          ? item.ImageId
+                                          : item.imageId,
+                                        'anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto',
+                                        'anyAccessibilityObstructionsDocumentAccessibilityIssuesPhotos',
+                                        item.path,
+                                        item.isLocal,
+                                      );
+                                    }}
+                                    style={styles.removeButton}>
+                                    <Text style={styles.removeButtonText}>
+                                      ×
+                                    </Text>
+                                  </TouchableOpacity>
+                                </View>
+                              </TouchableOpacity>
+                            ));
+                          })()
                         )}
                       </View>
                     </View>
@@ -747,62 +843,107 @@ const OutDoor = ({handleFetchData}) => {
                           flexDirection: 'row',
                           marginVertical: 15,
                           gap: 15,
+                          flexWrap: 'wrap',
                         }}>
                         {loadingImage ? (
                           <ActivityIndicator size="large" color="#FF9239" />
                         ) : (
-                          selectedOptions?.anyPotentialSafetyIssuesPhotos
-                            ?.length > 0 &&
-                          selectedOptions.anyPotentialSafetyIssuesPhotos.map(
-                            (item, index) => {
-                              return (
-                                <TouchableOpacity
-                                  key={index}
-                                  onPress={() => {
+                          (() => {
+                            const mergedImages = [
+                              ...(selectedOptions?.anyPotentialSafetyIssuesPhoto?.map(
+                                item => ({
+                                  ...item,
+                                  isLocal: true,
+                                }),
+                              ) || []),
+                              ...(selectedOptions?.anyPotentialSafetyIssuesPhotos?.map(
+                                item => ({
+                                  ...item,
+                                  isLocal: false,
+                                }),
+                              ) || []),
+                            ];
+
+                            if (mergedImages.length === 0) return null;
+
+                            return mergedImages.map((item, index) => (
+                              <TouchableOpacity
+                                key={index}
+                                onPress={() => {
+                                  if (item.isLocal) {
                                     openEditorforUpdate(
                                       item.path,
                                       setSelectedOptions,
                                       'anyPotentialSafetyIssuesPhoto',
-                                      'SignGeneralAudit',
+                                      'SignGeneralAudit', // or SignGeneralAudit? You decide
+                                      true,
+                                      item.ImageId,
+                                      baseUrl,
+                                      loginData?.tokenNumber,
+                                      true,
+                                      signProjectData?.sign_general_audit?.id ||
+                                        signProjectData?.sign_general_audit?.Id,
+                                      'sign_general_audit',
+                                      true,
+                                      selectedOptions,
+                                    );
+                                  } else {
+                                    openEditorforUpdate(
+                                      item.path,
+                                      setSelectedOptions,
+                                      'anyPotentialSafetyIssuesPhotos',
+                                      'SignGeneralAudit', // or SignGeneralAudit?
                                       true,
                                       item.imageId,
                                       baseUrl,
                                       loginData?.tokenNumber,
                                       true,
-                                      selectedOptions?.signId,
+                                      signProjectData?.sign_general_audit?.id ||
+                                        signProjectData?.sign_general_audit?.Id,
                                       'sign_general_audit',
+                                      false,
+                                      selectedOptions,
                                     );
-                                  }}>
-                                  <View
-                                    key={index}
-                                    style={styles.imageContainer}>
-                                    <Image
-                                      source={{
-                                        uri: item.path.startsWith('file://')
-                                          ? item.path
-                                          : `file://${item.path}`,
-                                      }}
-                                      style={styles.image}
-                                    />
-                                    <TouchableOpacity
-                                      onPress={() =>
+                                  }
+                                }}>
+                                <View style={styles.imageContainer}>
+                                  <Image
+                                    source={{
+                                      uri: item?.path?.startsWith('file://')
+                                        ? item?.path
+                                        : `file://${item?.path}`,
+                                    }}
+                                    style={styles.image}
+                                  />
+                                  <TouchableOpacity
+                                    onPress={() => {
+                                      if (!item.isLocal) {
                                         handleRemoveImage(
                                           item.imageId,
                                           'anyPotentialSafetyIssuesPhoto',
                                           'anyPotentialSafetyIssuesPhotos',
                                           item.path,
-                                        )
+                                          false,
+                                        );
+                                      } else {
+                                        handleRemoveImage(
+                                          item.ImageId,
+                                          'anyPotentialSafetyIssuesPhoto',
+                                          'anyPotentialSafetyIssuesPhotos',
+                                          item.path,
+                                          true,
+                                        );
                                       }
-                                      style={styles.removeButton}>
-                                      <Text style={styles.removeButtonText}>
-                                        ×
-                                      </Text>
-                                    </TouchableOpacity>
-                                  </View>
-                                </TouchableOpacity>
-                              );
-                            },
-                          )
+                                    }}
+                                    style={styles.removeButton}>
+                                    <Text style={styles.removeButtonText}>
+                                      ×
+                                    </Text>
+                                  </TouchableOpacity>
+                                </View>
+                              </TouchableOpacity>
+                            ));
+                          })()
                         )}
                       </View>
                     </View>
