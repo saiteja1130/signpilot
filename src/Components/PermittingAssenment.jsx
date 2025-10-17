@@ -19,12 +19,9 @@ import {useSelector} from 'react-redux';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
 import {updatePermittingAssessment} from '../Db/LocalData';
-import {useNetworkStatus} from '../Functions/functions';
 
 const PermittingAssenment = ({handleFetchData}) => {
   const projectTitle = useSelector(state => state.projecttitle.value);
-
-  const status = useNetworkStatus();
   const baseUrl = useSelector(state => state.baseUrl.value);
   const [active, setActive] = useState('');
   const signProjectData = useSelector(state => state.signProject.value);
@@ -126,12 +123,12 @@ const PermittingAssenment = ({handleFetchData}) => {
       ) {
         validDate = new Date(currentDate);
       } else {
-        validDate = new Date(); // ✅ always start from today
+        validDate = new Date(); 
       }
 
       DateTimePickerAndroid.open({
         value: validDate,
-        minimumDate: new Date(), // ✅ prevents past dates (optional)
+        minimumDate: new Date(), 
         onChange: (event, selectedDate) => {
           if (selectedDate) {
             setDate(selectedDate);
@@ -150,9 +147,10 @@ const PermittingAssenment = ({handleFetchData}) => {
     return date.toLocaleDateString();
   };
   const handleSave = async () => {
-    console.log('--- Save Button Pressed ---');
+    // console.log('--- Save Button Pressed ---');
     setLoadingImage(true);
-
+    const netState = await NetInfo.fetch();
+    const isConnected = netState.isConnected;
     const permitData = {
       ...selectedOptions,
       permitTimeframeFrom: fromDate?.toISOString() || '',
@@ -165,7 +163,7 @@ const PermittingAssenment = ({handleFetchData}) => {
       signType: signProjectData?.signType,
     };
     try {
-      if (status) {
+      if (isConnected) {
         const token = loginData?.tokenNumber;
         const response = await axios.post(
           `${baseUrl}/updatePermittingAssessmentAudit`,
@@ -203,7 +201,7 @@ const PermittingAssenment = ({handleFetchData}) => {
       console.log('❌ API Sync failed. Will still save locally.');
       console.log('Error:', error?.response?.data || error?.message);
     } finally {
-      if (status) {
+      if (isConnected) {
         setLoadingImage(false);
       } else {
         setTimeout(() => {

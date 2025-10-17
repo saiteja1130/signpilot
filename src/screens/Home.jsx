@@ -676,8 +676,8 @@ const Home = () => {
                 <>
                   <ExistingAuditProject handleFetchData={fetchData} />
                   <ElectricalAssessment handleFetchData={fetchData} />
-                  {/* <PermittingAssenment handleFetchData={fetchData} />
-                  <Outdoor handleFetchData={fetchData} /> */}
+                  <PermittingAssenment handleFetchData={fetchData} />
+                  {/*<Outdoor handleFetchData={fetchData} /> */}
                   {/* <Indoor handleFetchData={fetchData} /> */}
                   {/* {<Photos handleFetchData={fetchData} />} */}
 
