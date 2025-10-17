@@ -321,6 +321,7 @@ const Home = () => {
             if (projects.length > 0) {
               setAlldata(projects);
               handleProjectSelection(projects, signProjectData);
+              setResponse(true);
             } else {
               console.log('No local projects available');
               setResponse(false);
