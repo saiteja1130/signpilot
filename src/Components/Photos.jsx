@@ -21,628 +21,696 @@ import axios from 'axios';
 import Toast from 'react-native-toast-message';
 import {handleAddPhoto} from '../Functions/functions';
 import RadioButton from './RadioButton';
+import NetInfo from '@react-native-community/netinfo';
+import {deleteFolders, getBase64Array, getPath} from '../Functions/FSfunctions';
+import RNFS from 'react-native-fs';
+import {
+  createOfflineRemoveTable,
+  getPhotosAndMeasurementsImagesByKey,
+  insertOfflineRemove,
+  insertPhotosAndMeasurementsImagesOnly,
+  updatePhotosAndMeasurements,
+} from '../Db/LocalData';
+import {
+  openEditorforUpdate,
+  showPhotoOptions,
+} from '../Functions/ImagePickFunctions';
+
 const Photos = ({handleFetchData}) => {
   const projectTitle = useSelector(state => state.projecttitle.value);
-
   const [active, setActive] = useState('');
   const baseUrl = useSelector(state => state.baseUrl.value);
   const loginData = useSelector(state => state.login.value);
   const signProjectData = useSelector(state => state.signProject.value);
-  const [loadingImage, setLoadingImage] = useState(true);
+  const [loadingImage, setLoadingImage] = useState(false);
   const signName = signProjectData?.signName;
   const [signDimentionsState, setSignDimensionsState] = useState(false);
   const [measureChannel, setMeasureChannel] = useState(false);
   const [footage, setFootage] = useState(false);
   const [measureGround, setMeasureGround] = useState(false);
   const [otherPhotos, setOtherPhotos] = useState(false);
+  const [pansState, setPanstate] = useState(false);
+
+  useEffect(() => {
+    setSignDimensionsState(false);
+    setMeasureChannel(false);
+    setFootage(false);
+    setMeasureGround(false);
+    setOtherPhotos(false);
+  }, [active]);
 
   const [
     photosAndMeasurementsTodoPunchList,
     setPhotosAndMeasurementsTodoPunchList,
   ] = useState(
-    signProjectData?.outdoor_photos_and_measurements
+    signProjectData?.photos_and_measurements
       ?.photosAndMeasurementsTodoPunchList || '',
   );
   const [
     photosAndMeasurementsSummaryNotes,
     SetPhotosAndMeasurementsSummaryNotes,
   ] = useState(
-    signProjectData?.outdoor_photos_and_measurements
+    signProjectData?.photos_and_measurements
       ?.photosAndMeasurementsSummaryNotes || '',
   );
-  // const selectedOptions = {
-  //   Id: signProjectData?.sign_general_audit?.id,
-  //   projectId: signProjectData?.sign_general_audit?.projectId,
-  //   signId: signProjectData?.sign_general_audit?.signId,
-  //   optionId: signProjectData?.sign_general_audit?.optionId,
-  //   teamId: loginData?.userId,
-  //   adminId: loginData?.userId,
-  //   squareFootageFeet: '',
-  //   customerName: 'chris ronan',
-  //   signDimensionsHeightFT: '',
-  //   signDimensionsHeightIN: '',
-  //   signDimensionsWidthFT: '',
-  //   signDimensionsWidthIN: '',
-  //   signDimensionsDepthFT: '',
-  //   signDimensionsDepthIN: '',
-  //   wallDimensionsLengthFT: '',
-  //   wallDimensionsLengthIN: '',
-  //   wallDimensionsWidthFT: '',
-  //   wallDimensionsWidthIN: '',
-  //   squareFootageCalculationRequired: null,
-  //   squareFootageLengthIN: '',
-  //   squareFootageWidthIN: '',
-  //   squareFootage: '',
-  //   squareFootageNotes: '',
-  //   photoOfWallOrFloor: '',
-  //   measureDistanceLength1FT: '',
-  //   measureDistanceLength1IN: '',
-  //   measureDistanceLength2FT: '',
-  //   measureDistanceLength2IN: '',
-  //   measureDistanceLength3FT: '',
-  //   measureDistanceLength3IN: '',
-  //   measureDistanceLength4FT: '',
-  //   measureDistanceLength4IN: '',
-  //   areThereAnyVisibleOpenings: null,
-  //   visibleOpeningsLengthFT: '',
-  //   visibleOpeningsLengthIN: '',
-  //   visibleOpeningsWidthFT: '',
-  //   visibleOpeningsWidthIN: '',
-  //   visibleOpeningsNotes: '',
-  //   measureDistanceFromSignToFloorLengthFT: '',
-  //   measureDistanceFromSignToFloorLengthIN: '',
-  //   areMullionsPresent: null,
-  //   mullionsLengthFT: '',
-  //   mullionsLengthIN: '',
-  //   mullionsWidthFT: '',
-  //   mullionsWidthIN: '',
-  //   mullionsDepthFT: '',
-  //   mullionsDepthIN: '',
-  //   mullionsNotes: '',
-  //   indoorMeasurement: '',
-  //   otherPhotosAndMeasurementsLengthFT: '',
-  //   otherPhotosAndMeasurementsLengthIN: '',
-  //   otherPhotosAndMeasurementsWidthFT: '',
-  //   otherPhotosAndMeasurementsWidthIN: '',
-  //   otherPhotosAndMeasurementsDepthFT: '',
-  //   otherPhotosAndMeasurementsDepthIN: '',
-  //   photosAndMeasurementsTodoPunchList: '',
-  //   photosAndMeasurementsSummaryNotes: '',
-  //   surveyModule: 'Photos & Measurements',
-  //   signDimensionsPhoto: [],
-  //   signDimensionsSpikePhoto: [],
-  //   photoCloseUpOfSign: [],
-  //   wallDimensionsPhoto: [],
-  //   wallDimensionsSpikePhoto: [],
-  //   squareFootagePhoto: [],
-  //   squareFootageSpikePhoto: [],
-  //   photoOfWallOrFloorPhoto: [],
-  //   visibleOpeningsPhoto: [],
-  //   visibleOpeningsSpike: [],
-  //   mullionsPhoto: [],
-  //   mullionsSpike: [],
-  //   otherPhotosImage: [],
-  //   otherPhotosSpike: [],
-  // };
+
   const [selectedOptions, setSelectedOptions] = useState({
-    Id: signProjectData?.sign_general_audit?.id,
-    projectId: signProjectData?.sign_general_audit?.projectId,
-    signId: signProjectData?.sign_general_audit?.signId,
-    optionId: signProjectData?.sign_general_audit?.optionId,
+    Id:
+      signProjectData?.photos_and_measurements?.id ||
+      signProjectData?.photos_and_measurements?.Id,
+    projectId: signProjectData?.photos_and_measurements?.projectId,
+    signId: signProjectData?.photos_and_measurements?.signId,
+    optionId: signProjectData?.photos_and_measurements?.optionId,
     teamId: loginData?.userId,
     adminId: loginData?.userId,
     signDimensionsDepthFT:
-      signProjectData?.outdoor_photos_and_measurements?.signDimensionsDepthFT ||
-      '',
+      signProjectData?.photos_and_measurements?.signDimensionsDepthFT || '',
     signDimensionsDepthIN:
-      signProjectData?.outdoor_photos_and_measurements?.signDimensionsDepthIN ||
-      '',
+      signProjectData?.photos_and_measurements?.signDimensionsDepthIN || '',
     signDimensionsHeightFT:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.signDimensionsHeightFT || '',
+      signProjectData?.photos_and_measurements?.signDimensionsHeightFT || '',
     signDimensionsHeightIN:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.signDimensionsHeightIN || '',
+      signProjectData?.photos_and_measurements?.signDimensionsHeightIN || '',
     signDimensionsWidthFT:
-      signProjectData?.outdoor_photos_and_measurements?.signDimensionsWidthFT ||
-      '',
+      signProjectData?.photos_and_measurements?.signDimensionsWidthFT || '',
     signDimensionsWidthIN:
-      signProjectData?.outdoor_photos_and_measurements?.signDimensionsWidthIN ||
-      '',
+      signProjectData?.photos_and_measurements?.signDimensionsWidthIN || '',
     measureChannelLettersDepthIN:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureChannelLettersDepthIN || '',
+      signProjectData?.photos_and_measurements?.measureChannelLettersDepthIN ||
+      '',
     measureChannelLettersHeightFT:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureChannelLettersHeightFT || '',
+      signProjectData?.photos_and_measurements?.measureChannelLettersHeightFT ||
+      '',
     measureChannelLettersHeightIN:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureChannelLettersHeightIN || '',
+      signProjectData?.photos_and_measurements?.measureChannelLettersHeightIN ||
+      '',
     measureChannelLettersWidthFT:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureChannelLettersWidthFT || '',
+      signProjectData?.photos_and_measurements?.measureChannelLettersWidthFT ||
+      '',
     measureChannelLettersWidthIN:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureChannelLettersWidthIN || '',
+      signProjectData?.photos_and_measurements?.measureChannelLettersWidthIN ||
+      '',
     measureChannelLettersDepthFT:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureChannelLettersDepthFT || '',
+      signProjectData?.photos_and_measurements?.measureChannelLettersDepthFT ||
+      '',
     measureCutSizeDepthFT:
-      signProjectData?.outdoor_photos_and_measurements?.measureCutSizeDepthFT ||
-      '',
+      signProjectData?.photos_and_measurements?.measureCutSizeDepthFT || '',
     measureDistanceLength2IN:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureDistanceLength2IN || '',
+      signProjectData?.photos_and_measurements?.measureDistanceLength2IN || '',
     measureCutSizeDepthIN:
-      signProjectData?.outdoor_photos_and_measurements?.measureCutSizeDepthIN ||
-      '',
+      signProjectData?.photos_and_measurements?.measureCutSizeDepthIN || '',
     measureCutSizeHeightFT:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureCutSizeHeightFT || '',
+      signProjectData?.photos_and_measurements?.measureCutSizeHeightFT || '',
     measureCutSizeHeightIN:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureCutSizeHeightIN || '',
+      signProjectData?.photos_and_measurements?.measureCutSizeHeightIN || '',
     measureCutSizeWidthFT:
-      signProjectData?.outdoor_photos_and_measurements?.measureCutSizeWidthFT ||
-      '',
+      signProjectData?.photos_and_measurements?.measureCutSizeWidthFT || '',
     measureCutSizeWidthIN:
-      signProjectData?.outdoor_photos_and_measurements?.measureCutSizeWidthIN ||
-      '',
+      signProjectData?.photos_and_measurements?.measureCutSizeWidthIN || '',
     otherPhotosAndMeasurementsDepthFT:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.otherPhotosAndMeasurementsDepthFT || '',
     measureRetainerSizeDepthFT:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureRetainerSizeDepthFT || '',
+      signProjectData?.photos_and_measurements?.measureRetainerSizeDepthFT ||
+      '',
     measureRetainerSizeDepthIN:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureRetainerSizeDepthIN || '',
+      signProjectData?.photos_and_measurements?.measureRetainerSizeDepthIN ||
+      '',
     measureRetainerSizeHeightFT:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureRetainerSizeHeightFT || '',
+      signProjectData?.photos_and_measurements?.measureRetainerSizeHeightFT ||
+      '',
     measureDistanceLength3FT:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureDistanceLength3FT || '',
+      signProjectData?.photos_and_measurements?.measureDistanceLength3FT || '',
     measureDistanceLength3IN:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureDistanceLength3IN || '',
+      signProjectData?.photos_and_measurements?.measureDistanceLength3IN || '',
     measureDistanceLength4IN:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureDistanceLength4IN || '',
+      signProjectData?.photos_and_measurements?.measureDistanceLength4IN || '',
     measureDistanceLength4FT:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureDistanceLength4FT || '',
+      signProjectData?.photos_and_measurements?.measureDistanceLength4FT || '',
     measureRetainerSizeHeightIN:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureRetainerSizeHeightIN || '',
+      signProjectData?.photos_and_measurements?.measureRetainerSizeHeightIN ||
+      '',
     measureRetainerSizeWidthFT:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureRetainerSizeWidthFT || '',
+      signProjectData?.photos_and_measurements?.measureRetainerSizeWidthFT ||
+      '',
     measureRetainerSizeWidthIN:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureRetainerSizeWidthIN || '',
+      signProjectData?.photos_and_measurements?.measureRetainerSizeWidthIN ||
+      '',
 
     visibleOpeningsHeightFT:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.visibleOpeningsHeightFT || '',
+      signProjectData?.photos_and_measurements?.visibleOpeningsHeightFT || '',
     visibleOpeningsHeightIN:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.visibleOpeningsHeightIN || '',
+      signProjectData?.photos_and_measurements?.visibleOpeningsHeightIN || '',
     visibleOpeningsWidthFT:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.visibleOpeningsWidthFT || '',
+      signProjectData?.photos_and_measurements?.visibleOpeningsWidthFT || '',
     visibleOpeningsWidthIN:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.visibleOpeningsWidthIN || '',
+      signProjectData?.photos_and_measurements?.visibleOpeningsWidthIN || '',
     visibleOpeningsNotes:
-      signProjectData?.outdoor_photos_and_measurements?.visibleOpeningsNotes ||
-      '',
+      signProjectData?.photos_and_measurements?.visibleOpeningsNotes || '',
     nameofMeasurement:
-      signProjectData?.indoor_photos_and_measurements?.nameofMeasurement || '',
+      signProjectData?.photos_and_measurements?.nameofMeasurement || '',
+    nameOfMeasurement:
+      signProjectData?.photos_and_measurements?.nameOfMeasurement || '',
     squareFootageFeet:
-      signProjectData?.outdoor_photos_and_measurements?.squareFootageFeet || '',
+      signProjectData?.photos_and_measurements?.squareFootageFeet || '',
     squareFootageLengthIN:
-      signProjectData?.outdoor_photos_and_measurements?.squareFootageLengthIN ||
-      '',
+      signProjectData?.photos_and_measurements?.squareFootageLengthIN || '',
     squareFootageLengthFT:
-      signProjectData?.outdoor_photos_and_measurements?.squareFootageLengthFT ||
-      '',
+      signProjectData?.photos_and_measurements?.squareFootageLengthFT || '',
     squareFootageWidthIN:
-      signProjectData?.outdoor_photos_and_measurements?.squareFootageWidthIN ||
-      '',
+      signProjectData?.photos_and_measurements?.squareFootageWidthIN || '',
     measureDistanceLength3IN:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureDistanceLength3IN || '',
+      signProjectData?.photos_and_measurements?.measureDistanceLength3IN || '',
     squareFootageWidthFT:
-      signProjectData?.outdoor_photos_and_measurements?.squareFootageWidthFT ||
-      '',
+      signProjectData?.photos_and_measurements?.squareFootageWidthFT || '',
     squareFootageDepthIN:
-      signProjectData?.outdoor_photos_and_measurements?.squareFootageDepthIN ||
-      '',
+      signProjectData?.photos_and_measurements?.squareFootageDepthIN || '',
     squareFootageDepthFT:
-      signProjectData?.outdoor_photos_and_measurements?.squareFootageDepthFT ||
-      '',
+      signProjectData?.photos_and_measurements?.squareFootageDepthFT || '',
     squareFootageNotes:
-      signProjectData?.outdoor_photos_and_measurements?.squareFootageNotes ||
-      '',
+      signProjectData?.photos_and_measurements?.squareFootageNotes || '',
     squareFootageCalculationRequired:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.squareFootageCalculationRequired || '',
     measureDistanceLength1FT:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureDistanceLength1FT || '',
+      signProjectData?.photos_and_measurements?.measureDistanceLength1FT || '',
     measureDistanceLength1IN:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureDistanceLength1IN || '',
+      signProjectData?.photos_and_measurements?.measureDistanceLength1IN || '',
     squareFootage:
-      signProjectData?.outdoor_photos_and_measurements?.squareFootage || '',
+      signProjectData?.photos_and_measurements?.squareFootage || '',
     mullionsLengthFT:
-      signProjectData?.outdoor_photos_and_measurements?.mullionsLengthFT || '',
+      signProjectData?.photos_and_measurements?.mullionsLengthFT || '',
     mullionsLengthIN:
-      signProjectData?.outdoor_photos_and_measurements?.mullionsLengthIN || '',
+      signProjectData?.photos_and_measurements?.mullionsLengthIN || '',
     mullionsWidthFT:
-      signProjectData?.outdoor_photos_and_measurements?.mullionsWidthFT || '',
+      signProjectData?.photos_and_measurements?.mullionsWidthFT || '',
     mullionsWidthIN:
-      signProjectData?.outdoor_photos_and_measurements?.mullionsWidthIN || '',
+      signProjectData?.photos_and_measurements?.mullionsWidthIN || '',
     mullionsDepthFT:
-      signProjectData?.outdoor_photos_and_measurements?.mullionsDepthFT || '',
+      signProjectData?.photos_and_measurements?.mullionsDepthFT || '',
     mullionsDepthIN:
-      signProjectData?.outdoor_photos_and_measurements?.mullionsDepthIN || '',
+      signProjectData?.photos_and_measurements?.mullionsDepthIN || '',
     mullionsNotes:
-      signProjectData?.outdoor_photos_and_measurements?.mullionsNotes || '',
+      signProjectData?.photos_and_measurements?.mullionsNotes || '',
     otherPhotosAndMeasurementsLengthFT:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.otherPhotosAndMeasurementsLengthFT || '',
     measureGroundToSignHeightFT:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureGroundToSignHeightFT || '',
+      signProjectData?.photos_and_measurements?.measureGroundToSignHeightFT ||
+      '',
     measureGroundToSignHeightIN:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureGroundToSignHeightIN || '',
+      signProjectData?.photos_and_measurements?.measureGroundToSignHeightIN ||
+      '',
 
     measureCellingWallSurfaceAreaDepthFT:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.measureCellingWallSurfaceAreaDepthFT || '',
     measureCellingWallSurfaceAreaDepthIN:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.measureCellingWallSurfaceAreaDepthIN || '',
     measureCellingWallSurfaceAreaHeightFT:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.measureCellingWallSurfaceAreaHeightFT || '',
     measureCellingWallSurfaceAreaHeightIN:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.measureCellingWallSurfaceAreaHeightIN || '',
     measureCellingWallSurfaceAreaWidthFT:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.measureCellingWallSurfaceAreaWidthFT || '',
     measureCellingWallSurfaceAreaWidthIN:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.measureCellingWallSurfaceAreaWidthIN || '',
 
     ifPanMeasurePanDimensionWidthFT:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.ifPanMeasurePanDimensionWidthFT || '',
     ifPanMeasurePanDimensionWidthIN:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.ifPanMeasurePanDimensionWidthIN || '',
     ifPanMeasurePanDimensionHeightFT:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.ifPanMeasurePanDimensionHeightFT || '',
     ifPanMeasurePanDimensionHeightIN:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.ifPanMeasurePanDimensionHeightIN || '',
     ifPanMeasurePanDimensionDepthFT:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.ifPanMeasurePanDimensionDepthFT || '',
     ifPanMeasurePanDimensionDepthIN:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.ifPanMeasurePanDimensionDepthIN || '',
 
     otherPhotosMeasurementsMarkupsWidthFT:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.otherPhotosMeasurementsMarkupsWidthFT || '',
     otherPhotosMeasurementsMarkupsWidthIN:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.otherPhotosMeasurementsMarkupsWidthIN || '',
     otherPhotosMeasurementsMarkupsHeightFT:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.otherPhotosMeasurementsMarkupsHeightFT || '',
     otherPhotosMeasurementsMarkupsHeightIN:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.otherPhotosMeasurementsMarkupsHeightIN || '',
     otherPhotosMeasurementsMarkupsDepthFT:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.otherPhotosMeasurementsMarkupsDepthFT || '',
     otherPhotosMeasurementsMarkupsDepthIN:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.otherPhotosMeasurementsMarkupsDepthIN || '',
     measureDistanceLength2FT:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureDistanceLength2FT || '',
+      signProjectData?.photos_and_measurements?.measureDistanceLength2FT || '',
     areMullionsPresent:
-      signProjectData?.outdoor_photos_and_measurements?.areMullionsPresent ||
-      '',
+      signProjectData?.photos_and_measurements?.areMullionsPresent || '',
     areThereAnyVisibleOpenings:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.areThereAnyVisibleOpenings || '',
-    nameOfMeasurement:
-      signProjectData?.outdoor_photos_and_measurements?.nameOfMeasurement || '',
-    customerName:
-      signProjectData?.outdoor_photos_and_measurements?.customerName || '',
+      signProjectData?.photos_and_measurements?.areThereAnyVisibleOpenings ||
+      '',
+
+    customerName: signProjectData?.photos_and_measurements?.customerName || '',
     signOrientation:
-      signProjectData?.outdoor_photos_and_measurements?.signOrientation || '',
+      signProjectData?.photos_and_measurements?.signOrientation || '',
     surveyModule: '',
     measureDistanceFromSignToFloorLengthFT:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.measureDistanceFromSignToFloorLengthFT || '',
     measureDistanceFromSignToFloorLengthIN:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.measureDistanceFromSignToFloorLengthIN || '',
     visibleOpeningsLengthFT:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.visibleOpeningsLengthFT || '',
+      signProjectData?.photos_and_measurements?.visibleOpeningsLengthFT || '',
     visibleOpeningsLengthIN:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.visibleOpeningsLengthIN || '',
+      signProjectData?.photos_and_measurements?.visibleOpeningsLengthIN || '',
     measureChannelLettersPhotos:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureChannelLettersPhotos,
+      signProjectData?.photos_and_measurements?.measureChannelLettersPhotos,
     measureChannelLettersPhoto:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureChannelLettersPhoto,
+      signProjectData?.photos_and_measurements?.measureChannelLettersPhoto,
 
-    // All image arrays or strings without width/height/depth
     signDimensionsPhoto:
-      signProjectData?.outdoor_photos_and_measurements?.signDimensionsPhoto ||
-      [],
+      signProjectData?.photos_and_measurements?.signDimensionsPhoto || [],
     signDimensionsSpikePhoto:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.signDimensionsSpikePhoto || [],
+      signProjectData?.photos_and_measurements?.signDimensionsSpikePhoto || [],
     measureChannelLettersPhoto:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureChannelLettersPhoto || [],
+      signProjectData?.photos_and_measurements?.measureChannelLettersPhoto ||
+      [],
     squareFootagePhoto:
-      signProjectData?.outdoor_photos_and_measurements?.squareFootagePhoto ||
-      [],
+      signProjectData?.photos_and_measurements?.squareFootagePhoto || [],
     squareFootageSpikePhoto:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.squareFootageSpikePhoto || [],
+      signProjectData?.photos_and_measurements?.squareFootageSpikePhoto || [],
     photoCloseUpOfSign:
-      signProjectData?.outdoor_photos_and_measurements?.photoCloseUpOfSign ||
-      [],
+      signProjectData?.photos_and_measurements?.photoCloseUpOfSign || [],
     visibleOpeningsPhoto:
-      signProjectData?.outdoor_photos_and_measurements?.visibleOpeningsPhoto ||
-      [],
+      signProjectData?.photos_and_measurements?.visibleOpeningsPhoto || [],
     visibleOpeningsSpike:
-      signProjectData?.outdoor_photos_and_measurements?.visibleOpeningsSpike ||
-      [],
+      signProjectData?.photos_and_measurements?.visibleOpeningsSpike || [],
     mullionsPhoto:
-      signProjectData?.outdoor_photos_and_measurements?.mullionsPhoto || [],
+      signProjectData?.photos_and_measurements?.mullionsPhoto || [],
     mullionsSpike:
-      signProjectData?.outdoor_photos_and_measurements?.mullionsSpike || '',
+      signProjectData?.photos_and_measurements?.mullionsSpike || '',
     otherPhotosMeasurementsMarkupsPhoto:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.otherPhotosMeasurementsMarkupsPhoto || [],
     otherPhotosMeasurementsMarkupsSpike:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.otherPhotosMeasurementsMarkupsSpike || '',
     photoFullFrontalOfWholeSignStructurePhoto:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.photoFullFrontalOfWholeSignStructurePhoto || [],
     measureCellingWallSurfaceAreaPhoto:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.measureCellingWallSurfaceAreaPhoto || [],
     measureRetainerSizePhoto:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureRetainerSizePhoto || [],
+      signProjectData?.photos_and_measurements?.measureRetainerSizePhoto || [],
     measureCutSizePhoto:
-      signProjectData?.outdoor_photos_and_measurements?.measureCutSizePhoto ||
-      [],
+      signProjectData?.photos_and_measurements?.measureCutSizePhoto || [],
     ifPanMeasurePanDimensionPhoto:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.ifPanMeasurePanDimensionPhoto || [],
+      signProjectData?.photos_and_measurements?.ifPanMeasurePanDimensionPhoto ||
+      [],
     wallDimensionsPhoto:
-      signProjectData?.outdoor_photos_and_measurements?.wallDimensionsPhoto ||
-      [],
+      signProjectData?.photos_and_measurements?.wallDimensionsPhoto || [],
     otherPhotosImage:
-      signProjectData?.outdoor_photos_and_measurements?.otherPhotosImage || [],
+      signProjectData?.photos_and_measurements?.otherPhotosImage || [],
     wallDimensionsSpikePhoto:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.wallDimensionsSpikePhoto || [],
+      signProjectData?.photos_and_measurements?.wallDimensionsSpikePhoto || [],
     photoOfWallOrFloorPhoto:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.photoOfWallOrFloorPhoto || [],
+      signProjectData?.photos_and_measurements?.photoOfWallOrFloorPhoto || [],
     photoOfWallOrFloor:
-      signProjectData?.outdoor_photos_and_measurements?.photoOfWallOrFloor ||
-      [],
+      signProjectData?.photos_and_measurements?.photoOfWallOrFloor || [],
     otherPhotosSpike:
-      signProjectData?.outdoor_photos_and_measurements?.otherPhotosSpike || [],
+      signProjectData?.photos_and_measurements?.otherPhotosSpike || [],
     wallDimensionsLengthFT:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.wallDimensionsLengthFT || '',
+      signProjectData?.photos_and_measurements?.wallDimensionsLengthFT || '',
     wallDimensionsLengthIN:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.wallDimensionsLengthIN || '',
+      signProjectData?.photos_and_measurements?.wallDimensionsLengthIN || '',
     wallDimensionsWidthFT:
-      signProjectData?.outdoor_photos_and_measurements?.wallDimensionsWidthFT ||
-      '',
+      signProjectData?.photos_and_measurements?.wallDimensionsWidthFT || '',
     otherPhotosAndMeasurementsDepthIN:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.otherPhotosAndMeasurementsDepthIN || '',
     wallDimensionsWidthIN:
-      signProjectData?.outdoor_photos_and_measurements?.wallDimensionsWidthIN ||
-      '',
+      signProjectData?.photos_and_measurements?.wallDimensionsWidthIN || '',
     otherPhotosAndMeasurementsWidthFT:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.otherPhotosAndMeasurementsWidthFT || '',
 
     wallDimensionsLengthFT:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.wallDimensionsLengthFT || '',
+      signProjectData?.photos_and_measurements?.wallDimensionsLengthFT || '',
     ifPanMeasurePanDimensionPhotos:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.ifPanMeasurePanDimensionPhotos,
+      signProjectData?.photos_and_measurements
+        ?.ifPanMeasurePanDimensionPhotos || [],
     measureRetainerSizePhotos:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.measureRetainerSizePhotos,
+      signProjectData?.photos_and_measurements?.measureRetainerSizePhotos,
     photoCloseUpOfSigns:
-      signProjectData?.outdoor_photos_and_measurements?.photoCloseUpOfSigns,
+      signProjectData?.photos_and_measurements?.photoCloseUpOfSigns,
     photoFullFrontalOfWholeSignStructurePhotos:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.photoFullFrontalOfWholeSignStructurePhotos,
     signDimensionsPhotos:
-      signProjectData?.outdoor_photos_and_measurements?.signDimensionsPhotos,
+      signProjectData?.photos_and_measurements?.signDimensionsPhotos,
     squareFootageSpikePhotos:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.squareFootageSpikePhotos,
+      signProjectData?.photos_and_measurements?.squareFootageSpikePhotos,
     visibleOpeningsPhotos:
-      signProjectData?.outdoor_photos_and_measurements?.visibleOpeningsPhotos,
+      signProjectData?.photos_and_measurements?.visibleOpeningsPhotos,
     otherPhotosImages:
-      signProjectData?.outdoor_photos_and_measurements?.otherPhotosImages,
+      signProjectData?.photos_and_measurements?.otherPhotosImages,
     squareFootage:
-      signProjectData?.outdoor_photos_and_measurements?.squareFootage || '',
+      signProjectData?.photos_and_measurements?.squareFootage || '',
     photosAndMeasurementsTodoPunchList:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.photosAndMeasurementsTodoPunchList || '',
     photosAndMeasurementsSummaryNotes:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.photosAndMeasurementsSummaryNotes || '',
     heightOfPoleLengthFT:
-      signProjectData?.outdoor_photos_and_measurements?.heightOfPoleLengthFT ||
-      '',
+      signProjectData?.photos_and_measurements?.heightOfPoleLengthFT || '',
     heightOfPoleLengthIN:
-      signProjectData?.outdoor_photos_and_measurements?.heightOfPoleLengthIN ||
-      '',
+      signProjectData?.photos_and_measurements?.heightOfPoleLengthIN || '',
     otherPhotosAndMeasurementsWidthIN:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.otherPhotosAndMeasurementsWidthIN || '',
     otherPhotosAndMeasurementsLengthIN:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.otherPhotosAndMeasurementsLengthIN || '',
     circumferenceOfPoleLengthFT:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.circumferenceOfPoleLengthFT || '',
+      signProjectData?.photos_and_measurements?.circumferenceOfPoleLengthFT ||
+      '',
     circumferenceOfPoleLengthIN:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.circumferenceOfPoleLengthIN || '',
+      signProjectData?.photos_and_measurements?.circumferenceOfPoleLengthIN ||
+      '',
     distanceBetweenPolesLengthFT:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.distanceBetweenPolesLengthFT || '',
+      signProjectData?.photos_and_measurements?.distanceBetweenPolesLengthFT ||
+      '',
     distanceBetweenPolesLengthIN:
-      signProjectData?.outdoor_photos_and_measurements
-        ?.distanceBetweenPolesLengthIN || '',
+      signProjectData?.photos_and_measurements?.distanceBetweenPolesLengthIN ||
+      '',
     otherPhotosMeasurementsMarkupsPhotos:
-      signProjectData?.outdoor_photos_and_measurements
+      signProjectData?.photos_and_measurements
         ?.otherPhotosMeasurementsMarkupsPhotos || [],
     indoorWallHeightFT:
-      signProjectData?.indoor_photos_and_measurements?.indoorWallHeightFT || '',
+      signProjectData?.photos_and_measurements?.indoorWallHeightFT || '',
     indoorWallHeightIN:
-      signProjectData?.indoor_photos_and_measurements?.indoorWallHeightIN || '',
+      signProjectData?.photos_and_measurements?.indoorWallHeightIN || '',
     indoorWallWidthFT:
-      signProjectData?.indoor_photos_and_measurements?.indoorWallWidthFT || '',
+      signProjectData?.photos_and_measurements?.indoorWallWidthFT || '',
     indoorWallWidthIN:
-      signProjectData?.indoor_photos_and_measurements?.indoorWallWidthIN || '',
+      signProjectData?.photos_and_measurements?.indoorWallWidthIN || '',
     indoorWallPhoto:
-      signProjectData?.indoor_photos_and_measurements?.indoorWallPhoto || [],
+      signProjectData?.photos_and_measurements?.indoorWallPhoto || [],
 
     // Ceiling Measurements
     ceilingHeightFT:
-      signProjectData?.indoor_photos_and_measurements?.ceilingHeightFT || '',
+      signProjectData?.photos_and_measurements?.ceilingHeightFT || '',
     ceilingHeightIN:
-      signProjectData?.indoor_photos_and_measurements?.ceilingHeightIN || '',
+      signProjectData?.photos_and_measurements?.ceilingHeightIN || '',
     ceilingSurfacePhoto:
-      signProjectData?.indoor_photos_and_measurements?.ceilingSurfacePhoto ||
-      [],
+      signProjectData?.photos_and_measurements?.ceilingSurfacePhoto || [],
     indoorMeasurementNotes:
-      signProjectData?.indoor_photos_and_measurements?.indoorMeasurementNotes ||
-      '',
+      signProjectData?.photos_and_measurements?.indoorMeasurementNotes || '',
     indoorMeasurement:
-      signProjectData?.indoor_photos_and_measurements?.indoorMeasurement || '',
+      signProjectData?.photos_and_measurements?.indoorMeasurement || '',
     indoorTodoPunchList:
-      signProjectData?.indoor_photos_and_measurements?.indoorTodoPunchList ||
-      '',
+      signProjectData?.photos_and_measurements?.indoorTodoPunchList || '',
     indoorSummaryNotes:
-      signProjectData?.indoor_photos_and_measurements?.indoorSummaryNotes || '',
+      signProjectData?.photos_and_measurements?.indoorSummaryNotes || '',
   });
+
+  console.log('selectedOptions', selectedOptions);
+  console.log('PROJECT DATA', signProjectData);
   const data = [
     {
       question: 'Square Footage calculation Required?',
       options: ['Yes', 'No'],
       value: 'squareFootageCalculationRequired',
       selectedValue:
-        signProjectData?.permitting_assessment
+        signProjectData?.photos_and_measurements
           ?.squareFootageCalculationRequired,
     },
   ];
 
   const handleSave = async () => {
-    try {
-      const DoorData = {
-        ...selectedOptions,
-        photosAndMeasurementsSummaryNotes,
-        photosAndMeasurementsTodoPunchList,
-      };
-      setLoadingImage(true);
-      const token = loginData?.tokenNumber;
-      const responce = await axios.post(
-        `${baseUrl}/update${signName}PhotosAudit`,
-        DoorData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
+    setLoadingImage(true);
+    const netState = await NetInfo.fetch();
+    const isConnected = netState.isConnected;
+
+    let base64signDimensionsPhoto = [];
+    let base64squareFootageSpikePhoto = [];
+    let base64photoFullFrontalOfWholeSignStructurePhoto = [];
+    let base64photoCloseUpOfSign = [];
+    let base64otherPhotosMeasurementsMarkupsPhoto = [];
+    if (isConnected) {
+      base64signDimensionsPhoto = await getBase64Array(
+        selectedOptions?.signDimensionsPhoto || [],
       );
-      if (responce.data.status) {
+      base64squareFootageSpikePhoto = await getBase64Array(
+        selectedOptions?.squareFootageSpikePhoto || [],
+      );
+      base64photoFullFrontalOfWholeSignStructurePhoto = await getBase64Array(
+        selectedOptions?.photoFullFrontalOfWholeSignStructurePhoto || [],
+      );
+      base64photoCloseUpOfSign = await getBase64Array(
+        selectedOptions?.photoCloseUpOfSign || [],
+      );
+      base64otherPhotosMeasurementsMarkupsPhoto = await getBase64Array(
+        selectedOptions?.otherPhotosMeasurementsMarkupsPhoto || [],
+      );
+    } else {
+      base64signDimensionsPhoto = selectedOptions?.signDimensionsPhoto || [];
+      base64squareFootageSpikePhoto =
+        selectedOptions?.squareFootageSpikePhoto || [];
+      base64photoFullFrontalOfWholeSignStructurePhoto =
+        selectedOptions?.photoFullFrontalOfWholeSignStructurePhoto || [];
+      base64photoCloseUpOfSign = selectedOptions?.photoCloseUpOfSign || [];
+      base64otherPhotosMeasurementsMarkupsPhoto =
+        selectedOptions?.otherPhotosMeasurementsMarkupsPhoto || [];
+    }
+    const DoorData = {
+      ...selectedOptions,
+      photosAndMeasurementsSummaryNotes,
+      photosAndMeasurementsTodoPunchList,
+      signDimensionsPhoto: base64signDimensionsPhoto,
+      squareFootageSpikePhoto: base64squareFootageSpikePhoto,
+      photoFullFrontalOfWholeSignStructurePhoto:
+        base64photoFullFrontalOfWholeSignStructurePhoto,
+      photoCloseUpOfSign: base64photoCloseUpOfSign,
+      otherPhotosMeasurementsMarkupsPhoto:
+        base64otherPhotosMeasurementsMarkupsPhoto,
+      surveyModule:
+        signName == 'Outdoor'
+          ? 'outdoor_photos_and_measurements'
+          : 'indoor_photos_and_measurements',
+    };
+    console.log('DATAAA', DoorData);
+    // return;
+    try {
+      if (isConnected) {
+        const token = loginData?.tokenNumber;
+        const responce = await axios.post(
+          `${baseUrl}/update${signName}PhotosAudit`,
+          DoorData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+        if (responce.data.status) {
+          await deleteFolders();
+          const imagesCache = [
+            ...(selectedOptions?.signDimensionsPhoto || []),
+            ...(selectedOptions?.squareFootageSpikePhoto || []),
+          ];
+          for (const file of imagesCache) {
+            try {
+              const fileExists = await RNFS.exists(file.path);
+              if (fileExists) {
+                await RNFS.unlink(file.path);
+                console.log('FILE REMOVED');
+              }
+              console.log(file.path, 'exists?', fileExists);
+            } catch (err) {
+              console.log('Error checking file:', file.path, err);
+            }
+          }
+
+          Toast.show({
+            type: 'success',
+            text1: responce?.data?.message,
+            visibilityTime: 3000,
+            position: 'top',
+          });
+          handleFetchData(null, signProjectData);
+        } else {
+          throw new Error('Sync failed with unknown server response.');
+        }
+      } else {
+        updatePhotosAndMeasurements(DoorData, 0);
+        handleFetchData(null, signProjectData);
         Toast.show({
-          type: 'success',
-          text1: responce?.data?.message,
+          type: 'info',
+          text1: 'Saved Offline. Will sync later.',
           visibilityTime: 3000,
           position: 'top',
         });
-        handleFetchData(null, signProjectData);
-        setLoadingImage(true);
       }
+      // return;
     } catch (error) {
       console.log('API ERRORRRRRRRRRRRRRR', error.response.data);
       setLoadingImage(true);
+    } finally {
+      if (isConnected) {
+        setLoadingImage(false);
+      } else {
+        setTimeout(() => {
+          setLoadingImage(false);
+        }, 1200);
+      }
     }
   };
-  const handleRemoveImage = async (imageId1, fieldName1, actualKey) => {
+
+  const handleRemoveImage = async (
+    imageId1,
+    fieldName1,
+    actualKey,
+    path,
+    isLocalImageRemove,
+  ) => {
+    const netState = await NetInfo.fetch();
+    const isConnected = netState.isConnected;
     try {
       setLoadingImage(true);
+      if (isLocalImageRemove) {
+        const updatedArray = selectedOptions?.[fieldName1]?.filter(
+          item => item.ImageId !== imageId1,
+        );
+        await insertPhotosAndMeasurementsImagesOnly(
+          signProjectData?.signTableId,
+          fieldName1,
+          updatedArray,
+          0,
+        );
+        const imagesaRRAY = await getPhotosAndMeasurementsImagesByKey(
+          signProjectData?.signTableId,
+          fieldName1,
+        );
+        setSelectedOptions(prev => ({
+          ...prev,
+          [fieldName1]: imagesaRRAY || [],
+        }));
+        const fullPath = await getPath(path);
+        await RNFS.unlink(
+          fullPath.startsWith('file://')
+            ? fullPath.replace('file://', '')
+            : fullPath,
+        );
+        return;
+      }
       const data = {
         imageId: imageId1,
-        Id: signProjectData?.outdoor_photos_and_measurements?.id,
+        Id: signProjectData?.photos_and_measurements?.id,
         fieldName: fieldName1,
-        surveyModule: 'outdoor_photos_and_measurements',
+        surveyModule:
+          signName == 'Outdoor'
+            ? 'outdoor_photos_and_measurements'
+            : 'indoor_photos_and_measurements',
       };
-      const token = loginData?.tokenNumber;
-      const responce = await axios.post(`${baseUrl}/removeFile`, data, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (responce.data.status) {
+
+      if (isConnected) {
+        const token = loginData?.tokenNumber;
+        const response = await axios.post(`${baseUrl}/removeFile`, data, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        console.log('respose', response.data);
+        if (response.data.status) {
+          const previousImages = selectedOptions?.[actualKey] || [];
+          for (const item of previousImages) {
+            try {
+              if (item?.path) {
+                const storedPath = await getPath(item.path);
+                const cleanedPath = storedPath.startsWith('file://')
+                  ? storedPath.replace('file://', '')
+                  : storedPath;
+                await RNFS.unlink(cleanedPath);
+                console.log('image removeddd', item.path);
+              }
+            } catch (err) {
+              console.log('FILE REMOVEDDD', err);
+            }
+          }
+          const imagesArray = response?.data?.data[actualKey] || [];
+          // console.log('IMAGESSSARRAYY', imagesArray);
+          await insertPhotosAndMeasurementsImagesOnly(
+            signProjectData?.signTableId,
+            actualKey,
+            imagesArray,
+            1,
+          );
+          const imagesaRRAY = await getPhotosAndMeasurementsImagesByKey(
+            signProjectData?.signTableId,
+            actualKey,
+          );
+          // console.log('IMAGESARRAYAFTERINSERT', imagesaRRAY);
+          setSelectedOptions(prev => {
+            return {
+              ...prev,
+              [actualKey]: imagesaRRAY || [],
+            };
+          });
+        }
+      } else {
+        createOfflineRemoveTable();
+        const imagesArray = selectedOptions?.[actualKey]?.filter(
+          item => item.imageId !== imageId1,
+        );
+        // console.log('IMAGESSSARRAYY', imagesArray);
+        await insertPhotosAndMeasurementsImagesOnly(
+          signProjectData?.signTableId,
+          actualKey,
+          imagesArray,
+          0,
+        );
+        const imagesaRRAY = await getPhotosAndMeasurementsImagesByKey(
+          signProjectData?.signTableId,
+          actualKey,
+        );
+        // console.log('IMAGESARRAYAFTERINSERT', imagesaRRAY);
         setSelectedOptions(prev => {
           return {
             ...prev,
-            [actualKey]: responce?.data?.data[actualKey],
+            [actualKey]: imagesaRRAY || [],
           };
         });
-        setTimeout(() => {
-          setLoadingImage(false);
-        }, 1000);
+        insertOfflineRemove(data);
+        const fullPath = await getPath(path);
+        console.log('full path', fullPath);
+        await RNFS.unlink(`file://${fullPath}`);
       }
     } catch (error) {
       console.log('Error response data:', error.response);
+    } finally {
+      setTimeout(() => setLoadingImage(false), 1000);
     }
   };
-  useEffect(() => {
-    setTimeout(() => {
-      setLoadingImage(false);
-    }, 800);
-  }, []);
 
   return (
     <View>
@@ -662,9 +730,11 @@ const Photos = ({handleFetchData}) => {
           <Text style={styles.projectName}>
             {projectTitle || 'Project Name'}
           </Text>
-          <Text style={styles.auditTitle}>Photos & Measurements</Text>
+          <Text style={styles.auditTitle}>
+            {signName} Photos & Measurements
+          </Text>
           <Text style={styles.projectName}>
-            {signProjectData?.outdoor_photos_and_measurements?.signType ||
+            {signProjectData?.photos_and_measurements?.signType ||
               'Digital indoor free standing'}
           </Text>
         </View>
@@ -858,9 +928,11 @@ const Photos = ({handleFetchData}) => {
                     </View>
                     <TouchableOpacity
                       onPress={() =>
-                        handleAddPhoto(
+                        showPhotoOptions(
                           setSelectedOptions,
                           'signDimensionsPhoto',
+                          'PhotosAndMesurements',
+                          false,
                         )
                       }
                       style={styles.imageCon}>
@@ -869,7 +941,11 @@ const Photos = ({handleFetchData}) => {
                         <Photo />
                       </View>
                       <View style={styles.fileNameContainer}>
-                        <Text style={styles.fileNameText}></Text>
+                        <Text style={styles.fileNameText}>
+                          {selectedOptions?.signDimensionsPhoto?.length > 0
+                            ? `${selectedOptions?.signDimensionsPhoto?.length} files Choosen`
+                            : 'No file Choosen'}
+                        </Text>
                       </View>
                     </TouchableOpacity>
 
@@ -883,30 +959,79 @@ const Photos = ({handleFetchData}) => {
                       {loadingImage ? (
                         <ActivityIndicator size="small" color="#FF9239" />
                       ) : (
-                        selectedOptions?.signDimensionsPhotos?.length > 0 &&
-                        selectedOptions?.signDimensionsPhotos?.map(
-                          (data, index) => {
-                            return (
-                              <View key={index} style={styles.imageContainer}>
+                        (() => {
+                          const mergedDimensionsImages = [
+                            ...(selectedOptions?.signDimensionsPhoto?.map(
+                              item => ({
+                                ...item,
+                                isLocal: true,
+                              }),
+                            ) || []),
+                            ...(selectedOptions?.signDimensionsPhotos?.map(
+                              item => ({
+                                ...item,
+                                isLocal: false,
+                              }),
+                            ) || []),
+                          ];
+
+                          if (mergedDimensionsImages.length === 0) return null;
+
+                          return mergedDimensionsImages.map((item, index) => (
+                            <TouchableOpacity
+                              key={index}
+                              onPress={() => {
+                                openEditorforUpdate(
+                                  item.path || item.url,
+                                  setSelectedOptions,
+                                  item.isLocal
+                                    ? 'signDimensionsPhoto'
+                                    : 'signDimensionsPhotos',
+                                  'SignDimensions',
+                                  true,
+                                  item.isLocal ? item.ImageId : item.imageId,
+                                  baseUrl,
+                                  loginData?.tokenNumber,
+                                  true,
+                                  signProjectData?.photos_and_measurements
+                                    ?.id ||
+                                    signProjectData?.photos_and_measurements
+                                      ?.Id,
+                                  signName == 'Outdoor'
+                                    ? 'outdoor_photos_and_measurements'
+                                    : 'indoor_photos_and_measurements',
+                                  item.isLocal,
+                                  selectedOptions,
+                                );
+                              }}>
+                              <View style={styles.imageContainer}>
                                 <Image
-                                  source={{uri: data.url}}
+                                  source={{
+                                    uri: item?.path?.startsWith('file://')
+                                      ? item?.path
+                                      : `file://${item?.path}`,
+                                  }}
                                   style={styles.image}
                                 />
                                 <TouchableOpacity
                                   onPress={() =>
                                     handleRemoveImage(
-                                      data.imageId,
+                                      item.isLocal
+                                        ? item.ImageId
+                                        : item.imageId,
                                       'signDimensionsPhoto',
                                       'signDimensionsPhotos',
+                                      item.path,
+                                      item.isLocal,
                                     )
                                   }
                                   style={styles.removeButton}>
                                   <Text style={styles.removeButtonText}>×</Text>
                                 </TouchableOpacity>
                               </View>
-                            );
-                          },
-                        )
+                            </TouchableOpacity>
+                          ));
+                        })()
                       )}
                     </View>
 
@@ -1304,9 +1429,11 @@ const Photos = ({handleFetchData}) => {
                         <TouchableOpacity
                           style={styles.imageCon}
                           onPress={() =>
-                            handleAddPhoto(
+                            showPhotoOptions(
                               setSelectedOptions,
                               'squareFootageSpikePhoto',
+                              'PhotosAndMesurements',
+                              false,
                             )
                           }>
                           <View style={styles.photoButton}>
@@ -1314,7 +1441,12 @@ const Photos = ({handleFetchData}) => {
                             <Photo />
                           </View>
                           <View style={styles.fileNameContainer}>
-                            <Text style={styles.fileNameText}>{''}</Text>
+                            <Text style={styles.fileNameText}>
+                              {selectedOptions?.squareFootageSpikePhoto
+                                ?.length > 0
+                                ? `${selectedOptions?.squareFootageSpikePhoto?.length} files Choosen`
+                                : 'No file Choosen'}
+                            </Text>
                           </View>
                         </TouchableOpacity>
 
@@ -1328,37 +1460,90 @@ const Photos = ({handleFetchData}) => {
                           {loadingImage ? (
                             <ActivityIndicator size="small" color="#FF9239" />
                           ) : (
-                            selectedOptions?.squareFootageSpikePhotos?.length >
-                              0 &&
-                            selectedOptions?.squareFootageSpikePhotos?.map(
-                              (data, index) => {
-                                return (
-                                  <View
+                            (() => {
+                              // Merge local and remote images
+                              const mergedSquareFootageImages = [
+                                ...(selectedOptions?.squareFootageSpikePhoto?.map(
+                                  item => ({
+                                    ...item,
+                                    isLocal: true,
+                                  }),
+                                ) || []),
+                                ...(selectedOptions?.squareFootageSpikePhotos?.map(
+                                  item => ({
+                                    ...item,
+                                    isLocal: false,
+                                  }),
+                                ) || []),
+                              ];
+
+                              if (mergedSquareFootageImages.length === 0)
+                                return null;
+
+                              return mergedSquareFootageImages.map(
+                                (item, index) => (
+                                  <TouchableOpacity
                                     key={index}
-                                    style={styles.imageContainer}>
-                                    <Image
-                                      source={{uri: data.url}}
-                                      style={styles.image}
-                                    />
-                                    <TouchableOpacity
-                                      onPress={() =>
-                                        handleRemoveImage(
-                                          data.imageId,
-                                          'squareFootageSpikePhoto',
-                                          'squareFootageSpikePhotos',
-                                        )
-                                      }
-                                      style={styles.removeButton}>
-                                      <Text style={styles.removeButtonText}>
-                                        ×
-                                      </Text>
-                                    </TouchableOpacity>
-                                  </View>
-                                );
-                              },
-                            )
+                                    onPress={() => {
+                                      openEditorforUpdate(
+                                        item.path || item.url,
+                                        setSelectedOptions,
+                                        item.isLocal
+                                          ? 'squareFootageSpikePhoto'
+                                          : 'squareFootageSpikePhotos',
+                                        'SquareFootageSpike',
+                                        true,
+                                        item.isLocal
+                                          ? item.ImageId
+                                          : item.imageId,
+                                        baseUrl,
+                                        loginData?.tokenNumber,
+                                        true,
+                                        signProjectData?.photos_and_measurements
+                                          ?.id ||
+                                          signProjectData
+                                            ?.photos_and_measurements?.Id,
+                                        signName === 'Outdoor'
+                                          ? 'outdoor_photos_and_measurements'
+                                          : 'indoor_photos_and_measurements',
+                                        item.isLocal,
+                                        selectedOptions,
+                                      );
+                                    }}>
+                                    <View style={styles.imageContainer}>
+                                      <Image
+                                        source={{
+                                          uri: item?.path?.startsWith('file://')
+                                            ? item.path
+                                            : `file://${item.path || item.url}`,
+                                        }}
+                                        style={styles.image}
+                                      />
+                                      <TouchableOpacity
+                                        onPress={() =>
+                                          handleRemoveImage(
+                                            item.isLocal
+                                              ? item.ImageId
+                                              : item.imageId,
+                                            'squareFootageSpikePhoto',
+                                            'squareFootageSpikePhotos',
+                                            item.path,
+                                            item.isLocal,
+                                          )
+                                        }
+                                        style={styles.removeButton}>
+                                        <Text style={styles.removeButtonText}>
+                                          ×
+                                        </Text>
+                                      </TouchableOpacity>
+                                    </View>
+                                  </TouchableOpacity>
+                                ),
+                              );
+                            })()
                           )}
                         </View>
+
                         <TouchableOpacity
                           onPress={() => setFootage(prev => !prev)}
                           style={[
@@ -1466,9 +1651,11 @@ const Photos = ({handleFetchData}) => {
               <TouchableOpacity
                 style={styles.imageCon}
                 onPress={() =>
-                  handleAddPhoto(
+                  showPhotoOptions(
                     setSelectedOptions,
                     'photoFullFrontalOfWholeSignStructurePhoto',
+                    'PhotosAndMesurements',
+                    false,
                   )
                 }>
                 <View style={styles.photoButton}>
@@ -1477,7 +1664,12 @@ const Photos = ({handleFetchData}) => {
                 </View>
 
                 <View style={styles.fileNameContainer}>
-                  <Text style={styles.fileNameText}>{''}</Text>
+                  <Text style={styles.fileNameText}>
+                    {selectedOptions?.photoFullFrontalOfWholeSignStructurePhoto
+                      ?.length > 0
+                      ? `${selectedOptions?.photoFullFrontalOfWholeSignStructurePhoto?.length} files Choosen`
+                      : 'No file Choosen'}
+                  </Text>
                 </View>
               </TouchableOpacity>
               <View
@@ -1490,31 +1682,75 @@ const Photos = ({handleFetchData}) => {
                 {loadingImage ? (
                   <ActivityIndicator size="small" color="#FF9239" />
                 ) : (
-                  selectedOptions?.photoFullFrontalOfWholeSignStructurePhotos
-                    ?.length > 0 &&
-                  selectedOptions?.photoFullFrontalOfWholeSignStructurePhotos?.map(
-                    (data, index) => {
-                      return (
-                        <View key={index} style={styles.imageContainer}>
+                  (() => {
+                    const mergedFullFrontalImages = [
+                      ...(selectedOptions?.photoFullFrontalOfWholeSignStructurePhoto?.map(
+                        item => ({
+                          ...item,
+                          isLocal: true,
+                        }),
+                      ) || []),
+                      ...(selectedOptions?.photoFullFrontalOfWholeSignStructurePhotos?.map(
+                        item => ({
+                          ...item,
+                          isLocal: false,
+                        }),
+                      ) || []),
+                    ];
+
+                    if (mergedFullFrontalImages.length === 0) return null;
+
+                    return mergedFullFrontalImages.map((item, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        onPress={() => {
+                          openEditorforUpdate(
+                            item.path || item.url,
+                            setSelectedOptions,
+                            item.isLocal
+                              ? 'photoFullFrontalOfWholeSignStructurePhoto'
+                              : 'photoFullFrontalOfWholeSignStructurePhotos',
+                            'FullFrontalSignStructure',
+                            true,
+                            item.isLocal ? item.ImageId : item.imageId,
+                            baseUrl,
+                            loginData?.tokenNumber,
+                            true,
+                            signProjectData?.photos_and_measurements?.id ||
+                              signProjectData?.photos_and_measurements?.Id,
+                            signName === 'Outdoor'
+                              ? 'outdoor_photos_and_measurements'
+                              : 'indoor_photos_and_measurements',
+                            item.isLocal,
+                            selectedOptions,
+                          );
+                        }}>
+                        <View style={styles.imageContainer}>
                           <Image
-                            source={{uri: data.url}}
+                            source={{
+                              uri: item?.path?.startsWith('file://')
+                                ? item.path
+                                : `file://${item.path || item.url}`,
+                            }}
                             style={styles.image}
                           />
                           <TouchableOpacity
                             onPress={() =>
                               handleRemoveImage(
-                                data.imageId,
+                                item.isLocal ? item.ImageId : item.imageId,
                                 'photoFullFrontalOfWholeSignStructurePhoto',
                                 'photoFullFrontalOfWholeSignStructurePhotos',
+                                item.path,
+                                item.isLocal,
                               )
                             }
                             style={styles.removeButton}>
                             <Text style={styles.removeButtonText}>×</Text>
                           </TouchableOpacity>
                         </View>
-                      );
-                    },
-                  )
+                      </TouchableOpacity>
+                    ));
+                  })()
                 )}
               </View>
             </View>
@@ -1525,7 +1761,12 @@ const Photos = ({handleFetchData}) => {
               <TouchableOpacity
                 style={styles.imageCon}
                 onPress={() =>
-                  handleAddPhoto(setSelectedOptions, 'photoCloseUpOfSign')
+                  showPhotoOptions(
+                    setSelectedOptions,
+                    'photoCloseUpOfSign',
+                    'PhotosAndMesurements',
+                    false,
+                  )
                 }>
                 <View style={styles.photoButton}>
                   <Text style={styles.photoText}>add photo</Text>
@@ -1533,7 +1774,11 @@ const Photos = ({handleFetchData}) => {
                 </View>
 
                 <View style={styles.fileNameContainer}>
-                  <Text style={styles.fileNameText}>{''}</Text>
+                  <Text style={styles.fileNameText}>
+                    {selectedOptions?.photoCloseUpOfSign?.length > 0
+                      ? `${selectedOptions?.photoCloseUpOfSign?.length} files Choosen`
+                      : 'No file Choosen'}
+                  </Text>
                 </View>
               </TouchableOpacity>
               <View
@@ -1546,25 +1791,71 @@ const Photos = ({handleFetchData}) => {
                 {loadingImage ? (
                   <ActivityIndicator size="small" color="#FF9239" />
                 ) : (
-                  selectedOptions?.photoCloseUpOfSigns?.length > 0 &&
-                  selectedOptions?.photoCloseUpOfSigns?.map((data, index) => {
-                    return (
-                      <View key={index} style={styles.imageContainer}>
-                        <Image source={{uri: data.url}} style={styles.image} />
-                        <TouchableOpacity
-                          onPress={() =>
-                            handleRemoveImage(
-                              data.imageId,
-                              'photoCloseUpOfSign',
-                              'photoCloseUpOfSigns',
-                            )
-                          }
-                          style={styles.removeButton}>
-                          <Text style={styles.removeButtonText}>×</Text>
-                        </TouchableOpacity>
-                      </View>
-                    );
-                  })
+                  (() => {
+                    const mergedCloseUpImages = [
+                      ...(selectedOptions?.photoCloseUpOfSign?.map(item => ({
+                        ...item,
+                        isLocal: true,
+                      })) || []),
+                      ...(selectedOptions?.photoCloseUpOfSigns?.map(item => ({
+                        ...item,
+                        isLocal: false,
+                      })) || []),
+                    ];
+
+                    if (mergedCloseUpImages.length === 0) return null;
+
+                    return mergedCloseUpImages.map((item, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        onPress={() => {
+                          openEditorforUpdate(
+                            item.path || item.url,
+                            setSelectedOptions,
+                            item.isLocal
+                              ? 'photoCloseUpOfSign'
+                              : 'photoCloseUpOfSigns',
+                            'CloseUpSign',
+                            true,
+                            item.isLocal ? item.ImageId : item.imageId,
+                            baseUrl,
+                            loginData?.tokenNumber,
+                            true,
+                            signProjectData?.photos_and_measurements?.id ||
+                              signProjectData?.photos_and_measurements?.Id,
+                            signName === 'Outdoor'
+                              ? 'outdoor_photos_and_measurements'
+                              : 'indoor_photos_and_measurements',
+                            item.isLocal,
+                            selectedOptions,
+                          );
+                        }}>
+                        <View style={styles.imageContainer}>
+                          <Image
+                            source={{
+                              uri: item?.path?.startsWith('file://')
+                                ? item.path
+                                : `file://${item.path || item.url}`,
+                            }}
+                            style={styles.image}
+                          />
+                          <TouchableOpacity
+                            onPress={() =>
+                              handleRemoveImage(
+                                item.isLocal ? item.ImageId : item.imageId,
+                                'photoCloseUpOfSign',
+                                'photoCloseUpOfSigns',
+                                item.path,
+                                item.isLocal,
+                              )
+                            }
+                            style={styles.removeButton}>
+                            <Text style={styles.removeButtonText}>×</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </TouchableOpacity>
+                    ));
+                  })()
                 )}
               </View>
             </View>
@@ -1911,187 +2202,199 @@ const Photos = ({handleFetchData}) => {
                 </Collapsible>
               </View>
             </View> */}
-            {/* <View>
-              <TouchableOpacity
-                style={[styles.containerDrop]}
-                onPress={() => handleState('pan')}>
-                <Text style={styles.label}>If pan, measure pan dimensions</Text>
-                <View style={styles.iconButton}>
-                  {state === 'pan' ? (
-                    <Down width={18} height={18} />
-                  ) : (
-                    <Up width={18} height={18} />
-                  )}
-                </View>
-              </TouchableOpacity>
-              <View style={{marginBottom: state !== 'pan' ? 16 : 0}}>
-                <Collapsible
-                  duration={300}
-                  easing="easeInOutQuad"
-                  collapsed={state !== 'pan'}>
-                  <View style={styles.sectionContainer}>
-                    <View style={styles.row}>
-                      <TextInput
-                        style={[styles.input, {flex: 1}]}
-                        placeholder="Height(in)"
-                        keyboardType="number-pad"
-                        value={
-                          selectedOptions?.ifPanMeasurePanDimensionHeightIN
-                        }
-                        onChangeText={text => {
-                          setSelectedOptions(prev => {
-                            return {
-                              ...prev,
-                              ifPanMeasurePanDimensionHeightIN: text,
-                            };
-                          });
-                        }}
-                      />
-                      <TextInput
-                        style={[styles.input, {flex: 1}]}
-                        placeholder="Height(ft)"
-                        keyboardType="number-pad"
-                        value={
-                          selectedOptions?.ifPanMeasurePanDimensionHeightFT
-                        }
-                        onChangeText={text => {
-                          setSelectedOptions(prev => {
-                            return {
-                              ...prev,
-
-                              ifPanMeasurePanDimensionHeightFT: text,
-                            };
-                          });
-                        }}
-                      />
-                    </View>
-                    <View style={styles.row}>
-                      <TextInput
-                        style={[styles.input, {flex: 1}]}
-                        placeholder="Width(in)"
-                        keyboardType="number-pad"
-                        value={selectedOptions?.ifPanMeasurePanDimensionWidthFT}
-                        onChangeText={text => {
-                          setSelectedOptions(prev => {
-                            return {
-                              ...prev,
-                              ifPanMeasurePanDimensionWidthFT: text,
-                            };
-                          });
-                        }}
-                      />
-                      <TextInput
-                        style={[styles.input, {flex: 1}]}
-                        placeholder="Width(ft)"
-                        keyboardType="number-pad"
-                        value={selectedOptions?.measureRetainerSizeDepthFT}
-                        onChangeText={text => {
-                          setSelectedOptions(prev => {
-                            return {
-                              ...prev,
-                              measureRetainerSizeDepthFT: text,
-                            };
-                          });
-                        }}
-                      />
-                    </View>
-
-                    <View style={styles.row}>
-                      <TextInput
-                        style={[styles.input, {flex: 1}]}
-                        placeholder="Depth(in)"
-                        keyboardType="number-pad"
-                        value={selectedOptions?.ifPanMeasurePanDimensionDepthIN}
-                        onChangeText={text => {
-                          setSelectedOptions(prev => {
-                            return {
-                              ...prev,
-                              ifPanMeasurePanDimensionDepthIN: text,
-                            };
-                          });
-                        }}
-                      />
-                      <TextInput
-                        style={[styles.input, {flex: 1}]}
-                        placeholder="Depth(ft)"
-                        keyboardType="number-pad"
-                        value={selectedOptions?.ifPanMeasurePanDimensionDepthFT}
-                        onChangeText={text => {
-                          setSelectedOptions(prev => {
-                            return {
-                              ...prev,
-                              ifPanMeasurePanDimensionDepthFT: text,
-                            };
-                          });
-                        }}
-                      />
-                    </View>
-                    <TouchableOpacity
-                      style={styles.imageCon}
-                      onPress={() =>
-                        handleAddPhoto(
-                          setSelectedOptions,
-                          'ifPanMeasurePanDimensionPhoto',
-                        )
-                      }>
-                      <View style={styles.photoButton}>
-                        <Text style={styles.photoText}>add photo</Text>
-                        <Photo />
-                      </View>
-
-                      <View style={styles.fileNameContainer}>
-                        <Text style={styles.fileNameText}>{''}</Text>
-                      </View>
-                    </TouchableOpacity>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        marginVertical: 15,
-                        gap: 15,
-                        flexWrap: 'wrap',
-                      }}>
-                      {loadingImage ? (
-                        <ActivityIndicator size="small" color="#FF9239" />
-                      ) : (
-                        selectedOptions?.ifPanMeasurePanDimensionPhotos
-                          ?.length > 0 &&
-                        selectedOptions?.ifPanMeasurePanDimensionPhotos?.map(
-                          (data, index) => {
-                            return (
-                              <View key={index} style={styles.imageContainer}>
-                                <Image
-                                  source={{uri: data.url}}
-                                  style={styles.image}
-                                />
-                                <TouchableOpacity
-                                  onPress={() =>
-                                    handleRemoveImage(
-                                      data.imageId,
-                                      'ifPanMeasurePanDimensionPhoto',
-                                      'ifPanMeasurePanDimensionPhotos',
-                                    )
-                                  }
-                                  style={styles.removeButton}>
-                                  <Text style={styles.removeButtonText}>×</Text>
-                                </TouchableOpacity>
-                              </View>
-                            );
-                          },
-                        )
-                      )}
-                    </View>
-                    <TouchableOpacity
-                      onPress={() => handleState('pan')}
-                      style={[
-                        styles.iconButton,
-                        {alignSelf: 'flex-end', marginVertical: 15},
-                      ]}>
+            {/* {selectedOptions.signId == '1' && (
+              <View>
+                <TouchableOpacity
+                  style={[styles.containerDrop]}
+                  onPress={() => setPanstate(prev => !prev)}>
+                  <Text style={styles.label}>
+                    If pan, measure pan dimensions
+                  </Text>
+                  <View style={styles.iconButton}>
+                    {pansState ? (
                       <Down width={18} height={18} />
-                    </TouchableOpacity>
+                    ) : (
+                      <Up width={18} height={18} />
+                    )}
                   </View>
-                </Collapsible>
+                </TouchableOpacity>
+                <View style={{marginBottom: !pansState ? 16 : 0}}>
+                  <Collapsible
+                    duration={300}
+                    easing="easeInOutQuad"
+                    collapsed={!pansState}>
+                    <View style={styles.sectionContainer}>
+                      <View style={styles.row}>
+                        <TextInput
+                          style={[styles.input, {flex: 1}]}
+                          placeholder="Height(in)"
+                          keyboardType="number-pad"
+                          value={
+                            selectedOptions?.ifPanMeasurePanDimensionHeightIN
+                          }
+                          onChangeText={text => {
+                            setSelectedOptions(prev => {
+                              return {
+                                ...prev,
+                                ifPanMeasurePanDimensionHeightIN: text,
+                              };
+                            });
+                          }}
+                        />
+                        <TextInput
+                          style={[styles.input, {flex: 1}]}
+                          placeholder="Height(ft)"
+                          keyboardType="number-pad"
+                          value={
+                            selectedOptions?.ifPanMeasurePanDimensionHeightFT
+                          }
+                          onChangeText={text => {
+                            setSelectedOptions(prev => {
+                              return {
+                                ...prev,
+
+                                ifPanMeasurePanDimensionHeightFT: text,
+                              };
+                            });
+                          }}
+                        />
+                      </View>
+                      <View style={styles.row}>
+                        <TextInput
+                          style={[styles.input, {flex: 1}]}
+                          placeholder="Width(in)"
+                          keyboardType="number-pad"
+                          value={
+                            selectedOptions?.ifPanMeasurePanDimensionWidthFT
+                          }
+                          onChangeText={text => {
+                            setSelectedOptions(prev => {
+                              return {
+                                ...prev,
+                                ifPanMeasurePanDimensionWidthFT: text,
+                              };
+                            });
+                          }}
+                        />
+                        <TextInput
+                          style={[styles.input, {flex: 1}]}
+                          placeholder="Width(ft)"
+                          keyboardType="number-pad"
+                          value={selectedOptions?.measureRetainerSizeDepthFT}
+                          onChangeText={text => {
+                            setSelectedOptions(prev => {
+                              return {
+                                ...prev,
+                                measureRetainerSizeDepthFT: text,
+                              };
+                            });
+                          }}
+                        />
+                      </View>
+
+                      <View style={styles.row}>
+                        <TextInput
+                          style={[styles.input, {flex: 1}]}
+                          placeholder="Depth(in)"
+                          keyboardType="number-pad"
+                          value={
+                            selectedOptions?.ifPanMeasurePanDimensionDepthIN
+                          }
+                          onChangeText={text => {
+                            setSelectedOptions(prev => {
+                              return {
+                                ...prev,
+                                ifPanMeasurePanDimensionDepthIN: text,
+                              };
+                            });
+                          }}
+                        />
+                        <TextInput
+                          style={[styles.input, {flex: 1}]}
+                          placeholder="Depth(ft)"
+                          keyboardType="number-pad"
+                          value={
+                            selectedOptions?.ifPanMeasurePanDimensionDepthFT
+                          }
+                          onChangeText={text => {
+                            setSelectedOptions(prev => {
+                              return {
+                                ...prev,
+                                ifPanMeasurePanDimensionDepthFT: text,
+                              };
+                            });
+                          }}
+                        />
+                      </View>
+                      <TouchableOpacity
+                        style={styles.imageCon}
+                        onPress={() =>
+                          handleAddPhoto(
+                            setSelectedOptions,
+                            'ifPanMeasurePanDimensionPhoto',
+                          )
+                        }>
+                        <View style={styles.photoButton}>
+                          <Text style={styles.photoText}>add photo</Text>
+                          <Photo />
+                        </View>
+
+                        <View style={styles.fileNameContainer}>
+                          <Text style={styles.fileNameText}>{''}</Text>
+                        </View>
+                      </TouchableOpacity>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          marginVertical: 15,
+                          gap: 15,
+                          flexWrap: 'wrap',
+                        }}>
+                        {loadingImage ? (
+                          <ActivityIndicator size="small" color="#FF9239" />
+                        ) : (
+                          selectedOptions?.ifPanMeasurePanDimensionPhotos
+                            ?.length > 0 &&
+                          selectedOptions?.ifPanMeasurePanDimensionPhotos?.map(
+                            (data, index) => {
+                              return (
+                                <View key={index} style={styles.imageContainer}>
+                                  <Image
+                                    source={{uri: data.url}}
+                                    style={styles.image}
+                                  />
+                                  <TouchableOpacity
+                                    onPress={() =>
+                                      handleRemoveImage(
+                                        data.imageId,
+                                        'ifPanMeasurePanDimensionPhoto',
+                                        'ifPanMeasurePanDimensionPhotos',
+                                      )
+                                    }
+                                    style={styles.removeButton}>
+                                    <Text style={styles.removeButtonText}>
+                                      ×
+                                    </Text>
+                                  </TouchableOpacity>
+                                </View>
+                              );
+                            },
+                          )
+                        )}
+                      </View>
+                      <TouchableOpacity
+                        onPress={() => setPanstate(prev => !prev)}
+                        style={[
+                          styles.iconButton,
+                          {alignSelf: 'flex-end', marginVertical: 15},
+                        ]}>
+                        <Down width={18} height={18} />
+                      </TouchableOpacity>
+                    </View>
+                  </Collapsible>
+                </View>
               </View>
-            </View> */}
+            )} */}
 
             <View>
               <TouchableOpacity
@@ -2324,9 +2627,11 @@ const Photos = ({handleFetchData}) => {
                     <TouchableOpacity
                       style={styles.imageCon}
                       onPress={() =>
-                        handleAddPhoto(
+                        showPhotoOptions(
                           setSelectedOptions,
                           'otherPhotosMeasurementsMarkupsPhoto',
+                          'PhotosAndMesurements',
+                          false,
                         )
                       }>
                       <View style={styles.photoButton}>
@@ -2335,7 +2640,12 @@ const Photos = ({handleFetchData}) => {
                       </View>
 
                       <View style={styles.fileNameContainer}>
-                        <Text style={styles.fileNameText}>{''}</Text>
+                        <Text style={styles.fileNameText}>
+                          {selectedOptions?.otherPhotosMeasurementsMarkupsPhoto
+                            ?.length > 0
+                            ? `${selectedOptions?.otherPhotosMeasurementsMarkupsPhoto?.length} files Choosen`
+                            : 'No file Choosen'}
+                        </Text>
                       </View>
                     </TouchableOpacity>
                     <View
@@ -2347,36 +2657,83 @@ const Photos = ({handleFetchData}) => {
                       }}>
                       {loadingImage ? (
                         <ActivityIndicator size="small" color="#FF9239" />
-                      ) : selectedOptions?.otherPhotosMeasurementsMarkupsPhotos &&
-                        selectedOptions.otherPhotosMeasurementsMarkupsPhotos
-                          .length > 0 ? (
-                        selectedOptions.otherPhotosMeasurementsMarkupsPhotos.map(
-                          (data, index) => (
-                            <View key={index} style={styles.imageContainer}>
-                              <Image
-                                source={{uri: data.url}}
-                                style={styles.image}
-                              />
-                              <TouchableOpacity
-                                onPress={() =>
-                                  handleRemoveImage(
-                                    data.imageId,
-                                    'otherPhotosMeasurementsMarkupsPhoto',
-                                    'otherPhotosMeasurementsMarkupsPhotos',
-                                  )
-                                }
-                                style={styles.removeButton}>
-                                <Text style={styles.removeButtonText}>×</Text>
-                              </TouchableOpacity>
-                            </View>
-                          ),
-                        )
                       ) : (
-                        <Text style={{color: '#888'}}>
-                          No images to display
-                        </Text>
+                        (() => {
+                          const mergedOtherMarkupImages = [
+                            ...(selectedOptions?.otherPhotosMeasurementsMarkupsPhoto?.map(
+                              item => ({
+                                ...item,
+                                isLocal: true,
+                              }),
+                            ) || []),
+                            ...(selectedOptions?.otherPhotosMeasurementsMarkupsPhotos?.map(
+                              item => ({
+                                ...item,
+                                isLocal: false,
+                              }),
+                            ) || []),
+                          ];
+
+                          if (mergedOtherMarkupImages.length === 0) return;
+
+                          return mergedOtherMarkupImages.map((item, index) => (
+                            <TouchableOpacity
+                              key={index}
+                              onPress={() => {
+                                openEditorforUpdate(
+                                  item.path || item.url,
+                                  setSelectedOptions,
+                                  item.isLocal
+                                    ? 'otherPhotosMeasurementsMarkupsPhoto'
+                                    : 'otherPhotosMeasurementsMarkupsPhotos',
+                                  'OtherMeasurementsMarkup',
+                                  true,
+                                  item.isLocal ? item.ImageId : item.imageId,
+                                  baseUrl,
+                                  loginData?.tokenNumber,
+                                  true,
+                                  signProjectData?.photos_and_measurements
+                                    ?.id ||
+                                    signProjectData?.photos_and_measurements
+                                      ?.Id,
+                                  signName === 'Outdoor'
+                                    ? 'outdoor_photos_and_measurements'
+                                    : 'indoor_photos_and_measurements',
+                                  item.isLocal,
+                                  selectedOptions,
+                                );
+                              }}>
+                              <View style={styles.imageContainer}>
+                                <Image
+                                  source={{
+                                    uri: item?.path?.startsWith('file://')
+                                      ? item.path
+                                      : `file://${item.path || item.url}`,
+                                  }}
+                                  style={styles.image}
+                                />
+                                <TouchableOpacity
+                                  onPress={() =>
+                                    handleRemoveImage(
+                                      item.isLocal
+                                        ? item.ImageId
+                                        : item.imageId,
+                                      'otherPhotosMeasurementsMarkupsPhoto',
+                                      'otherPhotosMeasurementsMarkupsPhotos',
+                                      item.path,
+                                      item.isLocal,
+                                    )
+                                  }
+                                  style={styles.removeButton}>
+                                  <Text style={styles.removeButtonText}>×</Text>
+                                </TouchableOpacity>
+                              </View>
+                            </TouchableOpacity>
+                          ));
+                        })()
                       )}
                     </View>
+
                     <TouchableOpacity
                       onPress={() => setOtherPhotos(prev => !prev)}
                       style={[

@@ -315,8 +315,7 @@ const OutDoor = ({handleFetchData}) => {
           const imagesCache = [
             ...(selectedOptions?.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto ||
               []),
-            ...(selectedOptions?.anyAccessibilityObstructionsDocumentAccessibilityIssuesPhoto ||
-              []),
+            ...(selectedOptions?.anyPotentialSafetyIssuesPhoto || []),
           ];
           for (const file of imagesCache) {
             try {

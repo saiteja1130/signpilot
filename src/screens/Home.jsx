@@ -34,18 +34,19 @@ import {
   clearAllTables,
   createElectricalAuditTable,
   createExistingSignAuditTable,
-  createIndoorPhotosAndMeasurementsTable,
   createLocalDB,
   createOfflineImagesTable,
   createOfflineRemoveTable,
   createPermittingAssessmentTable,
+  createPhotosAndMeasurementsTable,
   createSignDataOptionsTable,
   createSignGeneralAuditTable,
+  dropAllTables,
   fetchAllProjectsData,
   insertElectricalAudit,
   insertExistingSignAudit,
-  insertIndoorPhotosAndMeasurements,
   insertPermittingAssessment,
+  insertPhotosAndMeasurements,
   insertProjectsData,
   insertSignGeneralAudit,
 } from '../Db/LocalData';
@@ -109,7 +110,7 @@ const Home = () => {
             insertExistingSignAudit(data, 1),
             insertElectricalAudit(data, 1),
             insertPermittingAssessment(data, 1),
-            insertIndoorPhotosAndMeasurements(data),
+            insertPhotosAndMeasurements(data, 1),
             insertSignGeneralAudit(data, 1),
           ]);
           fetchAllProjectsData(projects => {
@@ -273,6 +274,7 @@ const Home = () => {
   };
 
   useEffect(() => {
+    // dropAllTables();
     createOfflineRemoveTable();
     createOfflineImagesTable();
     createLocalDB();
@@ -280,7 +282,7 @@ const Home = () => {
     createExistingSignAuditTable();
     createElectricalAuditTable();
     createPermittingAssessmentTable();
-    createIndoorPhotosAndMeasurementsTable();
+    createPhotosAndMeasurementsTable();
     createSignGeneralAuditTable();
     const init = async () => {
       const netState = await NetInfo.fetch();
@@ -677,9 +679,9 @@ const Home = () => {
                   {/* <ExistingAuditProject handleFetchData={fetchData} />
                   <ElectricalAssessment handleFetchData={fetchData} />
                   <PermittingAssenment handleFetchData={fetchData} /> */}
-                  <Outdoor handleFetchData={fetchData} />
+                  {/* <Outdoor handleFetchData={fetchData} /> */}
                   {/* <Indoor handleFetchData={fetchData} /> */}
-                  {/* {<Photos handleFetchData={fetchData} />} */}
+                  {<Photos handleFetchData={fetchData} />}
 
                   {isConnected && (
                     <View>

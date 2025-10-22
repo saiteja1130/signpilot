@@ -444,11 +444,11 @@ export const createPermittingAssessmentTable = () => {
   });
 };
 
-export const createIndoorPhotosAndMeasurementsTable = () => {
+export const createPhotosAndMeasurementsTable = () => {
   db.transaction((tx: any) => {
     tx.executeSql(
       `
-      CREATE TABLE IF NOT EXISTS indoor_photos_and_measurements (
+      CREATE TABLE IF NOT EXISTS photos_and_measurements (
         id TEXT PRIMARY KEY,
         projectId TEXT,
         signId TEXT,
@@ -460,7 +460,8 @@ export const createIndoorPhotosAndMeasurementsTable = () => {
         adminId TEXT,
         adminName TEXT,
         customerName TEXT,
-        nameofMeasurement TEXT,
+        teamId TEXT,
+        nameOfMeasurement TEXT,
         areMullionsPresent TEXT,
         areThereAnyVisibleOpenings TEXT,
         signDimensionsWidthFT TEXT,
@@ -495,12 +496,19 @@ export const createIndoorPhotosAndMeasurementsTable = () => {
         squareFootageFeet TEXT,
         squareFootageWidthIN TEXT,
         squareFootageLengthIN TEXT,
+        squareFootageLengthFT TEXT,
+        squareFootageWidthFT TEXT,
+        squareFootageDepthIN TEXT,
+        squareFootageDepthFT TEXT,
         squareFootageNotes TEXT,
         visibleOpeningsLengthFT TEXT,
         visibleOpeningsLengthIN TEXT,
         visibleOpeningsWidthFT TEXT,
         visibleOpeningsWidthIN TEXT,
+        visibleOpeningsHeightFT TEXT,
+        visibleOpeningsHeightIN TEXT,
         visibleOpeningsNotes TEXT,
+        visibleOpeningsSpike TEXT,
         otherPhotosAndMeasurementsLengthFT TEXT,
         otherPhotosAndMeasurementsLengthIN TEXT,
         otherPhotosAndMeasurementsWidthFT TEXT,
@@ -510,19 +518,108 @@ export const createIndoorPhotosAndMeasurementsTable = () => {
         photoOfWallOrFloor TEXT,
         photosAndMeasurementsSummaryNotes TEXT,
         photosAndMeasurementsTodoPunchList TEXT,
+        signOrientation TEXT,
+        surveyModule TEXT,
+        measureGroundToSignHeightFT TEXT,
+        measureGroundToSignHeightIN TEXT,
+        measureChannelLettersWidthFT TEXT,
+        measureChannelLettersWidthIN TEXT,
+        measureChannelLettersHeightFT TEXT,
+        measureChannelLettersHeightIN TEXT,
+        measureChannelLettersDepthFT TEXT,
+        measureChannelLettersDepthIN TEXT,
+        measureCutSizeWidthFT TEXT,
+        measureCutSizeWidthIN TEXT,
+        measureCutSizeHeightFT TEXT,
+        measureCutSizeHeightIN TEXT,
+        measureCutSizeDepthFT TEXT,
+        measureCutSizeDepthIN TEXT,
+        measureRetainerSizeWidthFT TEXT,
+        measureRetainerSizeWidthIN TEXT,
+        measureRetainerSizeHeightFT TEXT,
+        measureRetainerSizeHeightIN TEXT,
+        measureRetainerSizeDepthFT TEXT,
+        measureRetainerSizeDepthIN TEXT,
+        ifPanMeasurePanDimensionWidthFT TEXT,
+        ifPanMeasurePanDimensionWidthIN TEXT,
+        ifPanMeasurePanDimensionHeightFT TEXT,
+        ifPanMeasurePanDimensionHeightIN TEXT,
+        ifPanMeasurePanDimensionDepthFT TEXT,
+        ifPanMeasurePanDimensionDepthIN TEXT,
+        measureCellingWallSurfaceAreaWidthFT TEXT,
+        measureCellingWallSurfaceAreaWidthIN TEXT,
+        measureCellingWallSurfaceAreaHeightFT TEXT,
+        measureCellingWallSurfaceAreaHeightIN TEXT,
+        measureCellingWallSurfaceAreaDepthFT TEXT,
+        measureCellingWallSurfaceAreaDepthIN TEXT,
+        heightOfPoleLengthFT TEXT,
+        heightOfPoleLengthIN TEXT,
+        circumferenceOfPoleLengthFT TEXT,
+        circumferenceOfPoleLengthIN TEXT,
+        distanceBetweenPolesLengthFT TEXT,
+        distanceBetweenPolesLengthIN TEXT,
+        otherPhotosMeasurementsMarkupsWidthFT TEXT,
+        otherPhotosMeasurementsMarkupsWidthIN TEXT,
+        otherPhotosMeasurementsMarkupsHeightFT TEXT,
+        otherPhotosMeasurementsMarkupsHeightIN TEXT,
+        otherPhotosMeasurementsMarkupsDepthFT TEXT,
+        otherPhotosMeasurementsMarkupsDepthIN TEXT,
+        indoorWallHeightFT TEXT,
+        indoorWallHeightIN TEXT,
+        indoorWallWidthFT TEXT,
+        indoorWallWidthIN TEXT,
+        ceilingHeightFT TEXT,
+        ceilingHeightIN TEXT,
+        indoorMeasurement TEXT,
+        indoorMeasurementNotes TEXT,
+        indoorSummaryNotes TEXT,
+        indoorTodoPunchList TEXT,
+        signDimensionsPhoto TEXT,
+        signDimensionsSpikePhoto TEXT,
+        measureChannelLettersPhoto TEXT,
+        measureChannelLettersPhotos TEXT,
+        squareFootagePhoto TEXT,
+        squareFootageSpikePhoto TEXT,
+        photoCloseUpOfSign TEXT,
+        visibleOpeningsPhoto TEXT,
+        mullionsPhoto TEXT,
+        mullionsSpike TEXT,
+        otherPhotosMeasurementsMarkupsPhoto TEXT,
+        otherPhotosMeasurementsMarkupsSpike TEXT,
+        photoFullFrontalOfWholeSignStructurePhoto TEXT,
+        measureCellingWallSurfaceAreaPhoto TEXT,
+        measureRetainerSizePhoto TEXT,
+        measureCutSizePhoto TEXT,
+        ifPanMeasurePanDimensionPhoto TEXT,
+        wallDimensionsPhoto TEXT,
+        otherPhotosImage TEXT,
+        wallDimensionsSpikePhoto TEXT,
+        photoOfWallOrFloorPhoto TEXT,
+        otherPhotosSpike TEXT,
+        ifPanMeasurePanDimensionPhotos TEXT,
+        measureRetainerSizePhotos TEXT,
+        photoCloseUpOfSigns TEXT,
+        photoFullFrontalOfWholeSignStructurePhotos TEXT,
+        signDimensionsPhotos TEXT,
+        squareFootageSpikePhotos TEXT,
+        visibleOpeningsPhotos TEXT,
+        otherPhotosImages TEXT,
+        otherPhotosMeasurementsMarkupsPhotos TEXT,
+        indoorWallPhoto TEXT,
+        ceilingSurfacePhoto TEXT,
+        isSynched BOOLEAN DEFAULT 0,
         FOREIGN KEY (projectId) REFERENCES projects(projectId) ON DELETE CASCADE
       )
       `,
       [],
       () =>
-        console.log(
-          'indoor_photos_and_measurements table created successfully',
-        ),
-      (_: any, error: any) =>
-        console.error(
-          'Error creating indoor_photos_and_measurements table:',
-          error,
-        ),
+        console.log('✅ photos_and_measurements table created successfully'),
+      (_: any, error: any) => {
+        console.error('❌ Error creating photos_and_measurements table');
+        console.error('Error object:', error);
+        console.error('Error message:', error?.message);
+        console.error('Error code:', error?.code);
+      },
     );
   });
 };
@@ -1154,134 +1251,492 @@ export const insertPermittingAssessment = (projects: any[], syched: number) => {
   );
 };
 
-export const insertIndoorPhotosAndMeasurements = (projects: any[]) => {
-  db.transaction(
-    (tx: any) => {
-      projects.forEach(project => {
-        project.signDataOptions?.forEach((option: any) => {
-          const indoor = option.indoor_photos_and_measurements;
-          if (indoor) {
-            tx.executeSql(
-              `
-              INSERT OR REPLACE INTO indoor_photos_and_measurements (
-                id, projectId, signId, optionId, signAliasName, signType, sign_order,
-                createdDate, adminId, adminName, customerName,
-                nameofMeasurement, areMullionsPresent, areThereAnyVisibleOpenings,
-                signDimensionsWidthFT, signDimensionsWidthIN,
-                signDimensionsHeightFT, signDimensionsHeightIN,
-                signDimensionsDepthFT, signDimensionsDepthIN,
-                wallDimensionsLengthFT, wallDimensionsLengthIN,
-                wallDimensionsWidthFT, wallDimensionsWidthIN,
-                measureDistanceFromSignToFloorLengthFT,
-                measureDistanceFromSignToFloorLengthIN,
-                measureDistanceLength1FT, measureDistanceLength1IN,
-                measureDistanceLength2FT, measureDistanceLength2IN,
-                measureDistanceLength3FT, measureDistanceLength3IN,
-                measureDistanceLength4FT, measureDistanceLength4IN,
-                mullionsLengthFT, mullionsLengthIN,
-                mullionsWidthFT, mullionsWidthIN,
-                mullionsDepthFT, mullionsDepthIN,
-                mullionsNotes,
-                squareFootage, squareFootageCalculationRequired,
-                squareFootageFeet, squareFootageWidthIN,
-                squareFootageLengthIN, squareFootageNotes,
-                visibleOpeningsLengthFT, visibleOpeningsLengthIN,
-                visibleOpeningsWidthFT, visibleOpeningsWidthIN,
-                visibleOpeningsNotes,
-                otherPhotosAndMeasurementsLengthFT,
-                otherPhotosAndMeasurementsLengthIN,
-                otherPhotosAndMeasurementsWidthFT,
-                otherPhotosAndMeasurementsWidthIN,
-                otherPhotosAndMeasurementsDepthFT,
-                otherPhotosAndMeasurementsDepthIN,
-                photoOfWallOrFloor,
-                photosAndMeasurementsSummaryNotes,
-                photosAndMeasurementsTodoPunchList
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-              `,
-              [
-                indoor.id,
-                indoor.projectId,
-                indoor.signId,
-                indoor.optionId,
-                indoor.signAliasName,
-                indoor.signType,
-                indoor.sign_order,
-                indoor.createdDate || '',
-                indoor.adminId || null,
-                indoor.adminName || '',
-                indoor.customerName || '',
-                indoor.nameofMeasurement || null,
-                indoor.areMullionsPresent || null,
-                indoor.areThereAnyVisibleOpenings || null,
-                indoor.signDimensionsWidthFT || null,
-                indoor.signDimensionsWidthIN || null,
-                indoor.signDimensionsHeightFT || null,
-                indoor.signDimensionsHeightIN || null,
-                indoor.signDimensionsDepthFT || null,
-                indoor.signDimensionsDepthIN || null,
-                indoor.wallDimensionsLengthFT || null,
-                indoor.wallDimensionsLengthIN || null,
-                indoor.wallDimensionsWidthFT || null,
-                indoor.wallDimensionsWidthIN || null,
-                indoor.measureDistanceFromSignToFloorLengthFT || null,
-                indoor.measureDistanceFromSignToFloorLengthIN || null,
-                indoor.measureDistanceLength1FT || null,
-                indoor.measureDistanceLength1IN || null,
-                indoor.measureDistanceLength2FT || null,
-                indoor.measureDistanceLength2IN || null,
-                indoor.measureDistanceLength3FT || null,
-                indoor.measureDistanceLength3IN || null,
-                indoor.measureDistanceLength4FT || null,
-                indoor.measureDistanceLength4IN || null,
-                indoor.mullionsLengthFT || null,
-                indoor.mullionsLengthIN || null,
-                indoor.mullionsWidthFT || null,
-                indoor.mullionsWidthIN || null,
-                indoor.mullionsDepthFT || null,
-                indoor.mullionsDepthIN || null,
-                indoor.mullionsNotes || null,
-                indoor.squareFootage || null,
-                indoor.squareFootageCalculationRequired || null,
-                indoor.squareFootageFeet || null,
-                indoor.squareFootageWidthIN || null,
-                indoor.squareFootageLengthIN || null,
-                indoor.squareFootageNotes || null,
-                indoor.visibleOpeningsLengthFT || null,
-                indoor.visibleOpeningsLengthIN || null,
-                indoor.visibleOpeningsWidthFT || null,
-                indoor.visibleOpeningsWidthIN || null,
-                indoor.visibleOpeningsNotes || null,
-                indoor.otherPhotosAndMeasurementsLengthFT || null,
-                indoor.otherPhotosAndMeasurementsLengthIN || null,
-                indoor.otherPhotosAndMeasurementsWidthFT || null,
-                indoor.otherPhotosAndMeasurementsWidthIN || null,
-                indoor.otherPhotosAndMeasurementsDepthFT || null,
-                indoor.otherPhotosAndMeasurementsDepthIN || null,
-                indoor.photoOfWallOrFloor || null,
-                indoor.photosAndMeasurementsSummaryNotes || '',
-                indoor.photosAndMeasurementsTodoPunchList || '',
-              ],
-              () =>
-                console.log(
-                  `Inserted indoor_photos_and_measurements for sign ${indoor.id}`,
-                ),
-              (_: any, error: any) =>
-                console.error(
-                  `Error inserting indoor_photos_and_measurements ${indoor.id}:`,
-                  error,
-                ),
-            );
-          }
-        });
-      });
-    },
-    (txError: any) => console.error('Transaction ERROR:', txError),
-    () =>
-      console.log(
-        'All indoor_photos_and_measurements data inserted successfully',
-      ),
+export const insertPhotosAndMeasurements = async (
+  projects: any[],
+  synched: number,
+) => {
+  for (const project of projects) {
+    for (const option of project.signDataOptions || []) {
+      const measurements: any =
+        option.indoor_photos_and_measurements ||
+        option.outdoor_photos_and_measurements;
+      if (!measurements) continue;
+
+      const id = measurements?.id;
+      console.log('Processing Measurement ID:', id);
+
+      // Download all image arrays first
+      const loadedSignDimensionsPhotos = await downloadImagesArray(
+        measurements.signDimensionsPhotos || [],
+        'signDimensionsPhotos',
+      );
+      const loadedSignDimensionsSpikePhoto = await downloadImagesArray(
+        measurements.signDimensionsSpikePhoto || [],
+        'signDimensionsSpikePhoto',
+      );
+      const loadedMeasureChannelLettersPhotos = await downloadImagesArray(
+        measurements.measureChannelLettersPhotos || [],
+        'measureChannelLettersPhotos',
+      );
+      const loadedMeasureChannelLettersPhoto = await downloadImagesArray(
+        measurements.measureChannelLettersPhoto || [],
+        'measureChannelLettersPhoto',
+      );
+      const loadedSquareFootagePhotos = await downloadImagesArray(
+        measurements.squareFootagePhoto || [],
+        'squareFootagePhoto',
+      );
+      const loadedSquareFootageSpikePhotos = await downloadImagesArray(
+        measurements.squareFootageSpikePhotos || [],
+        'squareFootageSpikePhotos',
+      );
+      const loadedPhotoCloseUpOfSign = await downloadImagesArray(
+        measurements.photoCloseUpOfSign || [],
+        'photoCloseUpOfSign',
+      );
+      const loadedVisibleOpeningsPhotos = await downloadImagesArray(
+        measurements.visibleOpeningsPhotos || [],
+        'visibleOpeningsPhotos',
+      );
+      const loadedMullionsPhotos = await downloadImagesArray(
+        measurements.mullionsPhoto || [],
+        'mullionsPhoto',
+      );
+      const loadedMullionsSpike = await downloadImagesArray(
+        measurements.mullionsSpike || [],
+        'mullionsSpike',
+      );
+      const loadedOtherPhotosMarkups = await downloadImagesArray(
+        measurements.otherPhotosMeasurementsMarkupsPhotos || [],
+        'otherPhotosMeasurementsMarkupsPhotos',
+      );
+      const loadedOtherPhotosMarkupsSpike = await downloadImagesArray(
+        measurements.otherPhotosMeasurementsMarkupsSpike || [],
+        'otherPhotosMeasurementsMarkupsSpike',
+      );
+      const loadedPhotoFullFrontal = await downloadImagesArray(
+        measurements.photoFullFrontalOfWholeSignStructurePhotos || [],
+        'photoFullFrontalOfWholeSignStructurePhotos',
+      );
+      const loadedMeasureCellingWall = await downloadImagesArray(
+        measurements.measureCellingWallSurfaceAreaPhoto || [],
+        'measureCellingWallSurfaceAreaPhoto',
+      );
+      const loadedMeasureRetainerSize = await downloadImagesArray(
+        measurements.measureRetainerSizePhoto || [],
+        'measureRetainerSizePhoto',
+      );
+      const loadedMeasureCutSize = await downloadImagesArray(
+        measurements.measureCutSizePhoto || [],
+        'measureCutSizePhoto',
+      );
+      const loadedIfPanMeasurePanDimension = await downloadImagesArray(
+        measurements.ifPanMeasurePanDimensionPhoto || [],
+        'ifPanMeasurePanDimensionPhoto',
+      );
+      const loadedWallDimensionsPhoto = await downloadImagesArray(
+        measurements.wallDimensionsPhoto || [],
+        'wallDimensionsPhoto',
+      );
+      const loadedOtherPhotosImage = await downloadImagesArray(
+        measurements.otherPhotosImage || [],
+        'otherPhotosImage',
+      );
+      const loadedWallDimensionsSpikePhoto = await downloadImagesArray(
+        measurements.wallDimensionsSpikePhoto || [],
+        'wallDimensionsSpikePhoto',
+      );
+      const loadedPhotoOfWallOrFloorPhoto = await downloadImagesArray(
+        measurements.photoOfWallOrFloorPhoto || [],
+        'photoOfWallOrFloorPhoto',
+      );
+      const loadedOtherPhotosSpike = await downloadImagesArray(
+        measurements.otherPhotosSpike || [],
+        'otherPhotosSpike',
+      );
+      const loadedIfPanMeasurePanDimensionPhotos = await downloadImagesArray(
+        measurements.ifPanMeasurePanDimensionPhotos || [],
+        'ifPanMeasurePanDimensionPhotos',
+      );
+      const loadedMeasureRetainerSizePhotos = await downloadImagesArray(
+        measurements.measureRetainerSizePhotos || [],
+        'measureRetainerSizePhotos',
+      );
+      const loadedPhotoCloseUpOfSigns = await downloadImagesArray(
+        measurements.photoCloseUpOfSigns || [],
+        'photoCloseUpOfSigns',
+      );
+      const loadedIndoorWallPhoto = await downloadImagesArray(
+        measurements.indoorWallPhoto || [],
+        'indoorWallPhoto',
+      );
+      const loadedCeilingSurfacePhoto = await downloadImagesArray(
+        measurements.ceilingSurfacePhoto || [],
+        'ceilingSurfacePhoto',
+      );
+
+      console.log(`✅ Downloaded all images for Measurement ID: ${id}`);
+
+      // Insert into SQLite
+      db.transaction(
+        (tx: any) => {
+          tx.executeSql(
+            `
+            INSERT OR REPLACE INTO photos_and_measurements (
+              id, projectId, signId, optionId, signAliasName, signType, sign_order,
+              createdDate, adminId, adminName, customerName, teamId, nameOfMeasurement,
+              areMullionsPresent, areThereAnyVisibleOpenings,
+              signDimensionsWidthFT, signDimensionsWidthIN, signDimensionsHeightFT, 
+              signDimensionsHeightIN, signDimensionsDepthFT, signDimensionsDepthIN,
+              wallDimensionsLengthFT, wallDimensionsLengthIN, wallDimensionsWidthFT, 
+              wallDimensionsWidthIN, measureDistanceFromSignToFloorLengthFT,
+              measureDistanceFromSignToFloorLengthIN, measureDistanceLength1FT,
+              measureDistanceLength1IN, measureDistanceLength2FT, measureDistanceLength2IN,
+              measureDistanceLength3FT, measureDistanceLength3IN, measureDistanceLength4FT,
+              measureDistanceLength4IN, mullionsLengthFT, mullionsLengthIN, mullionsWidthFT,
+              mullionsWidthIN, mullionsDepthFT, mullionsDepthIN, mullionsNotes,
+              squareFootage, squareFootageCalculationRequired, squareFootageFeet,
+              squareFootageWidthIN, squareFootageLengthIN, squareFootageLengthFT,
+              squareFootageWidthFT, squareFootageDepthIN, squareFootageDepthFT,
+              squareFootageNotes, visibleOpeningsLengthFT, visibleOpeningsLengthIN, 
+              visibleOpeningsWidthFT, visibleOpeningsWidthIN, visibleOpeningsHeightFT,
+              visibleOpeningsHeightIN, visibleOpeningsNotes, visibleOpeningsSpike,
+              otherPhotosAndMeasurementsLengthFT, otherPhotosAndMeasurementsLengthIN, 
+              otherPhotosAndMeasurementsWidthFT, otherPhotosAndMeasurementsWidthIN, 
+              otherPhotosAndMeasurementsDepthFT, otherPhotosAndMeasurementsDepthIN, 
+              photoOfWallOrFloor, photosAndMeasurementsSummaryNotes, 
+              photosAndMeasurementsTodoPunchList, signOrientation, surveyModule,
+              measureGroundToSignHeightFT, measureGroundToSignHeightIN,
+              measureChannelLettersWidthFT, measureChannelLettersWidthIN,
+              measureChannelLettersHeightFT, measureChannelLettersHeightIN,
+              measureChannelLettersDepthFT, measureChannelLettersDepthIN,
+              measureCutSizeWidthFT, measureCutSizeWidthIN, measureCutSizeHeightFT,
+              measureCutSizeHeightIN, measureCutSizeDepthFT, measureCutSizeDepthIN,
+              measureRetainerSizeWidthFT, measureRetainerSizeWidthIN,
+              measureRetainerSizeHeightFT, measureRetainerSizeHeightIN,
+              measureRetainerSizeDepthFT, measureRetainerSizeDepthIN,
+              ifPanMeasurePanDimensionWidthFT, ifPanMeasurePanDimensionWidthIN,
+              ifPanMeasurePanDimensionHeightFT, ifPanMeasurePanDimensionHeightIN,
+              ifPanMeasurePanDimensionDepthFT, ifPanMeasurePanDimensionDepthIN,
+              measureCellingWallSurfaceAreaWidthFT, measureCellingWallSurfaceAreaWidthIN,
+              measureCellingWallSurfaceAreaHeightFT, measureCellingWallSurfaceAreaHeightIN,
+              measureCellingWallSurfaceAreaDepthFT, measureCellingWallSurfaceAreaDepthIN,
+              heightOfPoleLengthFT, heightOfPoleLengthIN, circumferenceOfPoleLengthFT,
+              circumferenceOfPoleLengthIN, distanceBetweenPolesLengthFT,
+              distanceBetweenPolesLengthIN, otherPhotosMeasurementsMarkupsWidthFT,
+              otherPhotosMeasurementsMarkupsWidthIN, otherPhotosMeasurementsMarkupsHeightFT,
+              otherPhotosMeasurementsMarkupsHeightIN, otherPhotosMeasurementsMarkupsDepthFT,
+              otherPhotosMeasurementsMarkupsDepthIN, indoorWallHeightFT, indoorWallHeightIN,
+              indoorWallWidthFT, indoorWallWidthIN, ceilingHeightFT, ceilingHeightIN,
+              indoorMeasurement, indoorMeasurementNotes, indoorSummaryNotes, 
+              indoorTodoPunchList, signDimensionsPhoto, signDimensionsSpikePhoto,
+              measureChannelLettersPhoto, measureChannelLettersPhotos, squareFootagePhoto,
+              squareFootageSpikePhoto, photoCloseUpOfSign, visibleOpeningsPhoto,
+              mullionsPhoto, mullionsSpike, otherPhotosMeasurementsMarkupsPhoto,
+              otherPhotosMeasurementsMarkupsSpike, photoFullFrontalOfWholeSignStructurePhoto,
+              measureCellingWallSurfaceAreaPhoto, measureRetainerSizePhoto,
+              measureCutSizePhoto, ifPanMeasurePanDimensionPhoto, wallDimensionsPhoto,
+              otherPhotosImage, wallDimensionsSpikePhoto, photoOfWallOrFloorPhoto,
+              otherPhotosSpike, ifPanMeasurePanDimensionPhotos, measureRetainerSizePhotos,
+              photoCloseUpOfSigns, photoFullFrontalOfWholeSignStructurePhotos,
+              signDimensionsPhotos, squareFootageSpikePhotos, visibleOpeningsPhotos,
+              otherPhotosImages, otherPhotosMeasurementsMarkupsPhotos, indoorWallPhoto,
+              ceilingSurfacePhoto, isSynched
+            ) VALUES (
+              ${Array(159).fill('?').join(', ')}
+            )
+            `,
+            [
+              id || null,
+              measurements.projectId || null,
+              measurements.signId || null,
+              measurements.optionId || null,
+              measurements.signAliasName || null,
+              measurements.signType || null,
+              measurements.sign_order || null,
+              measurements.createdDate || null,
+              measurements.adminId || null,
+              measurements.adminName || null,
+              measurements.customerName || null,
+              measurements.teamId || null,
+              measurements.nameOfMeasurement || null,
+              measurements.areMullionsPresent || null,
+              measurements.areThereAnyVisibleOpenings || null,
+              measurements.signDimensionsWidthFT || null,
+              measurements.signDimensionsWidthIN || null,
+              measurements.signDimensionsHeightFT || null,
+              measurements.signDimensionsHeightIN || null,
+              measurements.signDimensionsDepthFT || null,
+              measurements.signDimensionsDepthIN || null,
+              measurements.wallDimensionsLengthFT || null,
+              measurements.wallDimensionsLengthIN || null,
+              measurements.wallDimensionsWidthFT || null,
+              measurements.wallDimensionsWidthIN || null,
+              measurements.measureDistanceFromSignToFloorLengthFT || null,
+              measurements.measureDistanceFromSignToFloorLengthIN || null,
+              measurements.measureDistanceLength1FT || null,
+              measurements.measureDistanceLength1IN || null,
+              measurements.measureDistanceLength2FT || null,
+              measurements.measureDistanceLength2IN || null,
+              measurements.measureDistanceLength3FT || null,
+              measurements.measureDistanceLength3IN || null,
+              measurements.measureDistanceLength4FT || null,
+              measurements.measureDistanceLength4IN || null,
+              measurements.mullionsLengthFT || null,
+              measurements.mullionsLengthIN || null,
+              measurements.mullionsWidthFT || null,
+              measurements.mullionsWidthIN || null,
+              measurements.mullionsDepthFT || null,
+              measurements.mullionsDepthIN || null,
+              measurements.mullionsNotes || null,
+              measurements.squareFootage || null,
+              measurements.squareFootageCalculationRequired || null,
+              measurements.squareFootageFeet || null,
+              measurements.squareFootageWidthIN || null,
+              measurements.squareFootageLengthIN || null,
+              measurements.squareFootageLengthFT || null,
+              measurements.squareFootageWidthFT || null,
+              measurements.squareFootageDepthIN || null,
+              measurements.squareFootageDepthFT || null,
+              measurements.squareFootageNotes || null,
+              measurements.visibleOpeningsLengthFT || null,
+              measurements.visibleOpeningsLengthIN || null,
+              measurements.visibleOpeningsWidthFT || null,
+              measurements.visibleOpeningsWidthIN || null,
+              measurements.visibleOpeningsHeightFT || null,
+              measurements.visibleOpeningsHeightIN || null,
+              measurements.visibleOpeningsNotes || null,
+              measurements.visibleOpeningsSpike || null,
+              measurements.otherPhotosAndMeasurementsLengthFT || null,
+              measurements.otherPhotosAndMeasurementsLengthIN || null,
+              measurements.otherPhotosAndMeasurementsWidthFT || null,
+              measurements.otherPhotosAndMeasurementsWidthIN || null,
+              measurements.otherPhotosAndMeasurementsDepthFT || null,
+              measurements.otherPhotosAndMeasurementsDepthIN || null,
+              JSON.stringify(measurements.photoOfWallOrFloor || null),
+              measurements.photosAndMeasurementsSummaryNotes || null,
+              measurements.photosAndMeasurementsTodoPunchList || null,
+              measurements.signOrientation || null,
+              measurements.surveyModule || null,
+              measurements.measureGroundToSignHeightFT || null,
+              measurements.measureGroundToSignHeightIN || null,
+              measurements.measureChannelLettersWidthFT || null,
+              measurements.measureChannelLettersWidthIN || null,
+              measurements.measureChannelLettersHeightFT || null,
+              measurements.measureChannelLettersHeightIN || null,
+              measurements.measureChannelLettersDepthFT || null,
+              measurements.measureChannelLettersDepthIN || null,
+              measurements.measureCutSizeWidthFT || null,
+              measurements.measureCutSizeWidthIN || null,
+              measurements.measureCutSizeHeightFT || null,
+              measurements.measureCutSizeHeightIN || null,
+              measurements.measureCutSizeDepthFT || null,
+              measurements.measureCutSizeDepthIN || null,
+              measurements.measureRetainerSizeWidthFT || null,
+              measurements.measureRetainerSizeWidthIN || null,
+              measurements.measureRetainerSizeHeightFT || null,
+              measurements.measureRetainerSizeHeightIN || null,
+              measurements.measureRetainerSizeDepthFT || null,
+              measurements.measureRetainerSizeDepthIN || null,
+              measurements.ifPanMeasurePanDimensionWidthFT || null,
+              measurements.ifPanMeasurePanDimensionWidthIN || null,
+              measurements.ifPanMeasurePanDimensionHeightFT || null,
+              measurements.ifPanMeasurePanDimensionHeightIN || null,
+              measurements.ifPanMeasurePanDimensionDepthFT || null,
+              measurements.ifPanMeasurePanDimensionDepthIN || null,
+              measurements.measureCellingWallSurfaceAreaWidthFT || null,
+              measurements.measureCellingWallSurfaceAreaWidthIN || null,
+              measurements.measureCellingWallSurfaceAreaHeightFT || null,
+              measurements.measureCellingWallSurfaceAreaHeightIN || null,
+              measurements.measureCellingWallSurfaceAreaDepthFT || null,
+              measurements.measureCellingWallSurfaceAreaDepthIN || null,
+              measurements.heightOfPoleLengthFT || null,
+              measurements.heightOfPoleLengthIN || null,
+              measurements.circumferenceOfPoleLengthFT || null,
+              measurements.circumferenceOfPoleLengthIN || null,
+              measurements.distanceBetweenPolesLengthFT || null,
+              measurements.distanceBetweenPolesLengthIN || null,
+              measurements.otherPhotosMeasurementsMarkupsWidthFT || null,
+              measurements.otherPhotosMeasurementsMarkupsWidthIN || null,
+              measurements.otherPhotosMeasurementsMarkupsHeightFT || null,
+              measurements.otherPhotosMeasurementsMarkupsHeightIN || null,
+              measurements.otherPhotosMeasurementsMarkupsDepthFT || null,
+              measurements.otherPhotosMeasurementsMarkupsDepthIN || null,
+              measurements.indoorWallHeightFT || null,
+              measurements.indoorWallHeightIN || null,
+              measurements.indoorWallWidthFT || null,
+              measurements.indoorWallWidthIN || null,
+              measurements.ceilingHeightFT || null,
+              measurements.ceilingHeightIN || null,
+              measurements.indoorMeasurement || null,
+              measurements.indoorMeasurementNotes || null,
+              measurements.indoorSummaryNotes || null,
+              measurements.indoorTodoPunchList || null,
+              JSON.stringify(measurements.signDimensionsPhoto || []),
+              JSON.stringify(loadedSignDimensionsSpikePhoto),
+              JSON.stringify(loadedMeasureChannelLettersPhoto),
+              JSON.stringify(loadedMeasureChannelLettersPhotos),
+              JSON.stringify(loadedSquareFootagePhotos),
+              JSON.stringify(measurements.squareFootageSpikePhoto || []),
+              JSON.stringify(loadedPhotoCloseUpOfSign),
+              JSON.stringify(loadedVisibleOpeningsPhotos),
+              JSON.stringify(loadedMullionsPhotos),
+              JSON.stringify(loadedMullionsSpike),
+              JSON.stringify(measurements.otherPhotosMeasurementsMarkupsPhoto || []),
+              JSON.stringify(loadedOtherPhotosMarkupsSpike),
+              JSON.stringify(measurements.photoFullFrontalOfWholeSignStructurePhoto || []),
+              JSON.stringify(loadedMeasureCellingWall),
+              JSON.stringify(loadedMeasureRetainerSize),
+              JSON.stringify(loadedMeasureCutSize),
+              JSON.stringify(loadedIfPanMeasurePanDimension),
+              JSON.stringify(loadedWallDimensionsPhoto),
+              JSON.stringify(loadedOtherPhotosImage),
+              JSON.stringify(loadedWallDimensionsSpikePhoto),
+              JSON.stringify(loadedPhotoOfWallOrFloorPhoto),
+              JSON.stringify(loadedOtherPhotosSpike),
+              JSON.stringify(loadedIfPanMeasurePanDimensionPhotos),
+              JSON.stringify(loadedMeasureRetainerSizePhotos),
+              JSON.stringify(loadedPhotoCloseUpOfSigns),
+              JSON.stringify(loadedPhotoFullFrontal),
+              JSON.stringify(loadedSignDimensionsPhotos),
+              JSON.stringify(loadedSquareFootageSpikePhotos),
+              JSON.stringify(loadedVisibleOpeningsPhotos),
+              JSON.stringify(loadedOtherPhotosMarkups),
+              JSON.stringify(loadedOtherPhotosMarkups),
+              JSON.stringify(loadedIndoorWallPhoto),
+              JSON.stringify(loadedCeilingSurfacePhoto),
+              synched,
+            ],
+            () =>
+              console.log(
+                `✅ Inserted photos_and_measurements for Measurement ID: ${id}`,
+              ),
+            (_: any, error: any) => {
+              console.error(
+                `❌ Error inserting photos_and_measurements ${id}:`,
+                error,
+              );
+            },
+          );
+        },
+        (txError: any) => console.error('Transaction ERROR:', txError),
+        () =>
+          console.log(
+            '✅ All photos_and_measurements data inserted successfully',
+          ),
+      );
+    }
+  }
+};
+
+export const insertPhotosAndMeasurementsImagesOnly = async (
+  id: string | number,
+  key: string,
+  images: any[] = [],
+  synced: number, // 1 = online synced, 0 = offline
+) => {
+  if (!id || !key) {
+    console.warn('⚠️ Missing ID or key for photos_and_measurements update');
+    return;
+  }
+
+  console.log(
+    `🟡 Updating Photos & Measurements ID: ${id}, Key: ${key}, Synced: ${synced}`,
   );
+
+  try {
+    let finalImages = images;
+
+    // Download images if online
+    if (synced === 1) {
+      finalImages = await downloadImagesArray(images || [], key);
+      console.log(
+        `✅ Downloaded ${finalImages?.length || 0} images for ${key}`,
+      );
+    } else {
+      console.log(
+        `📴 Offline mode — skipping download for ${key}, using local paths`,
+      );
+    }
+
+    // Update the SQLite table
+    db.transaction(
+      (tx: any) => {
+        tx.executeSql(
+          `
+          UPDATE photos_and_measurements
+          SET ${key} = ?, isSynched = ?
+          WHERE id = ?
+          `,
+          [JSON.stringify(finalImages || []), synced, id],
+          () =>
+            console.log(`✅ Updated ${key} for photos_and_measurements ${id}`),
+          (_: any, error: any) =>
+            console.error(
+              `❌ SQL error updating ${key} for photos_and_measurements ${id}:`,
+              error,
+            ),
+        );
+      },
+      (txError: any) => console.error('❌ Transaction ERROR:', txError),
+      () =>
+        console.log(
+          `✅ photos_and_measurements image update complete for ${key}`,
+        ),
+    );
+  } catch (error) {
+    console.error(`❌ Failed to insert/update images for ${key}:`, error);
+  }
+};
+
+export const getPhotosAndMeasurementsImagesByKey = async (
+  id: string | number,
+  key: string,
+): Promise<any[]> => {
+  return new Promise((resolve, reject) => {
+    if (!id || !key) {
+      console.warn('⚠️ Missing ID or key for photos_and_measurements');
+      resolve([]);
+      return;
+    }
+
+    console.log(
+      `📦 Fetching images for Photos & Measurements ID: ${id}, Key: ${key}`,
+    );
+
+    db.transaction(
+      (tx: any) => {
+        tx.executeSql(
+          `SELECT ${key} FROM photos_and_measurements WHERE id = ?`,
+          [id],
+          (_: any, results: any) => {
+            if (results.rows.length > 0) {
+              const row = results.rows.item(0);
+              try {
+                const images = JSON.parse(row[key] || '[]');
+                console.log(`✅ Retrieved ${images.length} images for ${key}`);
+                resolve(images);
+              } catch (err) {
+                console.error(`❌ Failed to parse images for ${key}:`, err);
+                resolve([]);
+              }
+            } else {
+              console.warn(`⚠️ No record found for ID ${id}`);
+              resolve([]);
+            }
+          },
+          (_: any, error: any) => {
+            console.error(`❌ Error fetching images for ${key}:`, error);
+            reject(error);
+          },
+        );
+      },
+      (txError: any) => {
+        console.error('Transaction ERROR:', txError);
+        reject(txError);
+      },
+    );
+  });
 };
 
 export const insertSignGeneralAudit = async (
@@ -1599,9 +2054,9 @@ export const fetchAllProjectsData = (callback: (projects: any[]) => void) => {
                     prop: 'permitting_assessment',
                   },
                   {
-                    table: 'indoor_photos_and_measurements',
-                    key: 'Id',
-                    prop: 'indoor_photos_and_measurements',
+                    table: 'photos_and_measurements',
+                    key: 'id',
+                    prop: 'photos_and_measurements',
                   },
                   {
                     table: 'sign_general_audit',
@@ -1732,6 +2187,61 @@ export const fetchAllProjectsData = (callback: (projects: any[]) => void) => {
                               audit.facilityDiagramOrSketchProvidedPhoto,
                             );
                         }
+
+                        // Parse photos_and_measurements JSON fields
+                        if (prop === 'photos_and_measurements') {
+                          // Parse ALL photo fields for photos_and_measurements
+                          const photoFields = [
+                            'photoOfWallOrFloor',
+                            'signDimensionsPhoto',
+                            'signDimensionsSpikePhoto',
+                            'measureChannelLettersPhoto',
+                            'measureChannelLettersPhotos',
+                            'squareFootagePhoto',
+                            'squareFootageSpikePhoto',
+                            'photoCloseUpOfSign',
+                            'visibleOpeningsPhoto',
+                            'mullionsPhoto',
+                            'mullionsSpike',
+                            'otherPhotosMeasurementsMarkupsPhoto',
+                            'otherPhotosMeasurementsMarkupsSpike',
+                            'photoFullFrontalOfWholeSignStructurePhoto',
+                            'measureCellingWallSurfaceAreaPhoto',
+                            'measureRetainerSizePhoto',
+                            'measureCutSizePhoto',
+                            'ifPanMeasurePanDimensionPhoto',
+                            'wallDimensionsPhoto',
+                            'otherPhotosImage',
+                            'wallDimensionsSpikePhoto',
+                            'photoOfWallOrFloorPhoto',
+                            'otherPhotosSpike',
+                            'ifPanMeasurePanDimensionPhotos',
+                            'measureRetainerSizePhotos',
+                            'photoCloseUpOfSigns',
+                            'photoFullFrontalOfWholeSignStructurePhotos',
+                            'signDimensionsPhotos',
+                            'squareFootageSpikePhotos',
+                            'visibleOpeningsPhotos',
+                            'otherPhotosImages',
+                            'otherPhotosMeasurementsMarkupsPhotos',
+                            'indoorWallPhoto',
+                            'ceilingSurfacePhoto',
+                          ];
+
+                          photoFields.forEach(field => {
+                            if (audit[field]) {
+                              try {
+                                audit[field] = JSON.parse(audit[field]);
+                              } catch (e) {
+                                console.error(`Error parsing ${field}:`, e);
+                                audit[field] = [];
+                              }
+                            } else {
+                              audit[field] = [];
+                            }
+                          });
+                        }
+
                         option[prop] = audit;
                       } else {
                         option[prop] = null;
@@ -2165,6 +2675,477 @@ export const updateSignGeneralAudit = (
   });
 };
 
+export const updatePhotosAndMeasurements = (
+  measurementsData: any,
+  synched: number,
+) => {
+  console.log('measurementsData', measurementsData);
+  db.transaction((tx: any) => {
+    tx.executeSql(
+      `
+      UPDATE photos_and_measurements
+      SET
+        projectId = ?,
+        signId = ?,
+        optionId = ?,
+        signAliasName = ?,
+        signType = ?,
+        sign_order = ?,
+        createdDate = ?,
+        adminId = ?,
+        adminName = ?,
+        customerName = ?,
+        teamId = ?,
+        nameOfMeasurement = ?,
+        nameofMeasurement = ?,
+        areMullionsPresent = ?,
+        areThereAnyVisibleOpenings = ?,
+        signDimensionsWidthFT = ?,
+        signDimensionsWidthIN = ?,
+        signDimensionsHeightFT = ?,
+        signDimensionsHeightIN = ?,
+        signDimensionsDepthFT = ?,
+        signDimensionsDepthIN = ?,
+        wallDimensionsLengthFT = ?,
+        wallDimensionsLengthIN = ?,
+        wallDimensionsWidthFT = ?,
+        wallDimensionsWidthIN = ?,
+        measureDistanceFromSignToFloorLengthFT = ?,
+        measureDistanceFromSignToFloorLengthIN = ?,
+        measureDistanceLength1FT = ?,
+        measureDistanceLength1IN = ?,
+        measureDistanceLength2FT = ?,
+        measureDistanceLength2IN = ?,
+        measureDistanceLength3FT = ?,
+        measureDistanceLength3IN = ?,
+        measureDistanceLength4FT = ?,
+        measureDistanceLength4IN = ?,
+        mullionsLengthFT = ?,
+        mullionsLengthIN = ?,
+        mullionsWidthFT = ?,
+        mullionsWidthIN = ?,
+        mullionsDepthFT = ?,
+        mullionsDepthIN = ?,
+        mullionsNotes = ?,
+        squareFootage = ?,
+        squareFootageCalculationRequired = ?,
+        squareFootageFeet = ?,
+        squareFootageWidthIN = ?,
+        squareFootageLengthIN = ?,
+        squareFootageLengthFT = ?,
+        squareFootageWidthFT = ?,
+        squareFootageDepthIN = ?,
+        squareFootageDepthFT = ?,
+        squareFootageNotes = ?,
+        visibleOpeningsLengthFT = ?,
+        visibleOpeningsLengthIN = ?,
+        visibleOpeningsWidthFT = ?,
+        visibleOpeningsWidthIN = ?,
+        visibleOpeningsHeightFT = ?,
+        visibleOpeningsHeightIN = ?,
+        visibleOpeningsNotes = ?,
+        visibleOpeningsSpike = ?,
+        otherPhotosAndMeasurementsLengthFT = ?,
+        otherPhotosAndMeasurementsLengthIN = ?,
+        otherPhotosAndMeasurementsWidthFT = ?,
+        otherPhotosAndMeasurementsWidthIN = ?,
+        otherPhotosAndMeasurementsDepthFT = ?,
+        otherPhotosAndMeasurementsDepthIN = ?,
+        photoOfWallOrFloor = ?,
+        photosAndMeasurementsSummaryNotes = ?,
+        photosAndMeasurementsTodoPunchList = ?,
+        signOrientation = ?,
+        surveyModule = ?,
+        measureGroundToSignHeightFT = ?,
+        measureGroundToSignHeightIN = ?,
+        measureChannelLettersWidthFT = ?,
+        measureChannelLettersWidthIN = ?,
+        measureChannelLettersHeightFT = ?,
+        measureChannelLettersHeightIN = ?,
+        measureChannelLettersDepthFT = ?,
+        measureChannelLettersDepthIN = ?,
+        measureCutSizeWidthFT = ?,
+        measureCutSizeWidthIN = ?,
+        measureCutSizeHeightFT = ?,
+        measureCutSizeHeightIN = ?,
+        measureCutSizeDepthFT = ?,
+        measureCutSizeDepthIN = ?,
+        measureRetainerSizeWidthFT = ?,
+        measureRetainerSizeWidthIN = ?,
+        measureRetainerSizeHeightFT = ?,
+        measureRetainerSizeHeightIN = ?,
+        measureRetainerSizeDepthFT = ?,
+        measureRetainerSizeDepthIN = ?,
+        ifPanMeasurePanDimensionWidthFT = ?,
+        ifPanMeasurePanDimensionWidthIN = ?,
+        ifPanMeasurePanDimensionHeightFT = ?,
+        ifPanMeasurePanDimensionHeightIN = ?,
+        ifPanMeasurePanDimensionDepthFT = ?,
+        ifPanMeasurePanDimensionDepthIN = ?,
+        measureCellingWallSurfaceAreaWidthFT = ?,
+        measureCellingWallSurfaceAreaWidthIN = ?,
+        measureCellingWallSurfaceAreaHeightFT = ?,
+        measureCellingWallSurfaceAreaHeightIN = ?,
+        measureCellingWallSurfaceAreaDepthFT = ?,
+        measureCellingWallSurfaceAreaDepthIN = ?,
+        heightOfPoleLengthFT = ?,
+        heightOfPoleLengthIN = ?,
+        circumferenceOfPoleLengthFT = ?,
+        circumferenceOfPoleLengthIN = ?,
+        distanceBetweenPolesLengthFT = ?,
+        distanceBetweenPolesLengthIN = ?,
+        otherPhotosMeasurementsMarkupsWidthFT = ?,
+        otherPhotosMeasurementsMarkupsWidthIN = ?,
+        otherPhotosMeasurementsMarkupsHeightFT = ?,
+        otherPhotosMeasurementsMarkupsHeightIN = ?,
+        otherPhotosMeasurementsMarkupsDepthFT = ?,
+        otherPhotosMeasurementsMarkupsDepthIN = ?,
+        indoorWallHeightFT = ?,
+        indoorWallHeightIN = ?,
+        indoorWallWidthFT = ?,
+        indoorWallWidthIN = ?,
+        ceilingHeightFT = ?,
+        ceilingHeightIN = ?,
+        indoorMeasurement = ?,
+        indoorMeasurementNotes = ?,
+        indoorSummaryNotes = ?,
+        indoorTodoPunchList = ?,
+        signDimensionsPhoto = ?,
+        signDimensionsSpikePhoto = ?,
+        measureChannelLettersPhoto = ?,
+        measureChannelLettersPhotos = ?,
+        squareFootagePhoto = ?,
+        squareFootageSpikePhoto = ?,
+        photoCloseUpOfSign = ?,
+        visibleOpeningsPhoto = ?,
+        mullionsPhoto = ?,
+        mullionsSpike = ?,
+        otherPhotosMeasurementsMarkupsPhoto = ?,
+        otherPhotosMeasurementsMarkupsSpike = ?,
+        photoFullFrontalOfWholeSignStructurePhoto = ?,
+        measureCellingWallSurfaceAreaPhoto = ?,
+        measureRetainerSizePhoto = ?,
+        measureCutSizePhoto = ?,
+        ifPanMeasurePanDimensionPhoto = ?,
+        wallDimensionsPhoto = ?,
+        otherPhotosImage = ?,
+        wallDimensionsSpikePhoto = ?,
+        photoOfWallOrFloorPhoto = ?,
+        otherPhotosSpike = ?,
+        ifPanMeasurePanDimensionPhotos = ?,
+        measureRetainerSizePhotos = ?,
+        photoCloseUpOfSigns = ?,
+        photoFullFrontalOfWholeSignStructurePhotos = ?,
+        signDimensionsPhotos = ?,
+        squareFootageSpikePhotos = ?,
+        visibleOpeningsPhotos = ?,
+        otherPhotosImages = ?,
+        otherPhotosMeasurementsMarkupsPhotos = ?,
+        indoorWallPhoto = ?,
+        ceilingSurfacePhoto = ?,
+        isSynched = ?
+      WHERE id = ?
+      `,
+      [
+        // Basic Info
+        measurementsData.projectId || null,
+        measurementsData.signId || null,
+        measurementsData.optionId || null,
+        measurementsData.signAliasName || null,
+        measurementsData.signType || null,
+        measurementsData.sign_order || null,
+        measurementsData.createdDate || null,
+        measurementsData.adminId || null,
+        measurementsData.adminName || null,
+        measurementsData.customerName || null,
+        measurementsData.teamId || null,
+        measurementsData.nameOfMeasurement || null,
+        measurementsData.nameofMeasurement || null,
+
+        // Flags
+        measurementsData.areMullionsPresent || null,
+        measurementsData.areThereAnyVisibleOpenings || null,
+
+        // Sign Dimensions
+        measurementsData.signDimensionsWidthFT || null,
+        measurementsData.signDimensionsWidthIN || null,
+        measurementsData.signDimensionsHeightFT || null,
+        measurementsData.signDimensionsHeightIN || null,
+        measurementsData.signDimensionsDepthFT || null,
+        measurementsData.signDimensionsDepthIN || null,
+
+        // Wall Dimensions
+        measurementsData.wallDimensionsLengthFT || null,
+        measurementsData.wallDimensionsLengthIN || null,
+        measurementsData.wallDimensionsWidthFT || null,
+        measurementsData.wallDimensionsWidthIN || null,
+
+        // Distance Measurements
+        measurementsData.measureDistanceFromSignToFloorLengthFT || null,
+        measurementsData.measureDistanceFromSignToFloorLengthIN || null,
+        measurementsData.measureDistanceLength1FT || null,
+        measurementsData.measureDistanceLength1IN || null,
+        measurementsData.measureDistanceLength2FT || null,
+        measurementsData.measureDistanceLength2IN || null,
+        measurementsData.measureDistanceLength3FT || null,
+        measurementsData.measureDistanceLength3IN || null,
+        measurementsData.measureDistanceLength4FT || null,
+        measurementsData.measureDistanceLength4IN || null,
+
+        // Mullions
+        measurementsData.mullionsLengthFT || null,
+        measurementsData.mullionsLengthIN || null,
+        measurementsData.mullionsWidthFT || null,
+        measurementsData.mullionsWidthIN || null,
+        measurementsData.mullionsDepthFT || null,
+        measurementsData.mullionsDepthIN || null,
+        measurementsData.mullionsNotes || null,
+
+        // Square Footage
+        measurementsData.squareFootage || null,
+        measurementsData.squareFootageCalculationRequired || null,
+        measurementsData.squareFootageFeet || null,
+        measurementsData.squareFootageWidthIN || null,
+        measurementsData.squareFootageLengthIN || null,
+        measurementsData.squareFootageLengthFT || null,
+        measurementsData.squareFootageWidthFT || null,
+        measurementsData.squareFootageDepthIN || null,
+        measurementsData.squareFootageDepthFT || null,
+        measurementsData.squareFootageNotes || null,
+
+        // Visible Openings
+        measurementsData.visibleOpeningsLengthFT || null,
+        measurementsData.visibleOpeningsLengthIN || null,
+        measurementsData.visibleOpeningsWidthFT || null,
+        measurementsData.visibleOpeningsWidthIN || null,
+        measurementsData.visibleOpeningsHeightFT || null,
+        measurementsData.visibleOpeningsHeightIN || null,
+        measurementsData.visibleOpeningsNotes || null,
+        measurementsData.visibleOpeningsSpike || null,
+
+        // Other Measurements (Indoor)
+        measurementsData.otherPhotosAndMeasurementsLengthFT || null,
+        measurementsData.otherPhotosAndMeasurementsLengthIN || null,
+        measurementsData.otherPhotosAndMeasurementsWidthFT || null,
+        measurementsData.otherPhotosAndMeasurementsWidthIN || null,
+        measurementsData.otherPhotosAndMeasurementsDepthFT || null,
+        measurementsData.otherPhotosAndMeasurementsDepthIN || null,
+
+        // Photos
+        measurementsData.photoOfWallOrFloor
+          ? JSON.stringify(measurementsData.photoOfWallOrFloor)
+          : null,
+
+        // Notes & Todo
+        measurementsData.photosAndMeasurementsSummaryNotes || null,
+        measurementsData.photosAndMeasurementsTodoPunchList || null,
+
+        // Outdoor Specific
+        measurementsData.signOrientation || null,
+        measurementsData.surveyModule || null,
+
+        // Ground to Sign Height
+        measurementsData.measureGroundToSignHeightFT || null,
+        measurementsData.measureGroundToSignHeightIN || null,
+
+        // Channel Letters
+        measurementsData.measureChannelLettersWidthFT || null,
+        measurementsData.measureChannelLettersWidthIN || null,
+        measurementsData.measureChannelLettersHeightFT || null,
+        measurementsData.measureChannelLettersHeightIN || null,
+        measurementsData.measureChannelLettersDepthFT || null,
+        measurementsData.measureChannelLettersDepthIN || null,
+
+        // Cut Size
+        measurementsData.measureCutSizeWidthFT || null,
+        measurementsData.measureCutSizeWidthIN || null,
+        measurementsData.measureCutSizeHeightFT || null,
+        measurementsData.measureCutSizeHeightIN || null,
+        measurementsData.measureCutSizeDepthFT || null,
+        measurementsData.measureCutSizeDepthIN || null,
+
+        // Retainer Size
+        measurementsData.measureRetainerSizeWidthFT || null,
+        measurementsData.measureRetainerSizeWidthIN || null,
+        measurementsData.measureRetainerSizeHeightFT || null,
+        measurementsData.measureRetainerSizeHeightIN || null,
+        measurementsData.measureRetainerSizeDepthFT || null,
+        measurementsData.measureRetainerSizeDepthIN || null,
+
+        // Pan Measurements
+        measurementsData.ifPanMeasurePanDimensionWidthFT || null,
+        measurementsData.ifPanMeasurePanDimensionWidthIN || null,
+        measurementsData.ifPanMeasurePanDimensionHeightFT || null,
+        measurementsData.ifPanMeasurePanDimensionHeightIN || null,
+        measurementsData.ifPanMeasurePanDimensionDepthFT || null,
+        measurementsData.ifPanMeasurePanDimensionDepthIN || null,
+
+        // Ceiling/Wall Surface Area
+        measurementsData.measureCellingWallSurfaceAreaWidthFT || null,
+        measurementsData.measureCellingWallSurfaceAreaWidthIN || null,
+        measurementsData.measureCellingWallSurfaceAreaHeightFT || null,
+        measurementsData.measureCellingWallSurfaceAreaHeightIN || null,
+        measurementsData.measureCellingWallSurfaceAreaDepthFT || null,
+        measurementsData.measureCellingWallSurfaceAreaDepthIN || null,
+
+        // Pole Measurements
+        measurementsData.heightOfPoleLengthFT || null,
+        measurementsData.heightOfPoleLengthIN || null,
+        measurementsData.circumferenceOfPoleLengthFT || null,
+        measurementsData.circumferenceOfPoleLengthIN || null,
+        measurementsData.distanceBetweenPolesLengthFT || null,
+        measurementsData.distanceBetweenPolesLengthIN || null,
+
+        // Other Measurements (Outdoor)
+        measurementsData.otherPhotosMeasurementsMarkupsWidthFT || null,
+        measurementsData.otherPhotosMeasurementsMarkupsWidthIN || null,
+        measurementsData.otherPhotosMeasurementsMarkupsHeightFT || null,
+        measurementsData.otherPhotosMeasurementsMarkupsHeightIN || null,
+        measurementsData.otherPhotosMeasurementsMarkupsDepthFT || null,
+        measurementsData.otherPhotosMeasurementsMarkupsDepthIN || null,
+
+        // Indoor Specific
+        measurementsData.indoorWallHeightFT || null,
+        measurementsData.indoorWallHeightIN || null,
+        measurementsData.indoorWallWidthFT || null,
+        measurementsData.indoorWallWidthIN || null,
+        measurementsData.ceilingHeightFT || null,
+        measurementsData.ceilingHeightIN || null,
+        measurementsData.indoorMeasurement || null,
+        measurementsData.indoorMeasurementNotes || null,
+        measurementsData.indoorSummaryNotes || null,
+        measurementsData.indoorTodoPunchList || null,
+
+        // Photo Fields (stringify arrays)
+        measurementsData.signDimensionsPhoto
+          ? JSON.stringify(measurementsData.signDimensionsPhoto)
+          : null,
+        measurementsData.signDimensionsSpikePhoto
+          ? JSON.stringify(measurementsData.signDimensionsSpikePhoto)
+          : null,
+        measurementsData.measureChannelLettersPhoto
+          ? JSON.stringify(measurementsData.measureChannelLettersPhoto)
+          : null,
+        measurementsData.measureChannelLettersPhotos
+          ? JSON.stringify(measurementsData.measureChannelLettersPhotos)
+          : null,
+        measurementsData.squareFootagePhoto
+          ? JSON.stringify(measurementsData.squareFootagePhoto)
+          : null,
+        measurementsData.squareFootageSpikePhoto
+          ? JSON.stringify(measurementsData.squareFootageSpikePhoto)
+          : null,
+        measurementsData.photoCloseUpOfSign
+          ? JSON.stringify(measurementsData.photoCloseUpOfSign)
+          : null,
+        measurementsData.visibleOpeningsPhoto
+          ? JSON.stringify(measurementsData.visibleOpeningsPhoto)
+          : null,
+        measurementsData.mullionsPhoto
+          ? JSON.stringify(measurementsData.mullionsPhoto)
+          : null,
+        measurementsData.mullionsSpike
+          ? JSON.stringify(measurementsData.mullionsSpike)
+          : null,
+        measurementsData.otherPhotosMeasurementsMarkupsPhoto
+          ? JSON.stringify(measurementsData.otherPhotosMeasurementsMarkupsPhoto)
+          : null,
+        measurementsData.otherPhotosMeasurementsMarkupsSpike
+          ? JSON.stringify(measurementsData.otherPhotosMeasurementsMarkupsSpike)
+          : null,
+        measurementsData.photoFullFrontalOfWholeSignStructurePhoto
+          ? JSON.stringify(
+              measurementsData.photoFullFrontalOfWholeSignStructurePhoto,
+            )
+          : null,
+        measurementsData.measureCellingWallSurfaceAreaPhoto
+          ? JSON.stringify(measurementsData.measureCellingWallSurfaceAreaPhoto)
+          : null,
+        measurementsData.measureRetainerSizePhoto
+          ? JSON.stringify(measurementsData.measureRetainerSizePhoto)
+          : null,
+        measurementsData.measureCutSizePhoto
+          ? JSON.stringify(measurementsData.measureCutSizePhoto)
+          : null,
+        measurementsData.ifPanMeasurePanDimensionPhoto
+          ? JSON.stringify(measurementsData.ifPanMeasurePanDimensionPhoto)
+          : null,
+        measurementsData.wallDimensionsPhoto
+          ? JSON.stringify(measurementsData.wallDimensionsPhoto)
+          : null,
+        measurementsData.otherPhotosImage
+          ? JSON.stringify(measurementsData.otherPhotosImage)
+          : null,
+        measurementsData.wallDimensionsSpikePhoto
+          ? JSON.stringify(measurementsData.wallDimensionsSpikePhoto)
+          : null,
+        measurementsData.photoOfWallOrFloorPhoto
+          ? JSON.stringify(measurementsData.photoOfWallOrFloorPhoto)
+          : null,
+        measurementsData.otherPhotosSpike
+          ? JSON.stringify(measurementsData.otherPhotosSpike)
+          : null,
+        measurementsData.ifPanMeasurePanDimensionPhotos
+          ? JSON.stringify(measurementsData.ifPanMeasurePanDimensionPhotos)
+          : null,
+        measurementsData.measureRetainerSizePhotos
+          ? JSON.stringify(measurementsData.measureRetainerSizePhotos)
+          : null,
+        measurementsData.photoCloseUpOfSigns
+          ? JSON.stringify(measurementsData.photoCloseUpOfSigns)
+          : null,
+        measurementsData.photoFullFrontalOfWholeSignStructurePhotos
+          ? JSON.stringify(
+              measurementsData.photoFullFrontalOfWholeSignStructurePhotos,
+            )
+          : null,
+        measurementsData.signDimensionsPhotos
+          ? JSON.stringify(measurementsData.signDimensionsPhotos)
+          : null,
+        measurementsData.squareFootageSpikePhotos
+          ? JSON.stringify(measurementsData.squareFootageSpikePhotos)
+          : null,
+        measurementsData.visibleOpeningsPhotos
+          ? JSON.stringify(measurementsData.visibleOpeningsPhotos)
+          : null,
+        measurementsData.otherPhotosImages
+          ? JSON.stringify(measurementsData.otherPhotosImages)
+          : null,
+        measurementsData.otherPhotosMeasurementsMarkupsPhotos
+          ? JSON.stringify(
+              measurementsData.otherPhotosMeasurementsMarkupsPhotos,
+            )
+          : null,
+        measurementsData.indoorWallPhoto
+          ? JSON.stringify(measurementsData.indoorWallPhoto)
+          : null,
+        measurementsData.ceilingSurfacePhoto
+          ? JSON.stringify(measurementsData.ceilingSurfacePhoto)
+          : null,
+
+        // Sync field
+        synched,
+
+        // WHERE clause
+        measurementsData.id || measurementsData?.Id,
+      ],
+      () =>
+        console.log(
+          `Updated photos_and_measurements ${
+            measurementsData.id || measurementsData?.Id
+          }`,
+        ),
+      (_: any, error: any) =>
+        console.error(
+          `Error updating photos_and_measurements ${
+            measurementsData.id || measurementsData?.Id
+          }:`,
+          error,
+        ),
+    );
+  });
+};
+
 export const getUnsyncedExistingSignAudits = (
   callback: (data: ExistingSignAudit[]) => void,
 ) => {
@@ -2308,6 +3289,107 @@ export const getUnsyncedSignGeneralAudits = (
   });
 };
 
+export const getUnsyncedPhotosAndMeasurements = (
+  callback: (data: any[]) => void,
+) => {
+  db.transaction((tx: any) => {
+    tx.executeSql(
+      `SELECT * FROM photos_and_measurements WHERE isSynched = 0`,
+      [],
+      (_: any, results: any) => {
+        const rows = results.rows;
+        const measurements: any[] = [];
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows.item(i);
+          measurements.push({
+            ...row,
+            // Parse ALL photo fields that were stored as JSON strings
+            photoOfWallOrFloor: JSON.parse(row.photoOfWallOrFloor || '[]'),
+            signDimensionsPhoto: JSON.parse(row.signDimensionsPhoto || '[]'),
+            signDimensionsSpikePhoto: JSON.parse(
+              row.signDimensionsSpikePhoto || '[]',
+            ),
+            measureChannelLettersPhoto: JSON.parse(
+              row.measureChannelLettersPhoto || '[]',
+            ),
+            measureChannelLettersPhotos: JSON.parse(
+              row.measureChannelLettersPhotos || '[]',
+            ),
+            squareFootagePhoto: JSON.parse(row.squareFootagePhoto || '[]'),
+            squareFootageSpikePhoto: JSON.parse(
+              row.squareFootageSpikePhoto || '[]',
+            ),
+            photoCloseUpOfSign: JSON.parse(row.photoCloseUpOfSign || '[]'),
+            visibleOpeningsPhoto: JSON.parse(row.visibleOpeningsPhoto || '[]'),
+            mullionsPhoto: JSON.parse(row.mullionsPhoto || '[]'),
+            mullionsSpike: JSON.parse(row.mullionsSpike || '[]'),
+            otherPhotosMeasurementsMarkupsPhoto: JSON.parse(
+              row.otherPhotosMeasurementsMarkupsPhoto || '[]',
+            ),
+            otherPhotosMeasurementsMarkupsSpike: JSON.parse(
+              row.otherPhotosMeasurementsMarkupsSpike || '[]',
+            ),
+            photoFullFrontalOfWholeSignStructurePhoto: JSON.parse(
+              row.photoFullFrontalOfWholeSignStructurePhoto || '[]',
+            ),
+            measureCellingWallSurfaceAreaPhoto: JSON.parse(
+              row.measureCellingWallSurfaceAreaPhoto || '[]',
+            ),
+            measureRetainerSizePhoto: JSON.parse(
+              row.measureRetainerSizePhoto || '[]',
+            ),
+            measureCutSizePhoto: JSON.parse(row.measureCutSizePhoto || '[]'),
+            ifPanMeasurePanDimensionPhoto: JSON.parse(
+              row.ifPanMeasurePanDimensionPhoto || '[]',
+            ),
+            wallDimensionsPhoto: JSON.parse(row.wallDimensionsPhoto || '[]'),
+            otherPhotosImage: JSON.parse(row.otherPhotosImage || '[]'),
+            wallDimensionsSpikePhoto: JSON.parse(
+              row.wallDimensionsSpikePhoto || '[]',
+            ),
+            photoOfWallOrFloorPhoto: JSON.parse(
+              row.photoOfWallOrFloorPhoto || '[]',
+            ),
+            otherPhotosSpike: JSON.parse(row.otherPhotosSpike || '[]'),
+            ifPanMeasurePanDimensionPhotos: JSON.parse(
+              row.ifPanMeasurePanDimensionPhotos || '[]',
+            ),
+            measureRetainerSizePhotos: JSON.parse(
+              row.measureRetainerSizePhotos || '[]',
+            ),
+            photoCloseUpOfSigns: JSON.parse(row.photoCloseUpOfSigns || '[]'),
+            photoFullFrontalOfWholeSignStructurePhotos: JSON.parse(
+              row.photoFullFrontalOfWholeSignStructurePhotos || '[]',
+            ),
+            signDimensionsPhotos: JSON.parse(row.signDimensionsPhotos || '[]'),
+            squareFootageSpikePhotos: JSON.parse(
+              row.squareFootageSpikePhotos || '[]',
+            ),
+            visibleOpeningsPhotos: JSON.parse(
+              row.visibleOpeningsPhotos || '[]',
+            ),
+            otherPhotosImages: JSON.parse(row.otherPhotosImages || '[]'),
+            otherPhotosMeasurementsMarkupsPhotos: JSON.parse(
+              row.otherPhotosMeasurementsMarkupsPhotos || '[]',
+            ),
+            indoorWallPhoto: JSON.parse(row.indoorWallPhoto || '[]'),
+            ceilingSurfacePhoto: JSON.parse(row.ceilingSurfacePhoto || '[]'),
+          });
+        }
+        callback(measurements);
+      },
+      (_: any, error: any) => {
+        console.error(
+          'Error fetching unsynced photos_and_measurements:',
+          error,
+        );
+        callback([]);
+        return false; // stops further propagation of error
+      },
+    );
+  });
+};
+
 export const dropAllTables = () => {
   db.transaction((tx: any) => {
     const tables = [
@@ -2316,7 +3398,7 @@ export const dropAllTables = () => {
       'existing_sign_audit',
       'electrical_audit',
       'permitting_assessment',
-      'indoor_photos_and_measurements',
+      'photos_and_measurements',
       'sign_general_audit',
       'offline_images',
       'offline_remove_images',
@@ -2342,10 +3424,10 @@ export const clearAllTables = () => {
       'existing_sign_audit',
       'electrical_audit',
       'permitting_assessment',
-      'indoor_photos_and_measurements',
       'sign_general_audit',
       'offline_images',
       'offline_remove_images',
+      'photos_and_measurements',
     ];
 
     tables.forEach(table => {

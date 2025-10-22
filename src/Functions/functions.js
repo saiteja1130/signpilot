@@ -12,11 +12,13 @@ import {
   getUnsyncedElectricalAudits,
   getUnsyncedExistingSignAudits,
   getUnsyncedPermittingAssessments,
+  getUnsyncedPhotosAndMeasurements,
   getUnsyncedSignGeneralAudits,
   insertOfflineImage,
   updateElectricalAudit,
   updateExistingSignAudit,
   updatePermittingAssessment,
+  updatePhotosAndMeasurements,
   updateSignGeneralAudit,
 } from '../Db/LocalData';
 import {compressImage} from './compressImage';
@@ -723,6 +725,84 @@ const syncSignGeneral = (loginData, baseUrl) => {
   });
 };
 
+const syncPhotosAndMeasurements = (loginData, baseUrl) => {
+  return new Promise(resolve => {
+    getUnsyncedPhotosAndMeasurements(async measurements => {
+      console.log('Pending Photos & Measurements to SYNC::::', measurements);
+
+      if (measurements.length === 0) {
+        console.log('No pending measurements to sync.');
+        return resolve();
+      }
+
+      const token = loginData?.tokenNumber;
+
+      for (const measurement of measurements) {
+        try {
+          // Convert each image array to base64 (if present)
+          const base64signDimensionsPhoto = await getBase64Array2222(
+            measurement?.signDimensionsPhoto || [],
+          );
+          const base64squareFootageSpikePhoto = await getBase64Array2222(
+            measurement?.squareFootageSpikePhoto || [],
+          );
+          const base64photoFullFrontalOfWholeSignStructurePhoto =
+            await getBase64Array2222(
+              measurement?.photoFullFrontalOfWholeSignStructurePhoto || [],
+            );
+          const base64photoCloseUpOfSign = await getBase64Array2222(
+            measurement?.photoCloseUpOfSign || [],
+          );
+          const base64otherPhotosMeasurementsMarkupsPhoto =
+            await getBase64Array2222(
+              measurement?.otherPhotosMeasurementsMarkupsPhoto || [],
+            );
+
+          const data = {
+            ...measurement,
+            Id: measurement.id,
+            teamId: loginData?.userId,
+            surveyModule: '',
+            signDimensionsPhoto: base64signDimensionsPhoto,
+            squareFootageSpikePhoto: base64squareFootageSpikePhoto,
+            photoFullFrontalOfWholeSignStructurePhoto:
+              base64photoFullFrontalOfWholeSignStructurePhoto,
+            photoCloseUpOfSign: base64photoCloseUpOfSign,
+            otherPhotosMeasurementsMarkupsPhoto:
+              base64otherPhotosMeasurementsMarkupsPhoto,
+          };
+
+          console.log('SYNC PAYLOAD Photos & Measurements:', data);
+
+          const response = await axios.post(
+            `${baseUrl}/updateOutdoorPhotosAudit`,
+            data,
+            {headers: {Authorization: `Bearer ${token}`}},
+          );
+
+          console.log('SYNC SUCCESS Photos & Measurements:', response.data);
+
+          if (response.data?.status) {
+            updatePhotosAndMeasurements(measurement, 1);
+          } else {
+            console.warn(
+              'Server responded with unexpected status for measurement:',
+              measurement.id,
+            );
+          }
+        } catch (err) {
+          console.error(
+            `Error syncing Photos & Measurements ID: ${measurement.id}`,
+            err.response?.data || err.message,
+          );
+        }
+      }
+
+      resolve();
+    });
+  });
+};
+
 // 5️⃣ Offline Images
 const syncOfflineImages = (loginData, baseUrl) => {
   return new Promise(resolve => {
@@ -795,6 +875,7 @@ export const syncToOnline = async (loginData, baseUrl) => {
   await syncElectrical(loginData, baseUrl);
   await syncPermitting(loginData, baseUrl);
   await syncSignGeneral(loginData, baseUrl);
+  await syncPhotosAndMeasurements(loginData, baseUrl);
   await syncOfflineImages(loginData, baseUrl);
   await syncRemovedImages(loginData, baseUrl);
   await clearCache();
