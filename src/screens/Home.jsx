@@ -33,6 +33,7 @@ import NetInfo from '@react-native-community/netinfo';
 import {
   clearAllTables,
   createElectricalAuditTable,
+  createElevationAndSitePlanTable,
   createExistingSignAuditTable,
   createLocalDB,
   createOfflineImagesTable,
@@ -44,6 +45,7 @@ import {
   dropAllTables,
   fetchAllProjectsData,
   insertElectricalAudit,
+  insertElevationAndSitePlan,
   insertExistingSignAudit,
   insertPermittingAssessment,
   insertPhotosAndMeasurements,
@@ -55,6 +57,7 @@ import {createUsersTable, dropUsersTable} from '../Db/db';
 import {addLoginData} from '../Redux/Slices/LoginData';
 import {clearCache, deleteFolders} from '../Functions/FSfunctions';
 import {addProjectTitle} from '../Redux/Slices/ProjectTitleSlice';
+import ElevationSitePlan from '../Components/ElevationSitePlan';
 
 const Home = () => {
   const baseUrl = useSelector(state => state.baseUrl.value);
@@ -111,6 +114,7 @@ const Home = () => {
             insertElectricalAudit(data, 1),
             insertPermittingAssessment(data, 1),
             insertPhotosAndMeasurements(data, 1),
+            insertElevationAndSitePlan(data, 1),
             insertSignGeneralAudit(data, 1),
           ]);
           fetchAllProjectsData(projects => {
@@ -283,6 +287,7 @@ const Home = () => {
     createElectricalAuditTable();
     createPermittingAssessmentTable();
     createPhotosAndMeasurementsTable();
+    createElevationAndSitePlanTable();
     createSignGeneralAuditTable();
     const init = async () => {
       const netState = await NetInfo.fetch();
@@ -478,6 +483,8 @@ const Home = () => {
       flex: 1,
     },
   });
+
+  console.log('signProjectData', signProjectData?.signId);
 
   if (loading) {
     return (
@@ -678,10 +685,12 @@ const Home = () => {
                 <>
                   <ExistingAuditProject handleFetchData={fetchData} />
                   <ElectricalAssessment handleFetchData={fetchData} />
-                  <PermittingAssenment handleFetchData={fetchData} /> 
+                  <PermittingAssenment handleFetchData={fetchData} />
                   <Outdoor handleFetchData={fetchData} />
-                  {/* <Indoor handleFetchData={fetchData} /> */}
-                  {<Photos handleFetchData={fetchData} />}
+                  <Photos handleFetchData={fetchData} />
+                  {signProjectData?.signId === '2' && (
+                    <ElevationSitePlan handleFetchData={fetchData} />
+                  )}
 
                   {isConnected && (
                     <View>

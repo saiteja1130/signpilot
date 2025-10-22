@@ -10,12 +10,14 @@ import {
   getAllOfflineImages,
   getAllRemovedImages,
   getUnsyncedElectricalAudits,
+  getUnsyncedElevationAndSitePlan,
   getUnsyncedExistingSignAudits,
   getUnsyncedPermittingAssessments,
   getUnsyncedPhotosAndMeasurements,
   getUnsyncedSignGeneralAudits,
   insertOfflineImage,
   updateElectricalAudit,
+  updateElevationAndSitePlan,
   updateExistingSignAudit,
   updatePermittingAssessment,
   updatePhotosAndMeasurements,
@@ -803,6 +805,96 @@ const syncPhotosAndMeasurements = (loginData, baseUrl) => {
   });
 };
 
+export const syncElevationAndSitePlan = (loginData, baseUrl) => {
+  return new Promise(resolve => {
+    getUnsyncedElevationAndSitePlan(async plans => {
+      console.log('Pending Elevation & SitePlan to SYNC::::', plans);
+      if (plans.length === 0) {
+        console.log('No pending elevation/siteplan to sync.');
+        return resolve();
+      }
+      const token = loginData?.tokenNumber;
+
+      for (const plan of plans) {
+        let base64measureLinearFrontagePhoto = [];
+        let base64measureWidthOfEasementImage = [];
+        let base64otherPhotosMeasurementsMarkupsPhoto = [];
+        let base64storefrontSpikePhoto = [];
+        // streetStoreFrontPhotostreetViewOfSign
+        let base64streetStoreFrontPhoto = [];
+        let base64streetViewOfSign = [];
+        try {
+          const base64storefrontPhoto = await getBase64Array2222(
+            plan?.storefrontPhoto || [],
+          );
+          base64measureLinearFrontagePhoto = await getBase64Array(
+            plan?.measureLinearFrontagePhoto || [],
+          );
+          base64measureWidthOfEasementImage = await getBase64Array(
+            plan?.measureWidthOfEasementImage || [],
+          );
+          base64otherPhotosMeasurementsMarkupsPhoto = await getBase64Array(
+            plan?.otherPhotosMeasurementsMarkupsPhoto || [],
+          );
+          base64storefrontSpikePhoto = await getBase64Array(
+            plan?.storefrontSpikePhoto || [],
+          );
+          base64streetStoreFrontPhoto = await getBase64Array(
+            plan?.streetStoreFrontPhoto || [],
+          );
+          base64streetViewOfSign = await getBase64Array(
+            plan?.streetViewOfSign || [],
+          );
+          const data = {
+            ...plan,
+            Id: plan.id,
+            teamId: loginData?.userId,
+            surveyModule: '',
+            storefrontPhoto: base64storefrontPhoto,
+            measureDistanceSpike: '',
+            measureDistanceSignToStoreSpike: '',
+            measureWidthOfEasementSpike: '',
+            storefrontSpikePhoto: [],
+            photoStoreViewOfSignImage: [],
+            measureLinearFrontagePhoto: base64measureLinearFrontagePhoto,
+            measureWidthOfEasementImage: base64measureWidthOfEasementImage,
+            otherPhotosMeasurementsMarkupsPhoto:
+              base64otherPhotosMeasurementsMarkupsPhoto,
+            storefrontSpikePhoto: base64storefrontSpikePhoto,
+            streetStoreFrontPhoto: base64streetStoreFrontPhoto,
+            streetViewOfSign: base64streetViewOfSign,
+          };
+
+          console.log('SYNC PAYLOAD Elevation & SitePlan:', data);
+          const response = await axios.post(
+            `${baseUrl}/updateElevationAudit`,
+            data,
+            {headers: {Authorization: `Bearer ${token}`}},
+          );
+
+          console.log('SYNC SUCCESS Elevation & SitePlan:', response.data);
+
+          if (response.data?.status) {
+            updateElevationAndSitePlan(plan, 1);
+          } else {
+            console.warn(
+              'Server responded with unexpected status for plan:',
+              plan.id,
+            );
+          }
+        } catch (err) {
+          console.error(
+            `Error syncing Elevation & SitePlan ID: ${plan.id}`,
+            err.response?.data || err.message,
+          );
+        }
+      }
+
+      resolve();
+    });
+  });
+};
+
 // 5️⃣ Offline Images
 const syncOfflineImages = (loginData, baseUrl) => {
   return new Promise(resolve => {
@@ -876,6 +968,7 @@ export const syncToOnline = async (loginData, baseUrl) => {
   await syncPermitting(loginData, baseUrl);
   await syncSignGeneral(loginData, baseUrl);
   await syncPhotosAndMeasurements(loginData, baseUrl);
+  await syncElevationAndSitePlan(loginData, baseUrl);
   await syncOfflineImages(loginData, baseUrl);
   await syncRemovedImages(loginData, baseUrl);
   await clearCache();

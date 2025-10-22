@@ -88,7 +88,7 @@ export const getBase64Array2222 = async (
   for (const img of imageArray) {
     try {
       // 1️⃣ Normalize path (remove file://)
-      const tempPath = img.path.startsWith('file://')
+      const tempPath = img?.path?.startsWith('file://')
         ? img.path.replace('file://', '')
         : img.path;
 

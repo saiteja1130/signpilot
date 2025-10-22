@@ -698,6 +698,126 @@ export const createSignGeneralAuditTable = () => {
   });
 };
 
+export const createElevationAndSitePlanTable = () => {
+  db.transaction((tx: any) => {
+    tx.executeSql(
+      `
+      CREATE TABLE IF NOT EXISTS elevation_and_siteplan (
+        id TEXT PRIMARY KEY,
+        projectId TEXT,
+        signId TEXT,
+        optionId TEXT,
+        signAliasName TEXT,
+        signType TEXT,
+        sign_order TEXT,
+        projectTitle TEXT,
+        customerName TEXT,
+        adminId TEXT,
+        adminName TEXT,
+        createdDate TEXT,
+        documentCompositionOfSignband TEXT,
+        documentElectricSafety TEXT,
+        electricLinesDistFT TEXT,
+        electricLinesDistIN TEXT,
+        electricLinesWithinWorkZone TEXT,
+        elevationAndSitePlanSummaryNotes TEXT,
+        elevationAndSitePlanTodoPunchList TEXT,
+        hasCallBeforeYouDigBeenContacted TEXT,
+        hasCustomerSuppliedPlottedSurvey TEXT,
+        isContactingACallBeforeYouDigRequired TEXT,
+        measureDistanceDistFT TEXT,
+        measureDistanceDistIN TEXT,
+        measureDistanceLengthFT TEXT,
+        measureDistanceLengthIN TEXT,
+        measureDistanceSignToStoreDistFT TEXT,
+        measureDistanceSignToStoreDistIN TEXT,
+        measureDistanceSignToStreetDistFT TEXT,
+        measureDistanceSignToStreetDistIN TEXT,
+        measureDoorsHeightFT1 TEXT,
+        measureDoorsHeightFT2 TEXT,
+        measureDoorsHeightIN1 TEXT,
+        measureDoorsHeightIN2 TEXT,
+        measureDoorsWidthFT1 TEXT,
+        measureDoorsWidthFT2 TEXT,
+        measureDoorsWidthIN1 TEXT,
+        measureDoorsWidthIN2 TEXT,
+        measureLinearFrontageDistFT TEXT,
+        measureLinearFrontageDistIN TEXT,
+        measureLinearFrontageLengthFT TEXT,
+        measureLinearFrontageLengthIN TEXT,
+        measureSignBandHeightFT TEXT,
+        measureSignBandHeightIN TEXT,
+        measureSignBandWidthFT TEXT,
+        measureSignBandWidthIN TEXT,
+        measureWidthOfEasementWidthFT TEXT,
+        measureWidthOfEasementWidthIN TEXT,
+        measureWindowsHeightFT1 TEXT,
+        measureWindowsHeightFT3 TEXT,
+        measureWindowsHeightIN1 TEXT,
+        measureWindowsHeightIN3 TEXT,
+        measureWindowsWidthFT2 TEXT,
+        measureWindowsWidthFT4 TEXT,
+        measureWindowsWidthIN2 TEXT,
+        measureWindowsWidthIN4 TEXT,
+        measurement TEXT,
+        callNotes TEXT,
+        outdoorOtherPhotosDepthFT TEXT,
+        outdoorOtherPhotosDepthIN TEXT,
+        outdoorOtherPhotosHeightFT TEXT,
+        outdoorOtherPhotosHeightIN TEXT,
+        outdoorOtherPhotosWidthFT TEXT,
+        outdoorOtherPhotosWidthIN TEXT,
+        storefrontHeightFT TEXT,
+        storefrontHeightIN TEXT,
+        storefrontWidthFT TEXT,
+        storefrontWidthIN TEXT,
+        surveyModule TEXT,
+        teamId TEXT,
+
+        -- 🖼️ Photo & File Columns
+        backOfStorefrontPhoto TEXT,
+        frontofsignPhoto TEXT,
+        electricLinesPhoto TEXT,
+        electricLinesSpikePhoto TEXT,
+        hasCustomerSuppliedPlottedSurveyFile TEXT,
+        hasCustomerSuppliedPlottedSurveyPhoto TEXT,
+        measureDistanceImage TEXT,
+        measureDistanceSignToStoreImage TEXT,
+        measureDistanceSignToStreetImage TEXT,
+        measureLinearFrontagePhoto TEXT,
+        measureLinearFrontageSpikePhoto TEXT,
+        measureSignBandPhoto TEXT,
+        measureSignBandSpike TEXT,
+        measureWidthOfEasementImage TEXT,
+        oneOftwoSidesBuildingPhoto TEXT,
+        twoOfTwoSideOfBuilding TEXT,
+        otherSignPhoto TEXT,
+        outdoorOtherPhotoImage TEXT,
+        photoStoreViewOfSignImage TEXT,
+        storefrontPhoto TEXT,
+        storefrontSpikePhoto TEXT,
+        streetStoreFrontPhoto TEXT,
+        streetViewOfSign TEXT,
+        videoWalkthrough TEXT,
+        storefrontPhotos TEXT,
+        streetViewOfSigns TEXT,
+        streetStoreFrontPhotos TEXT,
+        storefrontSpikePhotos TEXT,
+        measureWidthOfEasementImages TEXT,
+        measureLinearFrontagePhotos TEXT,
+
+        isSynced INTEGER DEFAULT 0,
+        FOREIGN KEY (projectId) REFERENCES projects(projectId) ON DELETE CASCADE
+      );
+      `,
+      [],
+      () => console.log('✅ elevation_and_siteplan table created successfully'),
+      (_: any, error: any) =>
+        console.error('❌ Error creating elevation_and_siteplan table:', error),
+    );
+  });
+};
+
 export const insertProjectsData = (projects: Project[]) => {
   // console.log('PROJECTSSS DATAAAAA:::::::::::', projects);
   // return;
@@ -1582,9 +1702,13 @@ export const insertPhotosAndMeasurements = async (
               JSON.stringify(loadedVisibleOpeningsPhotos),
               JSON.stringify(loadedMullionsPhotos),
               JSON.stringify(loadedMullionsSpike),
-              JSON.stringify(measurements.otherPhotosMeasurementsMarkupsPhoto || []),
+              JSON.stringify(
+                measurements.otherPhotosMeasurementsMarkupsPhoto || [],
+              ),
               JSON.stringify(loadedOtherPhotosMarkupsSpike),
-              JSON.stringify(measurements.photoFullFrontalOfWholeSignStructurePhoto || []),
+              JSON.stringify(
+                measurements.photoFullFrontalOfWholeSignStructurePhoto || [],
+              ),
               JSON.stringify(loadedMeasureCellingWall),
               JSON.stringify(loadedMeasureRetainerSize),
               JSON.stringify(loadedMeasureCutSize),
@@ -1995,6 +2119,341 @@ export const insertSignGeneralAuditImagesOnly = async (
   }
 };
 
+export const insertElevationAndSitePlan = async (
+  projects: any[],
+  synced: number,
+) => {
+  for (const project of projects) {
+    for (const option of project.signDataOptions || []) {
+      const elevation = option.elevation_and_siteplan;
+      if (!elevation) continue;
+
+      const id = elevation?.id;
+      if (!id) continue;
+
+      // Download storefront photos if synced
+      let finalStorefrontPhotos = elevation.storefrontPhotos || [];
+      let finalstreetViewOfSigns = elevation.streetViewOfSigns || [];
+      let finalstreetStoreFrontPhotos = elevation.streetStoreFrontPhotos || [];
+      let finalstorefrontSpikePhotos = elevation.storefrontSpikePhotos || [];
+      let finalmeasureWidthOfEasementImages =
+        elevation.measureWidthOfEasementImages || [];
+      let finalmeasureLinearFrontagePhotos =
+        elevation.measureLinearFrontagePhotos || [];
+      if (synced === 1) {
+        finalStorefrontPhotos = await downloadImagesArray(
+          finalStorefrontPhotos,
+          'storefrontPhotos',
+        );
+        finalstreetViewOfSigns = await downloadImagesArray(
+          finalstreetViewOfSigns,
+          'streetViewOfSigns',
+        );
+        finalstreetStoreFrontPhotos = await downloadImagesArray(
+          finalstreetStoreFrontPhotos,
+          'streetStoreFrontPhotos',
+        );
+        finalstorefrontSpikePhotos = await downloadImagesArray(
+          finalstorefrontSpikePhotos,
+          'storefrontSpikePhotos',
+        );
+        finalmeasureWidthOfEasementImages = await downloadImagesArray(
+          finalmeasureWidthOfEasementImages,
+          'measureWidthOfEasementImages',
+        );
+        finalmeasureLinearFrontagePhotos = await downloadImagesArray(
+          finalmeasureLinearFrontagePhotos,
+          'measureLinearFrontagePhotos',
+        );
+      }
+
+      db.transaction(
+        (tx: any) => {
+          tx.executeSql(
+            `
+            INSERT OR REPLACE INTO elevation_and_siteplan (
+              id,
+              projectId,
+              signId,
+              optionId,
+              signAliasName,
+              signType,
+              sign_order,
+              projectTitle,
+              customerName,
+              adminId,
+              adminName,
+              createdDate,
+              documentCompositionOfSignband,
+              documentElectricSafety,
+              electricLinesDistFT,
+              electricLinesDistIN,
+              electricLinesWithinWorkZone,
+              elevationAndSitePlanSummaryNotes,
+              elevationAndSitePlanTodoPunchList,
+              hasCallBeforeYouDigBeenContacted,
+              hasCustomerSuppliedPlottedSurvey,
+              isContactingACallBeforeYouDigRequired,
+              measureDistanceDistFT,
+              measureDistanceDistIN,
+              measureDistanceLengthFT,
+              measureDistanceLengthIN,
+              measureDistanceSignToStoreDistFT,
+              measureDistanceSignToStoreDistIN,
+              measureDistanceSignToStreetDistFT,
+              measureDistanceSignToStreetDistIN,
+              measureDoorsHeightFT1,
+              measureDoorsHeightFT2,
+              measureDoorsHeightIN1,
+              measureDoorsHeightIN2,
+              measureDoorsWidthFT1,
+              measureDoorsWidthFT2,
+              measureDoorsWidthIN1,
+              measureDoorsWidthIN2,
+              measureLinearFrontageDistFT,
+              measureLinearFrontageDistIN,
+              measureLinearFrontageLengthFT,
+              measureLinearFrontageLengthIN,
+              measureSignBandHeightFT,
+              measureSignBandHeightIN,
+              measureSignBandWidthFT,
+              measureSignBandWidthIN,
+              measureWidthOfEasementWidthFT,
+              measureWidthOfEasementWidthIN,
+              measureWindowsHeightFT1,
+              measureWindowsHeightFT3,
+              measureWindowsHeightIN1,
+              measureWindowsHeightIN3,
+              measureWindowsWidthFT2,
+              measureWindowsWidthFT4,
+              measureWindowsWidthIN2,
+              measureWindowsWidthIN4,
+              measurement,
+              callNotes,
+              outdoorOtherPhotosDepthFT,
+              outdoorOtherPhotosDepthIN,
+              outdoorOtherPhotosHeightFT,
+              outdoorOtherPhotosHeightIN,
+              outdoorOtherPhotosWidthFT,
+              outdoorOtherPhotosWidthIN,
+              storefrontHeightFT,
+              storefrontHeightIN,
+              storefrontWidthFT,
+              storefrontWidthIN,
+              storefrontPhotos,
+              streetViewOfSigns,
+              streetStoreFrontPhotos,
+              storefrontSpikePhotos,
+              measureWidthOfEasementImages,
+              measureLinearFrontagePhotos,
+              isSynced
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            `,
+            [
+              id,
+              elevation.projectId ?? null,
+              elevation.signId ?? null,
+              elevation.optionId ?? null,
+              elevation.signAliasName ?? null,
+              elevation.signType ?? null,
+              elevation.sign_order ?? null,
+              elevation.projectTitle ?? null,
+              elevation.customerName ?? null,
+              elevation.adminId ?? null,
+              elevation.adminName ?? null,
+              elevation.createdDate ?? null,
+              elevation.documentCompositionOfSignband ?? '',
+              elevation.documentElectricSafety ?? '',
+              elevation.electricLinesDistFT ?? '',
+              elevation.electricLinesDistIN ?? '',
+              elevation.electricLinesWithinWorkZone ?? '',
+              elevation.elevationAndSitePlanSummaryNotes ?? '',
+              elevation.elevationAndSitePlanTodoPunchList ?? '',
+              elevation.hasCallBeforeYouDigBeenContacted ?? '',
+              elevation.hasCustomerSuppliedPlottedSurvey ?? '',
+              elevation.isContactingACallBeforeYouDigRequired ?? '',
+              elevation.measureDistanceDistFT ?? '',
+              elevation.measureDistanceDistIN ?? '',
+              elevation.measureDistanceLengthFT ?? '',
+              elevation.measureDistanceLengthIN ?? '',
+              elevation.measureDistanceSignToStoreDistFT ?? '',
+              elevation.measureDistanceSignToStoreDistIN ?? '',
+              elevation.measureDistanceSignToStreetDistFT ?? '',
+              elevation.measureDistanceSignToStreetDistIN ?? '',
+              elevation.measureDoorsHeightFT1 ?? '',
+              elevation.measureDoorsHeightFT2 ?? '',
+              elevation.measureDoorsHeightIN1 ?? '',
+              elevation.measureDoorsHeightIN2 ?? '',
+              elevation.measureDoorsWidthFT1 ?? '',
+              elevation.measureDoorsWidthFT2 ?? '',
+              elevation.measureDoorsWidthIN1 ?? '',
+              elevation.measureDoorsWidthIN2 ?? '',
+              elevation.measureLinearFrontageDistFT ?? '',
+              elevation.measureLinearFrontageDistIN ?? '',
+              elevation.measureLinearFrontageLengthFT ?? '',
+              elevation.measureLinearFrontageLengthIN ?? '',
+              elevation.measureSignBandHeightFT ?? '',
+              elevation.measureSignBandHeightIN ?? '',
+              elevation.measureSignBandWidthFT ?? '',
+              elevation.measureSignBandWidthIN ?? '',
+              elevation.measureWidthOfEasementWidthFT ?? '',
+              elevation.measureWidthOfEasementWidthIN ?? '',
+              elevation.measureWindowsHeightFT1 ?? '',
+              elevation.measureWindowsHeightFT3 ?? '',
+              elevation.measureWindowsHeightIN1 ?? '',
+              elevation.measureWindowsHeightIN3 ?? '',
+              elevation.measureWindowsWidthFT2 ?? '',
+              elevation.measureWindowsWidthFT4 ?? '',
+              elevation.measureWindowsWidthIN2 ?? '',
+              elevation.measureWindowsWidthIN4 ?? '',
+              elevation.measurement ?? '',
+              elevation.callNotes ?? '',
+              elevation.outdoorOtherPhotosDepthFT ?? '',
+              elevation.outdoorOtherPhotosDepthIN ?? '',
+              elevation.outdoorOtherPhotosHeightFT ?? '',
+              elevation.outdoorOtherPhotosHeightIN ?? '',
+              elevation.outdoorOtherPhotosWidthFT ?? '',
+              elevation.outdoorOtherPhotosWidthIN ?? '',
+              elevation.storefrontHeightFT ?? '',
+              elevation.storefrontHeightIN ?? '',
+              elevation.storefrontWidthFT ?? '',
+              elevation.storefrontWidthIN ?? '',
+              JSON.stringify(finalStorefrontPhotos),
+              JSON.stringify(finalstreetViewOfSigns),
+              JSON.stringify(finalstreetStoreFrontPhotos),
+              JSON.stringify(finalstorefrontSpikePhotos),
+              JSON.stringify(finalmeasureWidthOfEasementImages),
+              JSON.stringify(finalmeasureLinearFrontagePhotos),
+              synced,
+            ],
+            () =>
+              console.log(`✅ Inserted elevation_and_siteplan for sign ${id}`),
+            (_: any, error: any) =>
+              console.error(
+                `❌ Error inserting elevation_and_siteplan ${id}:`,
+                error,
+              ),
+          );
+        },
+        (txError: any) => console.error('❌ Transaction ERROR:', txError),
+        () =>
+          console.log(
+            '✅ All elevation_and_siteplan data inserted successfully',
+          ),
+      );
+    }
+  }
+};
+
+export const insertElevationAndSiteImagesOnly = async (
+  id: string | number,
+  key: string,
+  images: any[] = [],
+  synced: number,
+) => {
+  if (!id || !key) {
+    console.warn('⚠️ Missing ID or key for elevation_and_siteplan update');
+    return;
+  }
+
+  console.log(
+    `🟡 Updating Elevation & SitePlan ID: ${id}, Key: ${key}, Synced: ${synced}`,
+  );
+
+  try {
+    let finalImages = images;
+
+    if (synced === 1) {
+      // Download images if online
+      finalImages = await downloadImagesArray(images || [], key);
+      console.log(
+        `✅ Downloaded ${finalImages?.length || 0} images for ${key}`,
+      );
+    } else {
+      console.log(
+        `📴 Offline mode — skipping download for ${key}, using local paths`,
+      );
+    }
+
+    db.transaction(
+      (tx: any) => {
+        tx.executeSql(
+          `
+            UPDATE elevation_and_siteplan
+            SET ${key} = ?, isSynced = ?
+            WHERE id = ?
+          `,
+          [JSON.stringify(finalImages || []), synced, id],
+          () =>
+            console.log(`✅ Updated ${key} for elevation_and_siteplan ${id}`),
+          (_: any, error: any) =>
+            console.error(
+              `❌ SQL error updating ${key} for elevation_and_siteplan ${id}:`,
+              error,
+            ),
+        );
+      },
+      (txError: any) => console.error('❌ Transaction ERROR:', txError),
+      () =>
+        console.log(
+          `✅ elevation_and_siteplan image update complete for ${key}`,
+        ),
+    );
+  } catch (error) {
+    console.error(`❌ Failed to insert/update images for ${key}:`, error);
+  }
+};
+
+export const getElevationAndSiteImagesByKey = async (
+  id: string | number,
+  key: string,
+): Promise<any[]> => {
+  return new Promise((resolve, reject) => {
+    if (!id || !key) {
+      console.warn('⚠️ Missing elevation_and_siteplan ID or key');
+      resolve([]);
+      return;
+    }
+
+    console.log(
+      `📦 Fetching images for Elevation & SitePlan ID: ${id}, Key: ${key}`,
+    );
+
+    db.transaction(
+      (tx: any) => {
+        tx.executeSql(
+          `SELECT ${key} FROM elevation_and_siteplan WHERE id = ?`,
+          [id],
+          (_: any, results: any) => {
+            if (results.rows.length > 0) {
+              const row = results.rows.item(0);
+              try {
+                const images = JSON.parse(row[key] || '[]');
+                console.log(`✅ Retrieved ${images.length} images for ${key}`);
+                resolve(images);
+              } catch (err) {
+                console.error(`❌ JSON parse error for ${key}:`, err);
+                resolve([]);
+              }
+            } else {
+              console.warn(`⚠️ No record found for ID ${id}`);
+              resolve([]);
+            }
+          },
+          (_: any, error: any) => {
+            console.error(`❌ SQL error fetching ${key}:`, error);
+            reject(error);
+          },
+        );
+      },
+      (txError: any) => {
+        console.error('Transaction ERROR:', txError);
+        reject(txError);
+      },
+    );
+  });
+};
+
 export const fetchAllProjectsData = (callback: (projects: any[]) => void) => {
   db.transaction((tx: any) => {
     // Step 1: Get all projects
@@ -2015,7 +2474,6 @@ export const fetchAllProjectsData = (callback: (projects: any[]) => void) => {
 
         let completed = 0;
 
-        // Step 2: For each project, fetch sign_data_options
         projects.forEach((project, projIndex) => {
           tx.executeSql(
             `SELECT * FROM sign_data_options WHERE projectId = ?`,
@@ -2035,7 +2493,6 @@ export const fetchAllProjectsData = (callback: (projects: any[]) => void) => {
 
               let optionsCompleted = 0;
 
-              // Step 3: For each sign option, fetch related audits
               signDataOptions.forEach((option, optionIndex) => {
                 const queries = [
                   {
@@ -2062,6 +2519,11 @@ export const fetchAllProjectsData = (callback: (projects: any[]) => void) => {
                     table: 'sign_general_audit',
                     key: 'Id',
                     prop: 'sign_general_audit',
+                  },
+                  {
+                    table: 'elevation_and_siteplan',
+                    key: 'id',
+                    prop: 'elevation_and_siteplan',
                   },
                 ];
 
@@ -2226,6 +2688,30 @@ export const fetchAllProjectsData = (callback: (projects: any[]) => void) => {
                             'otherPhotosMeasurementsMarkupsPhotos',
                             'indoorWallPhoto',
                             'ceilingSurfacePhoto',
+                          ];
+
+                          photoFields.forEach(field => {
+                            if (audit[field]) {
+                              try {
+                                audit[field] = JSON.parse(audit[field]);
+                              } catch (e) {
+                                console.error(`Error parsing ${field}:`, e);
+                                audit[field] = [];
+                              }
+                            } else {
+                              audit[field] = [];
+                            }
+                          });
+                        }
+                        if (prop === 'elevation_and_siteplan') {
+                          // Parse ALL photo fields for photos_and_measurements
+                          const photoFields = [
+                            'measureLinearFrontagePhotos',
+                            'measureWidthOfEasementImages',
+                            'storefrontSpikePhotos',
+                            'streetStoreFrontPhotos',
+                            'streetViewOfSigns',
+                            'storefrontPhotos',
                           ];
 
                           photoFields.forEach(field => {
@@ -3146,6 +3632,181 @@ export const updatePhotosAndMeasurements = (
   });
 };
 
+export const updateElevationAndSitePlan = (
+  elevationData: any,
+  synced: number,
+) => {
+  console.log('🔄 Updating elevation_and_siteplan data:', elevationData);
+
+  db.transaction((tx: any) => {
+    tx.executeSql(
+      `
+      UPDATE elevation_and_siteplan
+      SET
+        projectId = ?,
+        signId = ?,
+        optionId = ?,
+        signAliasName = ?,
+        signType = ?,
+        sign_order = ?,
+        projectTitle = ?,
+        customerName = ?,
+        adminId = ?,
+        adminName = ?,
+        createdDate = ?,
+        documentCompositionOfSignband = ?,
+        documentElectricSafety = ?,
+        electricLinesDistFT = ?,
+        electricLinesDistIN = ?,
+        electricLinesWithinWorkZone = ?,
+        elevationAndSitePlanSummaryNotes = ?,
+        elevationAndSitePlanTodoPunchList = ?,
+        hasCallBeforeYouDigBeenContacted = ?,
+        hasCustomerSuppliedPlottedSurvey = ?,
+        isContactingACallBeforeYouDigRequired = ?,
+        measureDistanceDistFT = ?,
+        measureDistanceDistIN = ?,
+        measureDistanceLengthFT = ?,
+        measureDistanceLengthIN = ?,
+        measureDistanceSignToStoreDistFT = ?,
+        measureDistanceSignToStoreDistIN = ?,
+        measureDistanceSignToStreetDistFT = ?,
+        measureDistanceSignToStreetDistIN = ?,
+        measureDoorsHeightFT1 = ?,
+        measureDoorsHeightFT2 = ?,
+        measureDoorsHeightIN1 = ?,
+        measureDoorsHeightIN2 = ?,
+        measureDoorsWidthFT1 = ?,
+        measureDoorsWidthFT2 = ?,
+        measureDoorsWidthIN1 = ?,
+        measureDoorsWidthIN2 = ?,
+        measureLinearFrontageDistFT = ?,
+        measureLinearFrontageDistIN = ?,
+        measureLinearFrontageLengthFT = ?,
+        measureLinearFrontageLengthIN = ?,
+        measureSignBandHeightFT = ?,
+        measureSignBandHeightIN = ?,
+        measureSignBandWidthFT = ?,
+        measureSignBandWidthIN = ?,
+        measureWidthOfEasementWidthFT = ?,
+        measureWidthOfEasementWidthIN = ?,
+        measureWindowsHeightFT1 = ?,
+        measureWindowsHeightFT3 = ?,
+        measureWindowsHeightIN1 = ?,
+        measureWindowsHeightIN3 = ?,
+        measureWindowsWidthFT2 = ?,
+        measureWindowsWidthFT4 = ?,
+        measureWindowsWidthIN2 = ?,
+        measureWindowsWidthIN4 = ?,
+        measurement = ?,
+        callNotes = ?,
+        outdoorOtherPhotosDepthFT = ?,
+        outdoorOtherPhotosDepthIN = ?,
+        outdoorOtherPhotosHeightFT = ?,
+        outdoorOtherPhotosHeightIN = ?,
+        outdoorOtherPhotosWidthFT = ?,
+        outdoorOtherPhotosWidthIN = ?,
+        storefrontHeightFT = ?,
+        storefrontHeightIN = ?,
+        storefrontWidthFT = ?,
+        storefrontWidthIN = ?,
+        storefrontPhoto = ?,
+        measureLinearFrontagePhoto = ?,
+        measureWidthOfEasementImage = ?,
+        storefrontSpikePhoto = ?,
+        streetStoreFrontPhoto = ?,
+        streetViewOfSign = ?,
+        isSynced = ?
+      WHERE id = ?
+      `,
+      [
+        elevationData.projectId || '',
+        elevationData.signId || '',
+        elevationData.optionId || '',
+        elevationData.signAliasName || '',
+        elevationData.signType || '',
+        elevationData.sign_order || '',
+        elevationData.projectTitle || '',
+        elevationData.customerName || '',
+        elevationData.adminId || '',
+        elevationData.adminName || '',
+        elevationData.createdDate || '',
+        elevationData.documentCompositionOfSignband || '',
+        elevationData.documentElectricSafety || '',
+        elevationData.electricLinesDistFT || '',
+        elevationData.electricLinesDistIN || '',
+        elevationData.electricLinesWithinWorkZone || '',
+        elevationData.elevationAndSitePlanSummaryNotes || '',
+        elevationData.elevationAndSitePlanTodoPunchList || '',
+        elevationData.hasCallBeforeYouDigBeenContacted || '',
+        elevationData.hasCustomerSuppliedPlottedSurvey || '',
+        elevationData.isContactingACallBeforeYouDigRequired || '',
+        elevationData.measureDistanceDistFT || '',
+        elevationData.measureDistanceDistIN || '',
+        elevationData.measureDistanceLengthFT || '',
+        elevationData.measureDistanceLengthIN || '',
+        elevationData.measureDistanceSignToStoreDistFT || '',
+        elevationData.measureDistanceSignToStoreDistIN || '',
+        elevationData.measureDistanceSignToStreetDistFT || '',
+        elevationData.measureDistanceSignToStreetDistIN || '',
+        elevationData.measureDoorsHeightFT1 || '',
+        elevationData.measureDoorsHeightFT2 || '',
+        elevationData.measureDoorsHeightIN1 || '',
+        elevationData.measureDoorsHeightIN2 || '',
+        elevationData.measureDoorsWidthFT1 || '',
+        elevationData.measureDoorsWidthFT2 || '',
+        elevationData.measureDoorsWidthIN1 || '',
+        elevationData.measureDoorsWidthIN2 || '',
+        elevationData.measureLinearFrontageDistFT || '',
+        elevationData.measureLinearFrontageDistIN || '',
+        elevationData.measureLinearFrontageLengthFT || '',
+        elevationData.measureLinearFrontageLengthIN || '',
+        elevationData.measureSignBandHeightFT || '',
+        elevationData.measureSignBandHeightIN || '',
+        elevationData.measureSignBandWidthFT || '',
+        elevationData.measureSignBandWidthIN || '',
+        elevationData.measureWidthOfEasementWidthFT || '',
+        elevationData.measureWidthOfEasementWidthIN || '',
+        elevationData.measureWindowsHeightFT1 || '',
+        elevationData.measureWindowsHeightFT3 || '',
+        elevationData.measureWindowsHeightIN1 || '',
+        elevationData.measureWindowsHeightIN3 || '',
+        elevationData.measureWindowsWidthFT2 || '',
+        elevationData.measureWindowsWidthFT4 || '',
+        elevationData.measureWindowsWidthIN2 || '',
+        elevationData.measureWindowsWidthIN4 || '',
+        elevationData.measurement || '',
+        elevationData.callNotes || '',
+        elevationData.outdoorOtherPhotosDepthFT || '',
+        elevationData.outdoorOtherPhotosDepthIN || '',
+        elevationData.outdoorOtherPhotosHeightFT || '',
+        elevationData.outdoorOtherPhotosHeightIN || '',
+        elevationData.outdoorOtherPhotosWidthFT || '',
+        elevationData.outdoorOtherPhotosWidthIN || '',
+        elevationData.storefrontHeightFT || '',
+        elevationData.storefrontHeightIN || '',
+        elevationData.storefrontWidthFT || '',
+        elevationData.storefrontWidthIN || '',
+        JSON.stringify(elevationData.storefrontPhoto || []),
+        JSON.stringify(elevationData.measureLinearFrontagePhoto || []),
+        JSON.stringify(elevationData.measureWidthOfEasementImage || []),
+        JSON.stringify(elevationData.storefrontSpikePhoto || []),
+        JSON.stringify(elevationData.streetStoreFrontPhoto || []),
+        JSON.stringify(elevationData.streetViewOfSign || []),
+        synced,
+        elevationData.Id || '',
+      ],
+      () =>
+        console.log(`✅ Updated elevation_and_siteplan ${elevationData.Id}`),
+      (_: any, error: any) =>
+        console.error(
+          `❌ Error updating elevation_and_siteplan ${elevationData.Id}:`,
+          error,
+        ),
+    );
+  });
+};
+
 export const getUnsyncedExistingSignAudits = (
   callback: (data: ExistingSignAudit[]) => void,
 ) => {
@@ -3390,6 +4051,53 @@ export const getUnsyncedPhotosAndMeasurements = (
   });
 };
 
+export const getUnsyncedElevationAndSitePlan = (
+  callback: (data: any[]) => void,
+) => {
+  db.transaction((tx: any) => {
+    tx.executeSql(
+      `SELECT * FROM elevation_and_siteplan WHERE isSynced = 0`,
+      [],
+      (_: any, results: any) => {
+        const rows = results.rows;
+        const plans: any[] = [];
+
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows.item(i);
+
+          // Parse JSON fields safely (in case you later store any arrays or objects)
+          plans.push({
+            ...row,
+            measureLinearFrontagePhoto:
+              JSON.parse(row.measureLinearFrontagePhoto) || [],
+            measureWidthOfEasementImage:
+              JSON.parse(row.measureWidthOfEasementImage) || [],
+            storefrontSpikePhoto: JSON.parse(row.storefrontSpikePhoto) || [],
+            streetStoreFrontPhoto: JSON.parse(row.streetStoreFrontPhoto) || [],
+            streetViewOfSign: JSON.parse(row.streetViewOfSign) || [],
+            storefrontPhoto: JSON.parse(row.storefrontPhoto) || [],
+
+            // keep ready for future-proofing if these fields become JSON arrays
+            documentCompositionOfSignband: row.documentCompositionOfSignband
+              ? JSON.parse(row.documentCompositionOfSignband)
+              : row.documentCompositionOfSignband,
+            documentElectricSafety: row.documentElectricSafety
+              ? JSON.parse(row.documentElectricSafety)
+              : row.documentElectricSafety,
+          });
+        }
+
+        callback(plans);
+      },
+      (_: any, error: any) => {
+        console.error('Error fetching unsynced elevation_and_siteplan:', error);
+        callback([]);
+        return false;
+      },
+    );
+  });
+};
+
 export const dropAllTables = () => {
   db.transaction((tx: any) => {
     const tables = [
@@ -3400,6 +4108,7 @@ export const dropAllTables = () => {
       'permitting_assessment',
       'photos_and_measurements',
       'sign_general_audit',
+      'elevation_and_siteplan',
       'offline_images',
       'offline_remove_images',
     ];
@@ -3424,6 +4133,7 @@ export const clearAllTables = () => {
       'existing_sign_audit',
       'electrical_audit',
       'permitting_assessment',
+      'elevation_and_siteplan',
       'sign_general_audit',
       'offline_images',
       'offline_remove_images',
