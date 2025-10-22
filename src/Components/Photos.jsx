@@ -354,7 +354,7 @@ const Photos = ({handleFetchData}) => {
     photoOfWallOrFloorPhoto:
       signProjectData?.photos_and_measurements?.photoOfWallOrFloorPhoto || [],
     photoOfWallOrFloor:
-      signProjectData?.photos_and_measurements?.photoOfWallOrFloor || [],
+      signProjectData?.photos_and_measurements?.photoOfWallOrFloor || '',
     otherPhotosSpike:
       signProjectData?.photos_and_measurements?.otherPhotosSpike || [],
     wallDimensionsLengthFT:
@@ -503,6 +503,7 @@ const Photos = ({handleFetchData}) => {
         selectedOptions?.otherPhotosMeasurementsMarkupsPhoto || [];
     }
     const DoorData = {
+      // ...indoorPayload,
       ...selectedOptions,
       photosAndMeasurementsSummaryNotes,
       photosAndMeasurementsTodoPunchList,
@@ -517,6 +518,7 @@ const Photos = ({handleFetchData}) => {
         signName == 'Outdoor'
           ? 'outdoor_photos_and_measurements'
           : 'indoor_photos_and_measurements',
+      squareFootageFeet: '',
     };
     console.log('DATAAA', DoorData);
     // return;
@@ -537,6 +539,10 @@ const Photos = ({handleFetchData}) => {
           const imagesCache = [
             ...(selectedOptions?.signDimensionsPhoto || []),
             ...(selectedOptions?.squareFootageSpikePhoto || []),
+            ...(selectedOptions?.photoFullFrontalOfWholeSignStructurePhoto ||
+              []),
+            ...(selectedOptions?.photoCloseUpOfSign || []),
+            ...(selectedOptions?.otherPhotosMeasurementsMarkupsPhoto || []),
           ];
           for (const file of imagesCache) {
             try {
