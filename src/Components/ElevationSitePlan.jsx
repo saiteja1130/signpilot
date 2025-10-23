@@ -65,7 +65,6 @@ const ElevationSitePlan = ({handleFetchData}) => {
     signProjectData?.elevation_and_siteplan?.elevationAndSitePlanSummaryNotes,
   );
 
-  console.log('signProjectData?.elevation_and_siteplan', signProjectData);
 
   const [selectedOptions, setSelectedOptions] = useState({
     Id:
@@ -742,11 +741,6 @@ const ElevationSitePlan = ({handleFetchData}) => {
                         isLocal: false,
                       })) || []),
                     ];
-
-                    console.log(
-                      'MERGED STOREFRONT IMAGES',
-                      mergedStorefrontImages,
-                    );
 
                     if (mergedStorefrontImages.length === 0) return null;
 

@@ -484,7 +484,6 @@ const Home = () => {
     },
   });
 
-  console.log('signProjectData', signProjectData?.signId);
 
   if (loading) {
     return (

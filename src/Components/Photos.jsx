@@ -453,8 +453,6 @@ const Photos = ({handleFetchData}) => {
       signProjectData?.photos_and_measurements?.indoorSummaryNotes || '',
   });
 
-  console.log('selectedOptions', selectedOptions);
-  console.log('PROJECT DATA', signProjectData);
   const data = [
     {
       question: 'Square Footage calculation Required?',

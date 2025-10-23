@@ -59,11 +59,6 @@ const OutDoor = ({handleFetchData}) => {
       ?.signGeneralAuditDocumentAccessibilityIssues,
   );
 
-  console.log(
-    'signProjectData?.sign_general_audit',
-    signProjectData.sign_general_audit,
-  );
-
   const [inputFields, setInputFields] = useState([
     {
       placeholder: 'General Description of placement of sign',

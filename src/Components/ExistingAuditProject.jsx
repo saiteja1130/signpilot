@@ -520,7 +520,6 @@ const ExistingAuditProject = ({handleFetchData}) => {
                                     item => ({...item, isLocal: false}),
                                   ) || []),
                                 ];
-                                console.log('MERGED ARRAYS', mergedImages);
                                 if (mergedImages.length === 0) return null;
                                 return mergedImages.map((item, index) => (
                                   <TouchableOpacity
