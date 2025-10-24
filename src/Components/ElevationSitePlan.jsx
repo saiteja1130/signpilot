@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState} from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -9,21 +9,15 @@ import {
   View,
 } from 'react-native';
 import {useSelector} from 'react-redux';
-import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
 import RNFS from 'react-native-fs';
 import NetInfo from '@react-native-community/netinfo';
-
-// Import SVG icons (update paths as needed)
-// import ElevationIcon from '../../assets/images/elevation.svg';
 import DropDownIcon from '../../assets/images/downarrow.svg';
 import UpDownIcon from '../../assets/images/arrowup.svg';
 import SaveImg from '../../assets/images/save.svg';
 import Photo from '../../assets/images/photo.svg';
 import RadioButton from './RadioButton';
-
-// Import database functions (create similar ones for elevation audit)
 import {
   createOfflineRemoveTable,
   getElevationAndSiteImagesByKey,
@@ -536,7 +530,6 @@ const ElevationSitePlan = ({handleFetchData}) => {
     }
   };
 
-  // Radio button questions data
   const radioQuestions = [
     {
       question: 'Has Customer Supplied Plotted Survey?',
@@ -744,7 +737,7 @@ const ElevationSitePlan = ({handleFetchData}) => {
 
                     if (mergedStorefrontImages.length === 0) return null;
 
-                    return mergedStorefrontImages.map((item, index) => (
+                    return mergedStorefrontImages?.map((item, index) => (
                       <TouchableOpacity
                         key={index}
                         onPress={() => {
@@ -797,7 +790,6 @@ const ElevationSitePlan = ({handleFetchData}) => {
               </View>
             </View>
 
-            {/* Radio Questions */}
             <FlatList
               data={radioQuestions.filter(
                 q => !q.condition || (q.condition && q.condition),
@@ -828,7 +820,6 @@ const ElevationSitePlan = ({handleFetchData}) => {
                     ))}
                   </View>
 
-                  {/* Conditional fields based on radio selection */}
                   {item.value === 'electricLinesWithinWorkZone' &&
                     (selectedOptions[item.value] === 'Yes' ||
                       selectedOptions[item.value] === 'yes') && (
@@ -893,7 +884,6 @@ const ElevationSitePlan = ({handleFetchData}) => {
               )}
             />
 
-            {/* Doors Measurements */}
             <View
               style={[
                 styles.section,
@@ -1014,7 +1004,6 @@ const ElevationSitePlan = ({handleFetchData}) => {
               </View>
             </View>
 
-            {/* Linear Frontage Measurements */}
             <View
               style={[
                 styles.section,
@@ -1077,7 +1066,6 @@ const ElevationSitePlan = ({handleFetchData}) => {
                   />
                 </View>
               </View>
-              {/* Photo Upload */}
               <TouchableOpacity
                 style={styles.imageCon}
                 onPress={() => {
@@ -1128,7 +1116,7 @@ const ElevationSitePlan = ({handleFetchData}) => {
 
                     if (mergedLinearFrontageImages.length === 0) return null;
 
-                    return mergedLinearFrontageImages.map((item, index) => (
+                    return mergedLinearFrontageImages?.map((item, index) => (
                       <TouchableOpacity
                         key={index}
                         onPress={() => {
@@ -1181,7 +1169,6 @@ const ElevationSitePlan = ({handleFetchData}) => {
               </View>
             </View>
 
-            {/* Easement Measurements */}
             <View
               style={[
                 styles.section,
@@ -1319,7 +1306,6 @@ const ElevationSitePlan = ({handleFetchData}) => {
               </View>
             </View>
 
-            {/* Windows Measurements */}
             <View
               style={[
                 styles.section,
@@ -1440,7 +1426,6 @@ const ElevationSitePlan = ({handleFetchData}) => {
               </View>
             </View>
 
-            {/* Other Outdoor Photos */}
             <View
               style={[
                 styles.section,
@@ -1585,7 +1570,6 @@ const ElevationSitePlan = ({handleFetchData}) => {
               </View> */}
             </View>
 
-            {/* Spike Photos */}
             <View
               style={[
                 styles.section,
@@ -1640,7 +1624,7 @@ const ElevationSitePlan = ({handleFetchData}) => {
 
                     if (mergedSpikeImages.length === 0) return null;
 
-                    return mergedSpikeImages.map((item, index) => (
+                    return mergedSpikeImages?.map((item, index) => (
                       <TouchableOpacity
                         key={index}
                         onPress={() => {
@@ -1693,7 +1677,6 @@ const ElevationSitePlan = ({handleFetchData}) => {
               </View>
             </View>
 
-            {/* Video Walkthrough */}
             {/* <View
               style={[
                 styles.section,
@@ -1781,7 +1764,7 @@ const ElevationSitePlan = ({handleFetchData}) => {
 
                     if (mergedStreetImages.length === 0) return null;
 
-                    return mergedStreetImages.map((item, index) => (
+                    return mergedStreetImages?.map((item, index) => (
                       <TouchableOpacity
                         key={index}
                         onPress={() => {
@@ -1952,7 +1935,6 @@ const ElevationSitePlan = ({handleFetchData}) => {
               </Text>
             </View>
 
-            {/* Summary Notes */}
             <View
               style={[
                 styles.section,
@@ -1972,7 +1954,6 @@ const ElevationSitePlan = ({handleFetchData}) => {
               </Text>
             </View>
 
-            {/* Save Button */}
             <TouchableOpacity
               style={[styles.saveButton, loadingImage && {opacity: 0.6}]}
               onPress={handleSave}

@@ -19,7 +19,6 @@ import Collapsible from 'react-native-collapsible';
 import {Image} from 'react-native-animatable';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
-import {handleAddPhoto} from '../Functions/functions';
 import RadioButton from './RadioButton';
 import NetInfo from '@react-native-community/netinfo';
 import {deleteFolders, getBase64Array, getPath} from '../Functions/FSfunctions';

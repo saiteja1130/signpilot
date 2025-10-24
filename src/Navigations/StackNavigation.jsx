@@ -3,7 +3,7 @@ import React, {useEffect, useState} from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Login from '../screens/Login';
 import Home from '../screens/Home';
-import {createUsersTable, dropUsersTable, getUsers} from '../Db/db.js';
+import {createUsersTable, getUsers} from '../Db/db.js';
 import {useDispatch} from 'react-redux';
 import {addLoginData} from '../Redux/Slices/LoginData';
 import Admin from '../screens/Admin.jsx';
@@ -14,9 +14,7 @@ import CustomerProjectScreen from '../screens/CustomerProjectScreen.jsx';
 import ProgressBar from '../Components/Progressbar.jsx';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import TestPage from '../screens/Testpage.tsx';
-import RNFS from 'react-native-fs';
-import {deleteFolders} from '../Functions/FSfunctions.tsx';
-import {syncToOnline} from '../Functions/functions.js';
+import TextInputScreen from '../screens/TextInputScreen.jsx';
 
 const Stack = createNativeStackNavigator();
 
@@ -67,6 +65,8 @@ const StackNavigation = () => {
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Home" component={Home} />
         <Stack.Screen name="TestPage" component={TestPage} />
+        <Stack.Screen name="TextInputScreen" component={TextInputScreen} />
+
 
         <Stack.Screen
           name="Menu"

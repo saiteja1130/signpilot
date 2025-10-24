@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, { useState} from 'react';
 import {styles} from '../Global/Global';
 import Photo from '../../assets/images/photo.svg';
 import Exist from '../../assets/images/4.svg';
@@ -21,7 +21,6 @@ import Down from '../../assets/images/down.svg';
 import Up from '../../assets/images/arrow.svg';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
-import {handleAddPhoto, useNetworkStatus} from '../Functions/functions';
 import NetInfo from '@react-native-community/netinfo';
 import RNFS from 'react-native-fs';
 
@@ -39,7 +38,6 @@ import {
 import {deleteFolders, getBase64Array, getPath} from '../Functions/FSfunctions';
 const OutDoor = ({handleFetchData}) => {
   const projectTitle = useSelector(state => state.projecttitle.value);
-  const status = useNetworkStatus();
   const baseUrl = useSelector(state => state.baseUrl.value);
   const loginData = useSelector(state => state.login.value);
   const signProjectData = useSelector(state => state.signProject.value);
@@ -51,13 +49,7 @@ const OutDoor = ({handleFetchData}) => {
     );
   const [signGeneralAuditSummaryNotes, setSignGeneralAuditSummaryNotes] =
     useState(signProjectData?.sign_general_audit?.signGeneralAuditSummaryNotes);
-  const [
-    signGeneralAuditDocumentAccessibilityIssues,
-    setSignGeneralAuditDocumentAccessibilityIssues,
-  ] = useState(
-    signProjectData?.sign_general_audit
-      ?.signGeneralAuditDocumentAccessibilityIssues,
-  );
+ 
 
   const [inputFields, setInputFields] = useState([
     {

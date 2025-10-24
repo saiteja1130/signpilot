@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useRef, useState} from 'react';
 import Exist from '../../assets/images/1.svg';
 import DropDownIcon from '../../assets/images/downarrow.svg';
 import UpDownIcon from '../../assets/images/arrowup.svg';
@@ -37,7 +37,7 @@ import {
   getPath,
 } from '../Functions/FSfunctions.tsx';
 
-const ExistingAuditProject = ({handleFetchData}) => {
+const ExistingAuditProject = ({handleFetchData, onFocus}) => {
   const projectTitle = useSelector(state => state.projecttitle.value);
   const baseUrl = useSelector(state => state.baseUrl.value);
   const loginData = useSelector(state => state.login.value);
@@ -332,6 +332,10 @@ const ExistingAuditProject = ({handleFetchData}) => {
       }
     }
   };
+  const field1Ref = useRef(null);
+  const field2Ref = useRef(null);
+  const [field1Value, setField1Value] = useState('');
+  const [field2Value, setField2Value] = useState('');
 
   return (
     <View>
@@ -647,6 +651,30 @@ const ExistingAuditProject = ({handleFetchData}) => {
                 </Text>
               </View>
             </View>
+
+            <TextInput
+              ref={field1Ref}
+              placeholder="Enter Option 1"
+              value={field1Value}
+              onChangeText={setField1Value}
+              editable={true}
+              multiline={true}
+              showSoftInputOnFocus={false}
+              onFocus={() => onFocus(field1Ref)}
+              style={styles.textInput}
+            />
+
+            <TextInput
+              ref={field2Ref}
+              placeholder="Enter Option 2"
+              value={field2Value}
+              editable={true}
+              showSoftInputOnFocus={false}
+              multiline={true}
+              onChangeText={setField2Value}
+              onFocus={() => onFocus(field2Ref)}
+              style={styles.textInput}
+            />
             <TouchableOpacity
               style={[styles.saveButton, loadingImage && {opacity: 0.6}]}
               onPress={handleSave}

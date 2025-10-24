@@ -1,9 +1,13 @@
 import {
+  Dimensions,
+  findNodeHandle,
   FlatList,
   ImageBackground,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
+  UIManager,
   View,
 } from 'react-native';
 import React, {useEffect, useRef, useState} from 'react';
@@ -71,7 +75,6 @@ const Home = () => {
   const [isActive, setIsActive] = useState(true);
   const [loading, setLoading] = useState(false);
   const [signConfirmed, setSignConfirmed] = useState(false);
-  const flatListRef = useRef(null);
   const prevConnection = useRef(null);
   const [allData, setAlldata] = useState([]);
   const [projectTitles, SetProjectTitles] = useState([]);
@@ -353,6 +356,37 @@ const Home = () => {
     setRefreshing(false);
   };
 
+  const flatListRef = useRef(null);
+  const screenHeight = Dimensions.get('window').height;
+
+  const handleFocus = fieldRef => {
+    // if (Platform.OS !== 'ios') return;
+    const flatListHandle = findNodeHandle(flatListRef.current);
+    const fieldHandle = findNodeHandle(fieldRef.current);
+
+    if (fieldHandle && flatListHandle) {
+      UIManager.measureInWindow(fieldHandle, (x, y, width, height) => {
+        const bottomPositionOfField = y + height;
+        const screenThreshold = screenHeight * 0.55;
+
+        if (bottomPositionOfField > screenThreshold) {
+          UIManager.measureLayout(
+            fieldHandle,
+            flatListHandle,
+            () => {},
+            (fx, fy, fWidth, fHeight) => {
+              const scrollPosition = fy - screenThreshold + fHeight;
+              flatListRef.current?.scrollToOffset({
+                offset: scrollPosition,
+                animated: true,
+              });
+            },
+          );
+        }
+      });
+    }
+  };
+
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -483,7 +517,6 @@ const Home = () => {
       flex: 1,
     },
   });
-
 
   if (loading) {
     return (
@@ -682,7 +715,10 @@ const Home = () => {
               )}
               {signConfirmed && (
                 <>
-                  <ExistingAuditProject handleFetchData={fetchData} />
+                  <ExistingAuditProject
+                    handleFetchData={fetchData}
+                    onFocus={handleFocus}
+                  />
                   <ElectricalAssessment handleFetchData={fetchData} />
                   <PermittingAssenment handleFetchData={fetchData} />
                   <Outdoor handleFetchData={fetchData} />
