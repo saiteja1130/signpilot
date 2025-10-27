@@ -351,9 +351,13 @@ const Home = () => {
       fetchData(null, signProjectData);
       setTimeout(resolve, 1000);
     });
-    dispatch(clearActiveStates([]))
+    dispatch(clearActiveStates([]));
     setRefreshing(false);
   };
+
+  useEffect(() => {
+    dispatch(clearActiveStates([]));
+  }, []);
 
   const styles = StyleSheet.create({
     container: {
@@ -616,7 +620,7 @@ const Home = () => {
                           dispatch(addSignProject(selectedSign));
                           setSignSelected(selectedSign);
                           setSignConfirmed(true);
-                          dispatch(clearActiveStates([]))
+                          dispatch(clearActiveStates([]));
                         }
                       }}>
                       <Picker.Item label="Select Sign" value={null} />
