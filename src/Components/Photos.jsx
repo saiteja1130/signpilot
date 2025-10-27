@@ -50,6 +50,8 @@ const Photos = ({handleFetchData}) => {
   const [measureGround, setMeasureGround] = useState(false);
   const [otherPhotos, setOtherPhotos] = useState(false);
   const [pansState, setPanstate] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const [retainer, setRetainer] = useState(false);
 
   useEffect(() => {
     setSignDimensionsState(false);
@@ -302,8 +304,6 @@ const Photos = ({handleFetchData}) => {
       signProjectData?.photos_and_measurements?.visibleOpeningsLengthIN || '',
     measureChannelLettersPhotos:
       signProjectData?.photos_and_measurements?.measureChannelLettersPhotos,
-    measureChannelLettersPhoto:
-      signProjectData?.photos_and_measurements?.measureChannelLettersPhoto,
 
     signDimensionsPhoto:
       signProjectData?.photos_and_measurements?.signDimensionsPhoto || [],
@@ -377,6 +377,8 @@ const Photos = ({handleFetchData}) => {
     ifPanMeasurePanDimensionPhotos:
       signProjectData?.photos_and_measurements
         ?.ifPanMeasurePanDimensionPhotos || [],
+    measureRetainerSizePhoto:
+      signProjectData?.photos_and_measurements?.measureRetainerSizePhoto,
     measureRetainerSizePhotos:
       signProjectData?.photos_and_measurements?.measureRetainerSizePhotos,
     photoCloseUpOfSigns:
@@ -474,6 +476,10 @@ const Photos = ({handleFetchData}) => {
     let base64photoFullFrontalOfWholeSignStructurePhoto = [];
     let base64photoCloseUpOfSign = [];
     let base64otherPhotosMeasurementsMarkupsPhoto = [];
+    let base64measureRetainerSizePhoto = [];
+    let base64visibleOpeningsPhoto = [];
+    let base64measureChannelLettersPhoto = [];
+    let base64ifPanMeasurePanDimensionPhoto = [];
     if (isConnected) {
       base64signDimensionsPhoto = await getBase64Array(
         selectedOptions?.signDimensionsPhoto || [],
@@ -490,6 +496,18 @@ const Photos = ({handleFetchData}) => {
       base64otherPhotosMeasurementsMarkupsPhoto = await getBase64Array(
         selectedOptions?.otherPhotosMeasurementsMarkupsPhoto || [],
       );
+      base64measureRetainerSizePhoto = await getBase64Array(
+        selectedOptions?.measureRetainerSizePhoto || [],
+      );
+      base64visibleOpeningsPhoto = await getBase64Array(
+        selectedOptions?.visibleOpeningsPhoto || [],
+      );
+      base64measureChannelLettersPhoto = await getBase64Array(
+        selectedOptions?.measureChannelLettersPhoto || [],
+      );
+      base64ifPanMeasurePanDimensionPhoto = await getBase64Array(
+        selectedOptions?.ifPanMeasurePanDimensionPhoto || [],
+      );
     } else {
       base64signDimensionsPhoto = selectedOptions?.signDimensionsPhoto || [];
       base64squareFootageSpikePhoto =
@@ -499,6 +517,13 @@ const Photos = ({handleFetchData}) => {
       base64photoCloseUpOfSign = selectedOptions?.photoCloseUpOfSign || [];
       base64otherPhotosMeasurementsMarkupsPhoto =
         selectedOptions?.otherPhotosMeasurementsMarkupsPhoto || [];
+      base64measureRetainerSizePhoto =
+        selectedOptions?.measureRetainerSizePhoto || [];
+      base64visibleOpeningsPhoto = selectedOptions?.visibleOpeningsPhoto || [];
+      base64measureChannelLettersPhoto =
+        selectedOptions?.measureChannelLettersPhoto || [];
+      base64ifPanMeasurePanDimensionPhoto =
+        selectedOptions?.ifPanMeasurePanDimensionPhoto || [];
     }
     const DoorData = {
       // ...indoorPayload,
@@ -517,6 +542,10 @@ const Photos = ({handleFetchData}) => {
           ? 'outdoor_photos_and_measurements'
           : 'indoor_photos_and_measurements',
       squareFootageFeet: '',
+      measureRetainerSizePhoto: base64measureRetainerSizePhoto,
+      visibleOpeningsPhoto: base64visibleOpeningsPhoto,
+      measureChannelLettersPhoto: base64measureChannelLettersPhoto,
+      ifPanMeasurePanDimensionPhoto: base64ifPanMeasurePanDimensionPhoto,
     };
     console.log('DATAAA', DoorData);
     // return;
@@ -541,6 +570,10 @@ const Photos = ({handleFetchData}) => {
               []),
             ...(selectedOptions?.photoCloseUpOfSign || []),
             ...(selectedOptions?.otherPhotosMeasurementsMarkupsPhoto || []),
+            ...(selectedOptions?.measureRetainerSizePhoto || []),
+            ...(selectedOptions?.visibleOpeningsPhoto || []),
+            ...(selectedOptions?.measureChannelLettersPhoto || []),
+            ...(selectedOptions?.ifPanMeasurePanDimensionPhoto || []),
           ];
           for (const file of imagesCache) {
             try {
@@ -1051,195 +1084,322 @@ const Photos = ({handleFetchData}) => {
                 </Collapsible>
               </View>
             </View>
-            <View>
-              <TouchableOpacity
-                style={[styles.containerDrop]}
-                onPress={() => setMeasureChannel(prev => !prev)}>
-                <Text style={styles.label}>Measure Channel Letters</Text>
-                <View style={styles.iconButton}>
-                  {measureChannel ? (
-                    <Down width={18} height={18} />
-                  ) : (
-                    <Up width={18} height={18} />
-                  )}
-                </View>
-              </TouchableOpacity>
-              <View style={{marginBottom: !measureChannel ? 16 : 0}}>
-                <Collapsible
-                  duration={300}
-                  easing="easeInOutQuad"
-                  collapsed={!measureChannel}>
-                  <View style={styles.sectionContainer}>
-                    <View style={styles.row}>
-                      <View style={{flex: 1}}>
-                        <Text
-                          style={{
-                            marginBottom: 4,
-                            opacity:
-                              selectedOptions?.measureChannelLettersHeightIN?.trim() !==
-                              ''
-                                ? 1
-                                : 0,
-                          }}>
-                          Height (in)
-                        </Text>
-                        <TextInput
-                          style={[styles.input]}
-                          placeholder="Height (in)"
-                          keyboardType="number-pad"
-                          value={selectedOptions?.measureChannelLettersHeightIN}
-                          onChangeText={text =>
-                            setSelectedOptions(prev => ({
-                              ...prev,
-                              measureChannelLettersHeightIN: text,
-                            }))
-                          }
-                        />
-                      </View>
-                      <View style={{flex: 1}}>
-                        <Text
-                          style={{
-                            marginBottom: 4,
-                            opacity:
-                              selectedOptions?.measureChannelLettersHeightFT?.trim() !==
-                              ''
-                                ? 1
-                                : 0,
-                          }}>
-                          Height (ft)
-                        </Text>
-                        <TextInput
-                          style={[styles.input]}
-                          placeholder="Height (ft)"
-                          keyboardType="number-pad"
-                          value={selectedOptions?.measureChannelLettersHeightFT}
-                          onChangeText={text =>
-                            setSelectedOptions(prev => ({
-                              ...prev,
-                              measureChannelLettersHeightFT: text,
-                            }))
-                          }
-                        />
-                      </View>
-                    </View>
-
-                    <View style={styles.row}>
-                      <View style={{flex: 1}}>
-                        <Text
-                          style={{
-                            marginBottom: 4,
-                            opacity:
-                              selectedOptions?.measureChannelLettersWidthIN?.trim() !==
-                              ''
-                                ? 1
-                                : 0,
-                          }}>
-                          Width (in)
-                        </Text>
-                        <TextInput
-                          style={[styles.input]}
-                          placeholder="Width (in)"
-                          keyboardType="number-pad"
-                          value={selectedOptions?.measureChannelLettersWidthIN}
-                          onChangeText={text =>
-                            setSelectedOptions(prev => ({
-                              ...prev,
-                              measureChannelLettersWidthIN: text,
-                            }))
-                          }
-                        />
-                      </View>
-                      <View style={{flex: 1}}>
-                        <Text
-                          style={{
-                            marginBottom: 4,
-                            opacity:
-                              selectedOptions?.measureChannelLettersWidthFT?.trim() !==
-                              ''
-                                ? 1
-                                : 0,
-                          }}>
-                          Width (ft)
-                        </Text>
-                        <TextInput
-                          style={[styles.input]}
-                          placeholder="Width (ft)"
-                          keyboardType="number-pad"
-                          value={selectedOptions?.measureChannelLettersWidthFT}
-                          onChangeText={text =>
-                            setSelectedOptions(prev => ({
-                              ...prev,
-                              measureChannelLettersWidthFT: text,
-                            }))
-                          }
-                        />
-                      </View>
-                    </View>
-
-                    <View style={styles.row}>
-                      <View style={{flex: 1}}>
-                        <Text
-                          style={{
-                            marginBottom: 4,
-                            opacity:
-                              selectedOptions?.measureChannelLettersDepthIN?.trim() !==
-                              ''
-                                ? 1
-                                : 0,
-                          }}>
-                          Depth (in)
-                        </Text>
-                        <TextInput
-                          style={[styles.input]}
-                          placeholder="Depth (in)"
-                          keyboardType="number-pad"
-                          value={selectedOptions?.measureChannelLettersDepthIN}
-                          onChangeText={text =>
-                            setSelectedOptions(prev => ({
-                              ...prev,
-                              measureChannelLettersDepthIN: text,
-                            }))
-                          }
-                        />
-                      </View>
-                      <View style={{flex: 1}}>
-                        <Text
-                          style={{
-                            marginBottom: 4,
-                            opacity:
-                              selectedOptions?.measureChannelLettersDepthFT?.trim() !==
-                              ''
-                                ? 1
-                                : 0,
-                          }}>
-                          Depth (ft)
-                        </Text>
-                        <TextInput
-                          style={[styles.input]}
-                          placeholder="Depth (ft)"
-                          keyboardType="number-pad"
-                          value={selectedOptions?.measureChannelLettersDepthFT}
-                          onChangeText={text =>
-                            setSelectedOptions(prev => ({
-                              ...prev,
-                              measureChannelLettersDepthFT: text,
-                            }))
-                          }
-                        />
-                      </View>
-                    </View>
-                    <TouchableOpacity
-                      onPress={() => setMeasureChannel(prev => !prev)}
-                      style={[
-                        styles.iconButton,
-                        {alignSelf: 'flex-end', marginVertical: 15},
-                      ]}>
+            {signProjectData?.signId === '2' && (
+              <View>
+                <TouchableOpacity
+                  style={[styles.containerDrop]}
+                  onPress={() => setMeasureChannel(prev => !prev)}>
+                  <Text style={styles.label}>Measure Channel Letters</Text>
+                  <View style={styles.iconButton}>
+                    {measureChannel ? (
                       <Down width={18} height={18} />
-                    </TouchableOpacity>
+                    ) : (
+                      <Up width={18} height={18} />
+                    )}
                   </View>
-                </Collapsible>
+                </TouchableOpacity>
+                <View style={{marginBottom: !measureChannel ? 16 : 0}}>
+                  <Collapsible
+                    duration={300}
+                    easing="easeInOutQuad"
+                    collapsed={!measureChannel}>
+                    <View style={styles.sectionContainer}>
+                      <View style={styles.row}>
+                        <View style={{flex: 1}}>
+                          <Text
+                            style={{
+                              marginBottom: 4,
+                              opacity:
+                                selectedOptions?.measureChannelLettersHeightIN?.trim() !==
+                                ''
+                                  ? 1
+                                  : 0,
+                            }}>
+                            Height (in)
+                          </Text>
+                          <TextInput
+                            style={[styles.input]}
+                            placeholder="Height (in)"
+                            keyboardType="number-pad"
+                            value={
+                              selectedOptions?.measureChannelLettersHeightIN
+                            }
+                            onChangeText={text =>
+                              setSelectedOptions(prev => ({
+                                ...prev,
+                                measureChannelLettersHeightIN: text,
+                              }))
+                            }
+                          />
+                        </View>
+                        <View style={{flex: 1}}>
+                          <Text
+                            style={{
+                              marginBottom: 4,
+                              opacity:
+                                selectedOptions?.measureChannelLettersHeightFT?.trim() !==
+                                ''
+                                  ? 1
+                                  : 0,
+                            }}>
+                            Height (ft)
+                          </Text>
+                          <TextInput
+                            style={[styles.input]}
+                            placeholder="Height (ft)"
+                            keyboardType="number-pad"
+                            value={
+                              selectedOptions?.measureChannelLettersHeightFT
+                            }
+                            onChangeText={text =>
+                              setSelectedOptions(prev => ({
+                                ...prev,
+                                measureChannelLettersHeightFT: text,
+                              }))
+                            }
+                          />
+                        </View>
+                      </View>
+
+                      <View style={styles.row}>
+                        <View style={{flex: 1}}>
+                          <Text
+                            style={{
+                              marginBottom: 4,
+                              opacity:
+                                selectedOptions?.measureChannelLettersWidthIN?.trim() !==
+                                ''
+                                  ? 1
+                                  : 0,
+                            }}>
+                            Width (in)
+                          </Text>
+                          <TextInput
+                            style={[styles.input]}
+                            placeholder="Width (in)"
+                            keyboardType="number-pad"
+                            value={
+                              selectedOptions?.measureChannelLettersWidthIN
+                            }
+                            onChangeText={text =>
+                              setSelectedOptions(prev => ({
+                                ...prev,
+                                measureChannelLettersWidthIN: text,
+                              }))
+                            }
+                          />
+                        </View>
+                        <View style={{flex: 1}}>
+                          <Text
+                            style={{
+                              marginBottom: 4,
+                              opacity:
+                                selectedOptions?.measureChannelLettersWidthFT?.trim() !==
+                                ''
+                                  ? 1
+                                  : 0,
+                            }}>
+                            Width (ft)
+                          </Text>
+                          <TextInput
+                            style={[styles.input]}
+                            placeholder="Width (ft)"
+                            keyboardType="number-pad"
+                            value={
+                              selectedOptions?.measureChannelLettersWidthFT
+                            }
+                            onChangeText={text =>
+                              setSelectedOptions(prev => ({
+                                ...prev,
+                                measureChannelLettersWidthFT: text,
+                              }))
+                            }
+                          />
+                        </View>
+                      </View>
+
+                      <View style={styles.row}>
+                        <View style={{flex: 1}}>
+                          <Text
+                            style={{
+                              marginBottom: 4,
+                              opacity:
+                                selectedOptions?.measureChannelLettersDepthIN?.trim() !==
+                                ''
+                                  ? 1
+                                  : 0,
+                            }}>
+                            Depth (in)
+                          </Text>
+                          <TextInput
+                            style={[styles.input]}
+                            placeholder="Depth (in)"
+                            keyboardType="number-pad"
+                            value={
+                              selectedOptions?.measureChannelLettersDepthIN
+                            }
+                            onChangeText={text =>
+                              setSelectedOptions(prev => ({
+                                ...prev,
+                                measureChannelLettersDepthIN: text,
+                              }))
+                            }
+                          />
+                        </View>
+                        <View style={{flex: 1}}>
+                          <Text
+                            style={{
+                              marginBottom: 4,
+                              opacity:
+                                selectedOptions?.measureChannelLettersDepthFT?.trim() !==
+                                ''
+                                  ? 1
+                                  : 0,
+                            }}>
+                            Depth (ft)
+                          </Text>
+                          <TextInput
+                            style={[styles.input]}
+                            placeholder="Depth (ft)"
+                            keyboardType="number-pad"
+                            value={
+                              selectedOptions?.measureChannelLettersDepthFT
+                            }
+                            onChangeText={text =>
+                              setSelectedOptions(prev => ({
+                                ...prev,
+                                measureChannelLettersDepthFT: text,
+                              }))
+                            }
+                          />
+                        </View>
+                      </View>
+                      <TouchableOpacity
+                        onPress={() =>
+                          showPhotoOptions(
+                            setSelectedOptions,
+                            'measureChannelLettersPhoto',
+                            'PhotosAndMesurements',
+                            false,
+                          )
+                        }
+                        style={styles.imageCon}>
+                        <View style={styles.photoButton}>
+                          <Text style={styles.photoText}>add photo</Text>
+                          <Photo />
+                        </View>
+                        <View style={styles.fileNameContainer}>
+                          <Text style={styles.fileNameText}>
+                            {selectedOptions?.measureChannelLettersPhoto
+                              ?.length > 0
+                              ? `${selectedOptions?.measureChannelLettersPhoto?.length} files Choosen`
+                              : 'No file Choosen'}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          marginVertical: 15,
+                          gap: 15,
+                          flexWrap: 'wrap',
+                        }}>
+                        {loadingImage ? (
+                          <ActivityIndicator size="small" color="#FF9239" />
+                        ) : (
+                          (() => {
+                            const mergedDimensionsImages = [
+                              ...(selectedOptions?.measureChannelLettersPhoto?.map(
+                                item => ({
+                                  ...item,
+                                  isLocal: true,
+                                }),
+                              ) || []),
+                              ...(selectedOptions?.measureChannelLettersPhotos?.map(
+                                item => ({
+                                  ...item,
+                                  isLocal: false,
+                                }),
+                              ) || []),
+                            ];
+
+                            if (mergedDimensionsImages.length === 0)
+                              return null;
+
+                            return mergedDimensionsImages.map((item, index) => (
+                              <TouchableOpacity
+                                key={index}
+                                onPress={() => {
+                                  openEditorforUpdate(
+                                    item.path || item.url,
+                                    setSelectedOptions,
+                                    item.isLocal
+                                      ? 'measureChannelLettersPhoto'
+                                      : 'measureChannelLettersPhotos',
+                                    'measureChannelLetters',
+                                    true,
+                                    item.isLocal ? item.ImageId : item.imageId,
+                                    baseUrl,
+                                    loginData?.tokenNumber,
+                                    true,
+                                    signProjectData?.photos_and_measurements
+                                      ?.id ||
+                                      signProjectData?.photos_and_measurements
+                                        ?.Id,
+                                    signName == 'Outdoor'
+                                      ? 'outdoor_photos_and_measurements'
+                                      : 'indoor_photos_and_measurements',
+                                    item.isLocal,
+                                    selectedOptions,
+                                  );
+                                }}>
+                                <View style={styles.imageContainer}>
+                                  <Image
+                                    source={{
+                                      uri: item?.path?.startsWith('file://')
+                                        ? item?.path
+                                        : `file://${item?.path}`,
+                                    }}
+                                    style={styles.image}
+                                  />
+                                  <TouchableOpacity
+                                    onPress={() =>
+                                      handleRemoveImage(
+                                        item.isLocal
+                                          ? item.ImageId
+                                          : item.imageId,
+                                        'measureChannelLettersPhoto',
+                                        'measureChannelLettersPhotos',
+                                        item.path,
+                                        item.isLocal,
+                                      )
+                                    }
+                                    style={styles.removeButton}>
+                                    <Text style={styles.removeButtonText}>
+                                      ×
+                                    </Text>
+                                  </TouchableOpacity>
+                                </View>
+                              </TouchableOpacity>
+                            ));
+                          })()
+                        )}
+                      </View>
+                      <TouchableOpacity
+                        onPress={() => setMeasureChannel(prev => !prev)}
+                        style={[
+                          styles.iconButton,
+                          {alignSelf: 'flex-end', marginVertical: 15},
+                        ]}>
+                        <Down width={18} height={18} />
+                      </TouchableOpacity>
+                    </View>
+                  </Collapsible>
+                </View>
               </View>
-            </View>
+            )}
+
             <View>
               <TouchableOpacity
                 style={[styles.containerDrop]}
@@ -1345,7 +1505,7 @@ const Photos = ({handleFetchData}) => {
                           </View>
                         </View>
 
-                        <View style={[styles.row, {marginBottom: 15}]}>
+                        {/* <View style={[styles.row, {marginBottom: 15}]}>
                           <View style={{flex: 1}}>
                             <Text
                               style={{
@@ -1373,7 +1533,7 @@ const Photos = ({handleFetchData}) => {
                               }}
                             />
                           </View>
-                        </View>
+                        </View> */}
                         <View style={[styles.row, {marginBottom: 15}]}>
                           <View style={{flex: 1}}>
                             <Text
@@ -1562,90 +1722,93 @@ const Photos = ({handleFetchData}) => {
                 </Collapsible>
               </View>
             </View>
-            <View>
-              <TouchableOpacity
-                style={[styles.containerDrop]}
-                onPress={() => setMeasureGround(prev => !prev)}>
-                <Text style={styles.label}>Measure ground to sign</Text>
-                <View style={styles.iconButton}>
-                  {measureGround ? (
-                    <Down width={18} height={18} />
-                  ) : (
-                    <Up width={18} height={18} />
-                  )}
-                </View>
-              </TouchableOpacity>
-              <View style={{marginBottom: !measureGround ? 16 : 0}}>
-                <Collapsible
-                  duration={300}
-                  easing="easeInOutQuad"
-                  collapsed={!measureGround}>
-                  <View style={styles.sectionContainer}>
-                    <View style={styles.row}>
-                      <View style={{flex: 1}}>
-                        <Text
-                          style={{
-                            marginBottom: 4,
-                            opacity:
-                              selectedOptions?.measureGroundToSignHeightIN?.trim() !==
-                              ''
-                                ? 1
-                                : 0,
-                          }}>
-                          Height (in)
-                        </Text>
-                        <TextInput
-                          style={[styles.input]}
-                          placeholder="Height (in)"
-                          keyboardType="number-pad"
-                          value={selectedOptions?.measureGroundToSignHeightIN}
-                          onChangeText={text =>
-                            setSelectedOptions(prev => ({
-                              ...prev,
-                              measureGroundToSignHeightIN: text,
-                            }))
-                          }
-                        />
-                      </View>
-                      <View style={{flex: 1}}>
-                        <Text
-                          style={{
-                            marginBottom: 4,
-                            opacity:
-                              selectedOptions?.measureGroundToSignHeightFT?.trim() !==
-                              ''
-                                ? 1
-                                : 0,
-                          }}>
-                          Height (ft)
-                        </Text>
-                        <TextInput
-                          style={[styles.input]}
-                          placeholder="Height (ft)"
-                          keyboardType="number-pad"
-                          value={selectedOptions?.measureGroundToSignHeightFT}
-                          onChangeText={text =>
-                            setSelectedOptions(prev => ({
-                              ...prev,
-                              measureGroundToSignHeightFT: text,
-                            }))
-                          }
-                        />
-                      </View>
-                    </View>
-
-                    <TouchableOpacity
-                      onPress={() => setMeasureGround(prev => !prev)}
-                      style={[
-                        styles.iconButton,
-                        {alignSelf: 'flex-end', marginVertical: 15},
-                      ]}>
+            {signProjectData?.signId === '2' && (
+              <View>
+                <TouchableOpacity
+                  style={[styles.containerDrop]}
+                  onPress={() => setMeasureGround(prev => !prev)}>
+                  <Text style={styles.label}>Measure ground to sign</Text>
+                  <View style={styles.iconButton}>
+                    {measureGround ? (
                       <Down width={18} height={18} />
-                    </TouchableOpacity>
+                    ) : (
+                      <Up width={18} height={18} />
+                    )}
                   </View>
-                </Collapsible>
+                </TouchableOpacity>
+                <View style={{marginBottom: !measureGround ? 16 : 0}}>
+                  <Collapsible
+                    duration={300}
+                    easing="easeInOutQuad"
+                    collapsed={!measureGround}>
+                    <View style={styles.sectionContainer}>
+                      <View style={styles.row}>
+                        <View style={{flex: 1}}>
+                          <Text
+                            style={{
+                              marginBottom: 4,
+                              opacity:
+                                selectedOptions?.measureGroundToSignHeightIN?.trim() !==
+                                ''
+                                  ? 1
+                                  : 0,
+                            }}>
+                            Height (in)
+                          </Text>
+                          <TextInput
+                            style={[styles.input]}
+                            placeholder="Height (in)"
+                            keyboardType="number-pad"
+                            value={selectedOptions?.measureGroundToSignHeightIN}
+                            onChangeText={text =>
+                              setSelectedOptions(prev => ({
+                                ...prev,
+                                measureGroundToSignHeightIN: text,
+                              }))
+                            }
+                          />
+                        </View>
+                        <View style={{flex: 1}}>
+                          <Text
+                            style={{
+                              marginBottom: 4,
+                              opacity:
+                                selectedOptions?.measureGroundToSignHeightFT?.trim() !==
+                                ''
+                                  ? 1
+                                  : 0,
+                            }}>
+                            Height (ft)
+                          </Text>
+                          <TextInput
+                            style={[styles.input]}
+                            placeholder="Height (ft)"
+                            keyboardType="number-pad"
+                            value={selectedOptions?.measureGroundToSignHeightFT}
+                            onChangeText={text =>
+                              setSelectedOptions(prev => ({
+                                ...prev,
+                                measureGroundToSignHeightFT: text,
+                              }))
+                            }
+                          />
+                        </View>
+                      </View>
+
+                      <TouchableOpacity
+                        onPress={() => setMeasureGround(prev => !prev)}
+                        style={[
+                          styles.iconButton,
+                          {alignSelf: 'flex-end', marginVertical: 15},
+                        ]}>
+                        <Down width={18} height={18} />
+                      </TouchableOpacity>
+                    </View>
+                  </Collapsible>
+                </View>
               </View>
-            </View>
+            )}
+
             <View style={{marginVertical: 13}}>
               <View style={styles.section}>
                 <Text style={styles.label}>
@@ -1863,24 +2026,24 @@ const Photos = ({handleFetchData}) => {
                 )}
               </View>
             </View>
-            {/* <View>
+            <View>
               <TouchableOpacity
                 style={[styles.containerDrop]}
-                onPress={() => handleState('visible')}>
+                onPress={() => setVisible(prev => !prev)}>
                 <Text style={styles.label}>Measure visible opening</Text>
                 <View style={styles.iconButton}>
-                  {state === 'visible' ? (
+                  {visible ? (
                     <Down width={18} height={18} />
                   ) : (
                     <Up width={18} height={18} />
                   )}
                 </View>
               </TouchableOpacity>
-              <View style={{marginBottom: state !== 'visible' ? 16 : 0}}>
+              <View style={{marginBottom: !visible ? 16 : 0}}>
                 <Collapsible
                   duration={300}
                   easing="easeInOutQuad"
-                  collapsed={state !== 'visible'}>
+                  collapsed={!visible}>
                   <View style={styles.sectionContainer}>
                     <View style={styles.row}>
                       <TextInput
@@ -1936,36 +2099,14 @@ const Photos = ({handleFetchData}) => {
                       />
                     </View>
 
-                    <View style={styles.row}>
-                      <TextInput
-                        style={[styles.input, {flex: 1}]}
-                        placeholder="Depth(in)"
-                        keyboardType="number-pad"
-                        // onChangeText={text =>
-                        //   setSelectedOptions(prev => ({
-                        //     ...prev,
-                        //     measureGroundToSignDeFT: text,
-                        //   }))
-                        // }
-                      />
-                      <TextInput
-                        style={[styles.input, {flex: 1}]}
-                        placeholder="Depth(ft)"
-                        keyboardType="number-pad"
-                        // onChangeText={text =>
-                        //   setSelectedOptions(prev => ({
-                        //     ...prev,
-                        //     measureGroundToSignHeightFT: text,
-                        //   }))
-                        // }
-                      />
-                    </View>
                     <TouchableOpacity
                       style={styles.imageCon}
                       onPress={() =>
-                        handleAddPhoto(
+                        showPhotoOptions(
                           setSelectedOptions,
                           'visibleOpeningsPhoto',
+                          'PhotosAndMesurements',
+                          false,
                         )
                       }>
                       <View
@@ -1977,7 +2118,11 @@ const Photos = ({handleFetchData}) => {
                       </View>
 
                       <View style={styles.fileNameContainer}>
-                        <Text style={styles.fileNameText}>{''}</Text>
+                        <Text style={styles.fileNameText}>
+                          {selectedOptions?.visibleOpeningsPhoto?.length > 0
+                            ? `${selectedOptions?.visibleOpeningsPhoto?.length} files Choosen`
+                            : 'No file Choosen'}
+                        </Text>
                       </View>
                     </TouchableOpacity>
                     <View
@@ -1990,34 +2135,89 @@ const Photos = ({handleFetchData}) => {
                       {loadingImage ? (
                         <ActivityIndicator size="small" color="#FF9239" />
                       ) : (
-                        selectedOptions?.visibleOpeningsPhotos?.length > 0 &&
-                        selectedOptions?.visibleOpeningsPhotos?.map(
-                          (data, index) => {
-                            return (
-                              <View key={index} style={styles.imageContainer}>
-                                <Image
-                                  source={{uri: data.url}}
-                                  style={styles.image}
-                                />
-                                <TouchableOpacity
-                                  onPress={() =>
-                                    handleRemoveImage(
-                                      data.imageId,
-                                      'visibleOpeningsPhoto',
-                                      'visibleOpeningsPhotos',
-                                    )
-                                  }
-                                  style={styles.removeButton}>
-                                  <Text style={styles.removeButtonText}>×</Text>
-                                </TouchableOpacity>
-                              </View>
-                            );
-                          },
-                        )
+                        (() => {
+                          const mergedVisibleOpeningsImages = [
+                            ...(selectedOptions?.visibleOpeningsPhoto?.map(
+                              item => ({
+                                ...item,
+                                isLocal: true,
+                              }),
+                            ) || []),
+                            ...(selectedOptions?.visibleOpeningsPhotos?.map(
+                              item => ({
+                                ...item,
+                                isLocal: false,
+                              }),
+                            ) || []),
+                          ];
+
+                          if (mergedVisibleOpeningsImages.length === 0)
+                            return null;
+
+                          return mergedVisibleOpeningsImages.map(
+                            (item, index) => (
+                              <TouchableOpacity
+                                key={index}
+                                onPress={() => {
+                                  openEditorforUpdate(
+                                    item.path || item.url,
+                                    setSelectedOptions,
+                                    item.isLocal
+                                      ? 'visibleOpeningsPhoto'
+                                      : 'visibleOpeningsPhotos',
+                                    'VisibleOpenings',
+                                    true,
+                                    item.isLocal ? item.ImageId : item.imageId,
+                                    baseUrl,
+                                    loginData?.tokenNumber,
+                                    true,
+                                    signProjectData?.photos_and_measurements
+                                      ?.id ||
+                                      signProjectData?.photos_and_measurements
+                                        ?.Id,
+                                    signName === 'Outdoor'
+                                      ? 'outdoor_photos_and_measurements'
+                                      : 'indoor_photos_and_measurements',
+                                    item.isLocal,
+                                    selectedOptions,
+                                  );
+                                }}>
+                                <View style={styles.imageContainer}>
+                                  <Image
+                                    source={{
+                                      uri: item?.path?.startsWith('file://')
+                                        ? item.path
+                                        : `file://${item.path || item.url}`,
+                                    }}
+                                    style={styles.image}
+                                  />
+                                  <TouchableOpacity
+                                    onPress={() =>
+                                      handleRemoveImage(
+                                        item.isLocal
+                                          ? item.ImageId
+                                          : item.imageId,
+                                        'visibleOpeningsPhoto',
+                                        'visibleOpeningsPhotos',
+                                        item.path,
+                                        item.isLocal,
+                                      )
+                                    }
+                                    style={styles.removeButton}>
+                                    <Text style={styles.removeButtonText}>
+                                      ×
+                                    </Text>
+                                  </TouchableOpacity>
+                                </View>
+                              </TouchableOpacity>
+                            ),
+                          );
+                        })()
                       )}
                     </View>
+
                     <TouchableOpacity
-                      onPress={() => handleState('visible')}
+                      onPress={() => setVisible(prev => !prev)}
                       style={[
                         styles.iconButton,
                         {alignSelf: 'flex-end', marginVertical: 15},
@@ -2027,186 +2227,252 @@ const Photos = ({handleFetchData}) => {
                   </View>
                 </Collapsible>
               </View>
-            </View> */}
-            {/* <View>
-              <TouchableOpacity
-                style={[styles.containerDrop]}
-                onPress={() => handleState('retainer')}>
-                <Text style={styles.label}>Measure retainer size</Text>
-                <View style={styles.iconButton}>
-                  {state === 'retainer' ? (
-                    <Down width={18} height={18} />
-                  ) : (
-                    <Up width={18} height={18} />
-                  )}
-                </View>
-              </TouchableOpacity>
-              <View style={{marginBottom: state !== 'retainer' ? 16 : 0}}>
-                <Collapsible
-                  duration={300}
-                  easing="easeInOutQuad"
-                  collapsed={state !== 'retainer'}>
-                  <View style={styles.sectionContainer}>
-                    <View style={styles.row}>
-                      <TextInput
-                        style={[styles.input, {flex: 1}]}
-                        placeholder="Height(in)"
-                        keyboardType="number-pad"
-                        value={selectedOptions?.measureRetainerSizeWidthIN}
-                        onChangeText={text => {
-                          setSelectedOptions(prev => {
-                            return {
-                              ...prev,
-                              measureRetainerSizeWidthIN: text,
-                            };
-                          });
-                        }}
-                      />
-                      <TextInput
-                        style={[styles.input, {flex: 1}]}
-                        placeholder="Height(ft)"
-                        keyboardType="number-pad"
-                        value={selectedOptions?.measureRetainerSizeHeightFT}
-                        onChangeText={text => {
-                          setSelectedOptions(prev => {
-                            return {
-                              ...prev,
-                              measureRetainerSizeHeightFT: text,
-                            };
-                          });
-                        }}
-                      />
-                    </View>
-                    <View style={styles.row}>
-                      <TextInput
-                        style={[styles.input, {flex: 1}]}
-                        placeholder="Width(in)"
-                        keyboardType="number-pad"
-                        value={selectedOptions?.measureRetainerSizeWidthIN}
-                        onChangeText={text => {
-                          setSelectedOptions(prev => {
-                            return {
-                              ...prev,
-                              measureRetainerSizeWidthIN: text,
-                            };
-                          });
-                        }}
-                      />
-                      <TextInput
-                        style={[styles.input, {flex: 1}]}
-                        placeholder="Width(ft)"
-                        keyboardType="number-pad"
-                        value={selectedOptions?.measureRetainerSizeWidthFT}
-                        onChangeText={text => {
-                          setSelectedOptions(prev => {
-                            return {
-                              ...prev,
-                              measureRetainerSizeWidthFT: text,
-                            };
-                          });
-                        }}
-                      />
-                    </View>
-                    <View style={styles.row}>
-                      <TextInput
-                        style={[styles.input, {flex: 1}]}
-                        placeholder="Depth(in)"
-                        keyboardType="number-pad"
-                        value={selectedOptions?.measureRetainerSizeDepthIN}
-                        onChangeText={text => {
-                          setSelectedOptions(prev => {
-                            return {
-                              ...prev,
-                              measureRetainerSizeDepthIN: text,
-                            };
-                          });
-                        }}
-                      />
-                      <TextInput
-                        style={[styles.input, {flex: 1}]}
-                        placeholder="Depth(ft)"
-                        keyboardType="number-pad"
-                        value={selectedOptions?.measureRetainerSizeDepthFT}
-                        onChangeText={text => {
-                          setSelectedOptions(prev => {
-                            return {
-                              ...prev,
-                              measureRetainerSizeDepthFT: text,
-                            };
-                          });
-                        }}
-                      />
-                    </View>
-                    <TouchableOpacity
-                      style={styles.imageCon}
-                      onPress={() =>
-                        handleAddPhoto(
-                          setSelectedOptions,
-                          'measureRetainerSizePhoto',
-                        )
-                      }>
+            </View>
+            {selectedOptions.signId == '2' && (
+              <View>
+                <TouchableOpacity
+                  style={[styles.containerDrop]}
+                  onPress={() => setRetainer(prev => !prev)}>
+                  <Text style={styles.label}>Measure retainer size</Text>
+                  <View style={styles.iconButton}>
+                    {retainer ? (
+                      <Down width={18} height={18} />
+                    ) : (
+                      <Up width={18} height={18} />
+                    )}
+                  </View>
+                </TouchableOpacity>
+                <View style={{marginBottom: !retainer ? 16 : 0}}>
+                  <Collapsible
+                    duration={300}
+                    easing="easeInOutQuad"
+                    collapsed={!retainer}>
+                    <View style={styles.sectionContainer}>
+                      <View style={styles.row}>
+                        <TextInput
+                          style={[styles.input, {flex: 1}]}
+                          placeholder="Height(in)"
+                          keyboardType="number-pad"
+                          value={selectedOptions?.measureRetainerSizeHeightIN}
+                          onChangeText={text => {
+                            setSelectedOptions(prev => {
+                              return {
+                                ...prev,
+                                measureRetainerSizeHeightIN: text,
+                              };
+                            });
+                          }}
+                        />
+                        <TextInput
+                          style={[styles.input, {flex: 1}]}
+                          placeholder="Height(ft)"
+                          keyboardType="number-pad"
+                          value={selectedOptions?.measureRetainerSizeHeightFT}
+                          onChangeText={text => {
+                            setSelectedOptions(prev => {
+                              return {
+                                ...prev,
+                                measureRetainerSizeHeightFT: text,
+                              };
+                            });
+                          }}
+                        />
+                      </View>
+                      <View style={styles.row}>
+                        <TextInput
+                          style={[styles.input, {flex: 1}]}
+                          placeholder="Width(in)"
+                          keyboardType="number-pad"
+                          value={selectedOptions?.measureRetainerSizeWidthIN}
+                          onChangeText={text => {
+                            setSelectedOptions(prev => {
+                              return {
+                                ...prev,
+                                measureRetainerSizeWidthIN: text,
+                              };
+                            });
+                          }}
+                        />
+                        <TextInput
+                          style={[styles.input, {flex: 1}]}
+                          placeholder="Width(ft)"
+                          keyboardType="number-pad"
+                          value={selectedOptions?.measureRetainerSizeWidthFT}
+                          onChangeText={text => {
+                            setSelectedOptions(prev => {
+                              return {
+                                ...prev,
+                                measureRetainerSizeWidthFT: text,
+                              };
+                            });
+                          }}
+                        />
+                      </View>
+                      <View style={styles.row}>
+                        <TextInput
+                          style={[styles.input, {flex: 1}]}
+                          placeholder="Depth(in)"
+                          keyboardType="number-pad"
+                          value={selectedOptions?.measureRetainerSizeDepthIN}
+                          onChangeText={text => {
+                            setSelectedOptions(prev => {
+                              return {
+                                ...prev,
+                                measureRetainerSizeDepthIN: text,
+                              };
+                            });
+                          }}
+                        />
+                        <TextInput
+                          style={[styles.input, {flex: 1}]}
+                          placeholder="Depth(ft)"
+                          keyboardType="number-pad"
+                          value={selectedOptions?.measureRetainerSizeDepthFT}
+                          onChangeText={text => {
+                            setSelectedOptions(prev => {
+                              return {
+                                ...prev,
+                                measureRetainerSizeDepthFT: text,
+                              };
+                            });
+                          }}
+                        />
+                      </View>
+                      <TouchableOpacity
+                        style={styles.imageCon}
+                        onPress={() =>
+                          showPhotoOptions(
+                            setSelectedOptions,
+                            'measureRetainerSizePhoto',
+                            'PhotosAndMesurements',
+                            false,
+                          )
+                        }>
+                        <View
+                          style={styles.photoButton}
+                          // onPress={() => imagePicker1()}s
+                        >
+                          <Text style={styles.photoText}>add photo</Text>
+                          <Photo />
+                        </View>
+
+                        <View style={styles.fileNameContainer}>
+                          <Text style={styles.fileNameText}>
+                            {selectedOptions?.measureRetainerSizePhoto?.length >
+                            0
+                              ? `${selectedOptions?.measureRetainerSizePhoto?.length} files Choosen`
+                              : 'No file Choosen'}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
                       <View
-                        style={styles.photoButton}
-                        // onPress={() => imagePicker1()}s
-                      >
-                        <Text style={styles.photoText}>add photo</Text>
-                        <Photo />
+                        style={{
+                          flexDirection: 'row',
+                          marginVertical: 15,
+                          gap: 15,
+                          flexWrap: 'wrap',
+                        }}>
+                        {loadingImage ? (
+                          <ActivityIndicator size="small" color="#FF9239" />
+                        ) : (
+                          (() => {
+                            const mergedMeasureRetainerImages = [
+                              ...(selectedOptions?.measureRetainerSizePhoto?.map(
+                                item => ({
+                                  ...item,
+                                  isLocal: true,
+                                }),
+                              ) || []),
+                              ...(selectedOptions?.measureRetainerSizePhotos?.map(
+                                item => ({
+                                  ...item,
+                                  isLocal: false,
+                                }),
+                              ) || []),
+                            ];
+
+                            if (mergedMeasureRetainerImages.length === 0)
+                              return null;
+
+                            return mergedMeasureRetainerImages.map(
+                              (item, index) => (
+                                <TouchableOpacity
+                                  key={index}
+                                  onPress={() => {
+                                    openEditorforUpdate(
+                                      item.path || item.url,
+                                      setSelectedOptions,
+                                      item.isLocal
+                                        ? 'measureRetainerSizePhoto'
+                                        : 'measureRetainerSizePhotos',
+                                      'MeasureRetainerSize',
+                                      true,
+                                      item.isLocal
+                                        ? item.ImageId
+                                        : item.imageId,
+                                      baseUrl,
+                                      loginData?.tokenNumber,
+                                      true,
+                                      signProjectData?.photos_and_measurements
+                                        ?.id ||
+                                        signProjectData?.photos_and_measurements
+                                          ?.Id,
+                                      signName === 'Outdoor'
+                                        ? 'outdoor_photos_and_measurements'
+                                        : 'indoor_photos_and_measurements',
+                                      item.isLocal,
+                                      selectedOptions,
+                                    );
+                                  }}>
+                                  <View style={styles.imageContainer}>
+                                    <Image
+                                      source={{
+                                        uri: item?.path?.startsWith('file://')
+                                          ? item.path
+                                          : `file://${item.path || item.url}`,
+                                      }}
+                                      style={styles.image}
+                                    />
+                                    <TouchableOpacity
+                                      onPress={() =>
+                                        handleRemoveImage(
+                                          item.isLocal
+                                            ? item.ImageId
+                                            : item.imageId,
+                                          'measureRetainerSizePhoto',
+                                          'measureRetainerSizePhotos',
+                                          item.path,
+                                          item.isLocal,
+                                        )
+                                      }
+                                      style={styles.removeButton}>
+                                      <Text style={styles.removeButtonText}>
+                                        ×
+                                      </Text>
+                                    </TouchableOpacity>
+                                  </View>
+                                </TouchableOpacity>
+                              ),
+                            );
+                          })()
+                        )}
                       </View>
 
-                      <View style={styles.fileNameContainer}>
-                        <Text style={styles.fileNameText}>{''}</Text>
-                      </View>
-                    </TouchableOpacity>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        marginVertical: 15,
-                        gap: 15,
-                        flexWrap: 'wrap',
-                      }}>
-                      {loadingImage ? (
-                        <ActivityIndicator size="small" color="#FF9239" />
-                      ) : (
-                        selectedOptions?.measureRetainerSizePhotos?.length >
-                          0 &&
-                        selectedOptions?.measureRetainerSizePhotos?.map(
-                          (data, index) => {
-                            return (
-                              <View key={index} style={styles.imageContainer}>
-                                <Image
-                                  source={{uri: data.url}}
-                                  style={styles.image}
-                                />
-                                <TouchableOpacity
-                                  onPress={() =>
-                                    handleRemoveImage(
-                                      data.imageId,
-                                      'measureRetainerSizePhoto',
-                                      'measureRetainerSizePhotos',
-                                    )
-                                  }
-                                  style={styles.removeButton}>
-                                  <Text style={styles.removeButtonText}>×</Text>
-                                </TouchableOpacity>
-                              </View>
-                            );
-                          },
-                        )
-                      )}
+                      <TouchableOpacity
+                        onPress={() => setRetainer(prev => !prev)}
+                        style={[
+                          styles.iconButton,
+                          {alignSelf: 'flex-end', marginVertical: 15},
+                        ]}>
+                        <Down width={18} height={18} />
+                      </TouchableOpacity>
                     </View>
-                    <TouchableOpacity
-                      onPress={() => handleState('retainer')}
-                      style={[
-                        styles.iconButton,
-                        {alignSelf: 'flex-end', marginVertical: 15},
-                      ]}>
-                      <Down width={18} height={18} />
-                    </TouchableOpacity>
-                  </View>
-                </Collapsible>
+                  </Collapsible>
+                </View>
               </View>
-            </View> */}
-            {/* {selectedOptions.signId == '1' && (
+            )}
+
+            {selectedOptions.signId == '2' && (
               <View>
                 <TouchableOpacity
                   style={[styles.containerDrop]}
@@ -2333,9 +2599,11 @@ const Photos = ({handleFetchData}) => {
                       <TouchableOpacity
                         style={styles.imageCon}
                         onPress={() =>
-                          handleAddPhoto(
+                          showPhotoOptions(
                             setSelectedOptions,
                             'ifPanMeasurePanDimensionPhoto',
+                            'PhotosAndMesurements',
+                            false,
                           )
                         }>
                         <View style={styles.photoButton}>
@@ -2344,7 +2612,12 @@ const Photos = ({handleFetchData}) => {
                         </View>
 
                         <View style={styles.fileNameContainer}>
-                          <Text style={styles.fileNameText}>{''}</Text>
+                          <Text style={styles.fileNameText}>
+                            {selectedOptions?.ifPanMeasurePanDimensionPhoto
+                              ?.length > 0
+                              ? `${selectedOptions?.ifPanMeasurePanDimensionPhoto?.length} files Choosen`
+                              : 'No file Choosen'}
+                          </Text>
                         </View>
                       </TouchableOpacity>
                       <View
@@ -2357,35 +2630,89 @@ const Photos = ({handleFetchData}) => {
                         {loadingImage ? (
                           <ActivityIndicator size="small" color="#FF9239" />
                         ) : (
-                          selectedOptions?.ifPanMeasurePanDimensionPhotos
-                            ?.length > 0 &&
-                          selectedOptions?.ifPanMeasurePanDimensionPhotos?.map(
-                            (data, index) => {
-                              return (
-                                <View key={index} style={styles.imageContainer}>
-                                  <Image
-                                    source={{uri: data.url}}
-                                    style={styles.image}
-                                  />
-                                  <TouchableOpacity
-                                    onPress={() =>
-                                      handleRemoveImage(
-                                        data.imageId,
-                                        'ifPanMeasurePanDimensionPhoto',
-                                        'ifPanMeasurePanDimensionPhotos',
-                                      )
-                                    }
-                                    style={styles.removeButton}>
-                                    <Text style={styles.removeButtonText}>
-                                      ×
-                                    </Text>
-                                  </TouchableOpacity>
-                                </View>
-                              );
-                            },
-                          )
+                          (() => {
+                            const mergedIfPanMeasureImages = [
+                              ...(selectedOptions?.ifPanMeasurePanDimensionPhoto?.map(
+                                item => ({
+                                  ...item,
+                                  isLocal: true,
+                                }),
+                              ) || []),
+                              ...(selectedOptions?.ifPanMeasurePanDimensionPhotos?.map(
+                                item => ({
+                                  ...item,
+                                  isLocal: false,
+                                }),
+                              ) || []),
+                            ];
+
+                            if (mergedIfPanMeasureImages.length === 0)
+                              return null;
+
+                            return mergedIfPanMeasureImages.map(
+                              (item, index) => (
+                                <TouchableOpacity
+                                  key={index}
+                                  onPress={() => {
+                                    openEditorforUpdate(
+                                      item.path || item.url,
+                                      setSelectedOptions,
+                                      item.isLocal
+                                        ? 'ifPanMeasurePanDimensionPhoto'
+                                        : 'ifPanMeasurePanDimensionPhotos',
+                                      'IfPanMeasurePanDimension',
+                                      true,
+                                      item.isLocal
+                                        ? item.ImageId
+                                        : item.imageId,
+                                      baseUrl,
+                                      loginData?.tokenNumber,
+                                      true,
+                                      signProjectData?.photos_and_measurements
+                                        ?.id ||
+                                        signProjectData?.photos_and_measurements
+                                          ?.Id,
+                                      signName === 'Outdoor'
+                                        ? 'outdoor_photos_and_measurements'
+                                        : 'indoor_photos_and_measurements',
+                                      item.isLocal,
+                                      selectedOptions,
+                                    );
+                                  }}>
+                                  <View style={styles.imageContainer}>
+                                    <Image
+                                      source={{
+                                        uri: item?.path?.startsWith('file://')
+                                          ? item.path
+                                          : `file://${item.path || item.url}`,
+                                      }}
+                                      style={styles.image}
+                                    />
+                                    <TouchableOpacity
+                                      onPress={() =>
+                                        handleRemoveImage(
+                                          item.isLocal
+                                            ? item.ImageId
+                                            : item.imageId,
+                                          'ifPanMeasurePanDimensionPhoto',
+                                          'ifPanMeasurePanDimensionPhotos',
+                                          item.path,
+                                          item.isLocal,
+                                        )
+                                      }
+                                      style={styles.removeButton}>
+                                      <Text style={styles.removeButtonText}>
+                                        ×
+                                      </Text>
+                                    </TouchableOpacity>
+                                  </View>
+                                </TouchableOpacity>
+                              ),
+                            );
+                          })()
                         )}
                       </View>
+
                       <TouchableOpacity
                         onPress={() => setPanstate(prev => !prev)}
                         style={[
@@ -2398,7 +2725,7 @@ const Photos = ({handleFetchData}) => {
                   </Collapsible>
                 </View>
               </View>
-            )} */}
+            )}
 
             <View>
               <TouchableOpacity

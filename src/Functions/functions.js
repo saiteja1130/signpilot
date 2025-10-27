@@ -741,7 +741,6 @@ const syncPhotosAndMeasurements = (loginData, baseUrl) => {
 
       for (const measurement of measurements) {
         try {
-          // Convert each image array to base64 (if present)
           const base64signDimensionsPhoto = await getBase64Array2222(
             measurement?.signDimensionsPhoto || [],
           );
@@ -760,6 +759,19 @@ const syncPhotosAndMeasurements = (loginData, baseUrl) => {
               measurement?.otherPhotosMeasurementsMarkupsPhoto || [],
             );
 
+          const base64measureRetainerSizePhoto = await getBase64Array(
+            selectedOptions?.measureRetainerSizePhoto || [],
+          );
+          const base64visibleOpeningsPhoto = await getBase64Array(
+            selectedOptions?.visibleOpeningsPhoto || [],
+          );
+          const base64measureChannelLettersPhoto = await getBase64Array(
+            selectedOptions?.measureChannelLettersPhoto || [],
+          );
+          const base64ifPanMeasurePanDimensionPhoto = await getBase64Array(
+            selectedOptions?.ifPanMeasurePanDimensionPhoto || [],
+          );
+
           const data = {
             ...measurement,
             Id: measurement.id,
@@ -772,6 +784,10 @@ const syncPhotosAndMeasurements = (loginData, baseUrl) => {
             photoCloseUpOfSign: base64photoCloseUpOfSign,
             otherPhotosMeasurementsMarkupsPhoto:
               base64otherPhotosMeasurementsMarkupsPhoto,
+            measureRetainerSizePhoto: base64measureRetainerSizePhoto,
+            visibleOpeningsPhoto: base64visibleOpeningsPhoto,
+            measureChannelLettersPhoto: base64measureChannelLettersPhoto,
+            ifPanMeasurePanDimensionPhoto: base64ifPanMeasurePanDimensionPhoto,
           };
 
           console.log('SYNC PAYLOAD Photos & Measurements:', data);
