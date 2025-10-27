@@ -351,6 +351,7 @@ const Home = () => {
       fetchData(null, signProjectData);
       setTimeout(resolve, 1000);
     });
+    dispatch(clearActiveStates([]))
     setRefreshing(false);
   };
 

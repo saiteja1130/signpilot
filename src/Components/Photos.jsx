@@ -755,7 +755,7 @@ const Photos = ({handleFetchData}) => {
     <View>
       <TouchableOpacity
         onPress={() => {
-          dispatch(setActiveState('Permitting'));
+          dispatch(setActiveState('Photos'));
         }}
         style={[styles.container, {borderColor: '#5C5CE8'}]}>
         <View style={[styles.iconWrapper, {backgroundColor: '#5C5CE8'}]}>
@@ -3130,7 +3130,7 @@ const Photos = ({handleFetchData}) => {
                 {alignSelf: 'flex-end', marginTop: 34},
               ]}
               onPress={() => {
-                dispatch(setActiveState('Permitting'));
+                dispatch(setActiveState('Photos'));
               }}>
               <UpDownIcon width={39} height={39} />
             </TouchableOpacity>
