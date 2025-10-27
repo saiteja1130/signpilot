@@ -15,7 +15,7 @@ import {styles} from '../Global/Global';
 import SaveImg from '../../assets/images/save.svg';
 import UpDownIcon from '../../assets/images/arrowup.svg';
 import RadioButton from './RadioButton';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
 import NetInfo from '@react-native-community/netinfo';
@@ -37,8 +37,11 @@ import {
   getPath,
 } from '../Functions/FSfunctions.tsx';
 import RNFS from 'react-native-fs';
+import {setActiveState} from '../Redux/Slices/Active.js';
 
 const ElectricalAssessment = ({handleFetchData}) => {
+  const dispatch = useDispatch();
+  const globalActive = useSelector(state => state.active.values);
   const projectTitle = useSelector(state => state.projecttitle.value);
   const baseUrl = useSelector(state => state.baseUrl.value);
   const signProjectData = useSelector(state => state.signProject.value);
@@ -107,7 +110,6 @@ const ElectricalAssessment = ({handleFetchData}) => {
     electricalAuditspecialInstructions:
       signProjectData?.electrical_audit?.electricalAuditspecialInstructions,
   });
-  const [active, setActive] = useState('');
   const [signImageName, setSignImageName] = useState('No File Choosen');
   const [anyAccessibilityIssues, setAnyAccessibilityIssues] = useState(
     signProjectData?.electrical_audit?.anyAccessibilityIssues || '',
@@ -435,11 +437,7 @@ const ElectricalAssessment = ({handleFetchData}) => {
     <View>
       <TouchableOpacity
         onPress={() => {
-          if (active === '') {
-            setActive('Electrical');
-          } else {
-            setActive('');
-          }
+          dispatch(setActiveState('Electrical'));
         }}
         style={[styles.container, {borderColor: '#FF9239'}]}>
         <View style={[styles.iconWrapper, {backgroundColor: '#FF9239'}]}>
@@ -456,7 +454,7 @@ const ElectricalAssessment = ({handleFetchData}) => {
           </Text>
         </View>
         <View style={styles.dropdownIconWrapper}>
-          {active === 'Electrical' ? (
+          {globalActive?.includes('Electrical') ? (
             <UpDownIcon width={39} height={39} />
           ) : (
             <DropDownIcon width={39} height={39} />
@@ -464,7 +462,7 @@ const ElectricalAssessment = ({handleFetchData}) => {
         </View>
       </TouchableOpacity>
       <View style={{marginTop: -8}}>
-        {active === 'Electrical' && (
+        {globalActive?.includes('Electrical') && (
           <View style={styles.card}>
             <View style={styles.headerSection}>
               <View
@@ -925,7 +923,9 @@ const ElectricalAssessment = ({handleFetchData}) => {
                 styles.dropdownIconWrapper,
                 {alignSelf: 'flex-end', marginTop: 34},
               ]}
-              onPress={() => setActive('')}>
+              onPress={() => {
+                dispatch(setActiveState('Electrical'));
+              }}>
               <UpDownIcon width={39} height={39} />
             </TouchableOpacity>
           </View>

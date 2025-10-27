@@ -15,7 +15,7 @@ import DropDownIcon from '../../assets/images/downarrow.svg';
 import UpDownIcon from '../../assets/images/arrowup.svg';
 import RadioButton from './RadioButton';
 import SaveImg from '../../assets/images/save.svg';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import Collapsible from 'react-native-collapsible';
 import Down from '../../assets/images/down.svg';
 import Up from '../../assets/images/arrow.svg';
@@ -37,13 +37,14 @@ import {
   showPhotoOptions,
 } from '../Functions/ImagePickFunctions';
 import {deleteFolders, getBase64Array, getPath} from '../Functions/FSfunctions';
+import {setActiveState} from '../Redux/Slices/Active';
 const OutDoor = ({handleFetchData}) => {
+  const dispatch = useDispatch();
+  const globalActive = useSelector(state => state.active.values);
   const projectTitle = useSelector(state => state.projecttitle.value);
-  const status = useNetworkStatus();
   const baseUrl = useSelector(state => state.baseUrl.value);
   const loginData = useSelector(state => state.login.value);
   const signProjectData = useSelector(state => state.signProject.value);
-  const [active, setActive] = useState('');
   const [state, setState] = useState(null);
   const [signGeneralAuditTodoPunchList, setSignGeneralAuditTodoPunchList] =
     useState(
@@ -51,13 +52,6 @@ const OutDoor = ({handleFetchData}) => {
     );
   const [signGeneralAuditSummaryNotes, setSignGeneralAuditSummaryNotes] =
     useState(signProjectData?.sign_general_audit?.signGeneralAuditSummaryNotes);
-  const [
-    signGeneralAuditDocumentAccessibilityIssues,
-    setSignGeneralAuditDocumentAccessibilityIssues,
-  ] = useState(
-    signProjectData?.sign_general_audit
-      ?.signGeneralAuditDocumentAccessibilityIssues,
-  );
 
   const [inputFields, setInputFields] = useState([
     {
@@ -478,11 +472,7 @@ const OutDoor = ({handleFetchData}) => {
     <View>
       <TouchableOpacity
         onPress={() => {
-          if (active === '') {
-            setActive('Outdoor');
-          } else {
-            setActive('');
-          }
+          dispatch(setActiveState('Outdoor'));
         }}
         style={[styles.container, {borderColor: '#2B92F0'}]}>
         <View style={[styles.iconWrapper, {backgroundColor: '#2B92F0'}]}>
@@ -505,7 +495,7 @@ const OutDoor = ({handleFetchData}) => {
         </View>
 
         <View style={styles.dropdownIconWrapper}>
-          {active === 'Outdoor' ? (
+          {globalActive?.includes('Outdoor') ? (
             <UpDownIcon width={39} height={39} />
           ) : (
             <DropDownIcon width={39} height={39} />
@@ -513,7 +503,7 @@ const OutDoor = ({handleFetchData}) => {
         </View>
       </TouchableOpacity>
       <View style={{marginTop: -8}}>
-        {active === 'Outdoor' && (
+        {globalActive?.includes('Outdoor') && (
           <View style={[styles.card, {borderColor: '#2B92F0'}]}>
             {inputFields[0] && (
               <TextInput
@@ -1006,7 +996,9 @@ const OutDoor = ({handleFetchData}) => {
                 styles.dropdownIconWrapper,
                 {alignSelf: 'flex-end', marginTop: 34},
               ]}
-              onPress={() => setActive('')}>
+              onPress={() => {
+                dispatch(setActiveState('Outdoor'));
+              }}>
               <UpDownIcon width={39} height={39} />
             </TouchableOpacity>
           </View>

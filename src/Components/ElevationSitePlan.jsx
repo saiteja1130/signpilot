@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
@@ -43,14 +43,16 @@ import {
 import Exist from '../../assets/images/5.svg';
 
 import {styles} from '../Global/Global';
+import {setActiveState} from '../Redux/Slices/Active.js';
 
 const ElevationSitePlan = ({handleFetchData}) => {
+  const dispatch = useDispatch();
+  const globalActive = useSelector(state => state.active.values);
   const projectTitle = useSelector(state => state.projecttitle.value);
   const baseUrl = useSelector(state => state.baseUrl.value);
   const loginData = useSelector(state => state.login.value);
   const signProjectData = useSelector(state => state.signProject.value);
   const [loadingImage, setLoadingImage] = useState(false);
-  const [active, setActive] = useState('');
 
   const [
     elevationAndSitePlanTodoPunchList,
@@ -64,7 +66,6 @@ const ElevationSitePlan = ({handleFetchData}) => {
   ] = useState(
     signProjectData?.elevation_and_siteplan?.elevationAndSitePlanSummaryNotes,
   );
-
 
   const [selectedOptions, setSelectedOptions] = useState({
     Id:
@@ -570,11 +571,7 @@ const ElevationSitePlan = ({handleFetchData}) => {
     <View>
       <TouchableOpacity
         onPress={() => {
-          if (active === '') {
-            setActive('Elevation');
-          } else {
-            setActive('');
-          }
+          dispatch(setActiveState('Elevation'));
         }}
         style={[styles.container, {borderColor: '#b63c3c'}]}>
         <View style={[styles.iconWrapper, {backgroundColor: '#b63c3c'}]}>
@@ -591,7 +588,7 @@ const ElevationSitePlan = ({handleFetchData}) => {
           </Text>
         </View>
         <View style={styles.dropdownIconWrapper}>
-          {active === 'Elevation' ? (
+          {globalActive?.includes('Elevation') ? (
             <UpDownIcon width={39} height={39} />
           ) : (
             <DropDownIcon width={39} height={39} />
@@ -599,7 +596,7 @@ const ElevationSitePlan = ({handleFetchData}) => {
         </View>
       </TouchableOpacity>
       <View style={{marginTop: -8}}>
-        {active === 'Elevation' && (
+        {globalActive?.includes('Elevation') && (
           <View style={[styles.card, {borderColor: '#b63c3c'}]}>
             {/* <View style={[styles.headerSection, {backgroundColor: '#F7F9FC'}]}>
               <View
@@ -1992,7 +1989,9 @@ const ElevationSitePlan = ({handleFetchData}) => {
                 styles.dropdownIconWrapper,
                 {alignSelf: 'flex-end', marginTop: 34},
               ]}
-              onPress={() => setActive('')}>
+              onPress={() => {
+                dispatch(setActiveState('Elevation'));
+              }}>
               <UpDownIcon width={39} height={39} />
             </TouchableOpacity>
           </View>

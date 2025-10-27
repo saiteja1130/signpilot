@@ -26,7 +26,7 @@ import {addSignProject} from '../Redux/Slices/SigProject';
 import {useNavigation} from '@react-navigation/native';
 import {setPhotoState} from '../Redux/Slices/PhotosActive';
 import Toast from 'react-native-toast-message';
-import {setActiveState} from '../Redux/Slices/Active';
+import {clearActiveStates, setActiveState} from '../Redux/Slices/Active';
 import ProgressBar from '../Components/Progressbar';
 import {syncToOnline, useNetworkStatus} from '../Functions/functions';
 import NetInfo from '@react-native-community/netinfo';
@@ -271,6 +271,7 @@ const Home = () => {
         setSelectedSignValue('');
         dispatch(addSignProject(null));
         dispatch(setActiveState(null));
+        dispatch(clearActiveStates([]));
       }
     } else {
       console.warn('No project found for:', item);
@@ -484,7 +485,6 @@ const Home = () => {
     },
   });
 
-
   if (loading) {
     return (
       <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
@@ -615,6 +615,7 @@ const Home = () => {
                           dispatch(addSignProject(selectedSign));
                           setSignSelected(selectedSign);
                           setSignConfirmed(true);
+                          dispatch(clearActiveStates([]))
                         }
                       }}>
                       <Picker.Item label="Select Sign" value={null} />

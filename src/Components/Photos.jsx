@@ -14,7 +14,7 @@ import SaveImg from '../../assets/images/save.svg';
 import Photo from '../../assets/images/photo.svg';
 import Down from '../../assets/images/down.svg';
 import Up from '../../assets/images/arrow.svg';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import Collapsible from 'react-native-collapsible';
 import {Image} from 'react-native-animatable';
 import axios from 'axios';
@@ -35,10 +35,12 @@ import {
   openEditorforUpdate,
   showPhotoOptions,
 } from '../Functions/ImagePickFunctions';
+import {setActiveState} from '../Redux/Slices/Active';
 
 const Photos = ({handleFetchData}) => {
+  const dispatch = useDispatch();
+  const globalActive = useSelector(state => state.active.values);
   const projectTitle = useSelector(state => state.projecttitle.value);
-  const [active, setActive] = useState('');
   const baseUrl = useSelector(state => state.baseUrl.value);
   const loginData = useSelector(state => state.login.value);
   const signProjectData = useSelector(state => state.signProject.value);
@@ -59,7 +61,7 @@ const Photos = ({handleFetchData}) => {
     setFootage(false);
     setMeasureGround(false);
     setOtherPhotos(false);
-  }, [active]);
+  }, [globalActive]);
 
   const [
     photosAndMeasurementsTodoPunchList,
@@ -753,11 +755,7 @@ const Photos = ({handleFetchData}) => {
     <View>
       <TouchableOpacity
         onPress={() => {
-          if (active === '') {
-            setActive('Photos');
-          } else {
-            setActive('');
-          }
+          dispatch(setActiveState('Permitting'));
         }}
         style={[styles.container, {borderColor: '#5C5CE8'}]}>
         <View style={[styles.iconWrapper, {backgroundColor: '#5C5CE8'}]}>
@@ -776,7 +774,7 @@ const Photos = ({handleFetchData}) => {
           </Text>
         </View>
         <View style={styles.dropdownIconWrapper}>
-          {active === 'Photos' ? (
+          {globalActive?.includes('Photos') ? (
             <UpDownIcon width={39} height={39} />
           ) : (
             <DropDownIcon width={39} height={39} />
@@ -784,7 +782,7 @@ const Photos = ({handleFetchData}) => {
         </View>
       </TouchableOpacity>
       <View style={{marginTop: -8}}>
-        {active === 'Photos' && (
+        {globalActive?.includes('Photos') && (
           <View style={[styles.card, {borderColor: '#5C5CE8'}]}>
             <View>
               <TouchableOpacity
@@ -3131,7 +3129,9 @@ const Photos = ({handleFetchData}) => {
                 styles.dropdownIconWrapper,
                 {alignSelf: 'flex-end', marginTop: 34},
               ]}
-              onPress={() => setActive('')}>
+              onPress={() => {
+                dispatch(setActiveState('Permitting'));
+              }}>
               <UpDownIcon width={39} height={39} />
             </TouchableOpacity>
           </View>

@@ -3,19 +3,24 @@ import {createSlice} from '@reduxjs/toolkit';
 const activeSlice = createSlice({
   name: 'active',
   initialState: {
-    value: null,
+    values: [],
   },
   reducers: {
     setActiveState: (state, action) => {
-      if (state.value === action.payload) {
-        state.value = null;
+      console.log('action', action.payload);
+      const item = action.payload;
+      if (state.values.includes(item)) {
+        state.values = state.values.filter(i => i !== item);
       } else {
-        state.value = action.payload;
+        state.values.push(item);
       }
+    },
+    clearActiveStates: state => {
+      state.values = [];
     },
   },
 });
 
-export const {setActiveState} = activeSlice.actions;
+export const {setActiveState, clearActiveStates} = activeSlice.actions;
 
 export default activeSlice.reducer;
